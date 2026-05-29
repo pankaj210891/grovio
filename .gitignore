@@ -1,0 +1,51 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Turborepo
+.turbo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage
+
+# TypeScript build info
+*.tsbuildinfo
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.idea
+.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# React Native / Expo
+apps/mobile/.expo
+apps/mobile/android
+apps/mobile/ios/Pods
+apps/mobile/ios/build
+# Keep tracked iOS config files (e.g., Podfile, Info.plist) via negation rules
+!apps/mobile/ios/Podfile
+!apps/mobile/ios/Podfile.lock
+
+# pnpm
+pnpm-debug.log*
+
+# Logs
+*.log
+logs
