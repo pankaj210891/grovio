@@ -1,0 +1,151 @@
+diff --git a/build/src/export/embed/exportEmbedAsync.js b/build/src/export/embed/exportEmbedAsync.js
+index 40f8baba1846633b069279e02a17350bfb219465..d6de3b4d4bc3073c252341c66e141b18854613b3 100644
+--- a/build/src/export/embed/exportEmbedAsync.js
++++ b/build/src/export/embed/exportEmbedAsync.js	
+@@ -66,21 +66,21 @@ function _glob() {
+     return data;
+ }
+ function _Server() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/Server"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/Server"));
+     _Server = function() {
+         return data;
+     };
+     return data;
+ }
+ function _splitBundleOptions() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/lib/splitBundleOptions"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/lib/splitBundleOptions"));
+     _splitBundleOptions = function() {
+         return data;
+     };
+     return data;
+ }
+ function _bundle() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/shared/output/bundle"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/shared/output/bundle"));
+     _bundle = function() {
+         return data;
+     };
+diff --git a/build/src/start/server/metro/MetroBundlerDevServer.js b/build/src/start/server/metro/MetroBundlerDevServer.js
+index 2c340ddaa9231aa4ea67270ffa1b05f1b82bf986..21a6d6f23ac49a2a949c619a2953dab4cee0de41 100644
+--- a/build/src/start/server/metro/MetroBundlerDevServer.js
++++ b/build/src/start/server/metro/MetroBundlerDevServer.js	
+@@ -49,28 +49,28 @@ function _chalk() {
+     return data;
+ }
+ function _baseJSBundle() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/DeltaBundler/Serializers/baseJSBundle"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/DeltaBundler/Serializers/baseJSBundle"));
+     _baseJSBundle = function() {
+         return data;
+     };
+     return data;
+ }
+ function _sourceMapGenerator() {
+-    const data = require("metro/src/DeltaBundler/Serializers/sourceMapGenerator");
++    const data = require("metro/private/DeltaBundler/Serializers/sourceMapGenerator");
+     _sourceMapGenerator = function() {
+         return data;
+     };
+     return data;
+ }
+ function _bundleToString() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/lib/bundleToString"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/lib/bundleToString"));
+     _bundleToString = function() {
+         return data;
+     };
+     return data;
+ }
+ function _getGraphId() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/lib/getGraphId"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/lib/getGraphId"));
+     _getGraphId = function() {
+         return data;
+     };
+diff --git a/build/src/start/server/metro/TerminalReporter.js b/build/src/start/server/metro/TerminalReporter.js
+index 38c75be676bf424bb6dd716b64fa74cbd46e3309..9024017c5842c0d7af631bdf494dbd9f814e9279 100644
+--- a/build/src/start/server/metro/TerminalReporter.js
++++ b/build/src/start/server/metro/TerminalReporter.js	
+@@ -29,7 +29,7 @@ function _chalk() {
+     return data;
+ }
+ function _TerminalReporter() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/lib/TerminalReporter"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/lib/TerminalReporter"));
+     _TerminalReporter = function() {
+         return data;
+     };
+diff --git a/build/src/start/server/metro/getCssModulesFromBundler.js b/build/src/start/server/metro/getCssModulesFromBundler.js
+index 4989315c76208b1b1f82e5ec15d875e48c12c91d..0c92fa8eab0afdddc89058f04371fafbff138f18 100644
+--- a/build/src/start/server/metro/getCssModulesFromBundler.js
++++ b/build/src/start/server/metro/getCssModulesFromBundler.js	
+@@ -24,14 +24,14 @@ function _crypto() {
+     return data;
+ }
+ function _js() {
+-    const data = require("metro/src/DeltaBundler/Serializers/helpers/js.js");
++    const data = require("metro/private/DeltaBundler/Serializers/helpers/js.js");
+     _js = function() {
+         return data;
+     };
+     return data;
+ }
+ function _splitBundleOptions() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/lib/splitBundleOptions"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/lib/splitBundleOptions"));
+     _splitBundleOptions = function() {
+         return data;
+     };
+diff --git a/build/src/start/server/metro/instantiateMetro.js b/build/src/start/server/metro/instantiateMetro.js
+index afb665f13ce8b30fb8e1ce47d3dc9ba165215fcb..e540aab120d593ffc266913d1df23f8580549d1c 100644
+--- a/build/src/start/server/metro/instantiateMetro.js
++++ b/build/src/start/server/metro/instantiateMetro.js	
+@@ -48,14 +48,14 @@ function _chalk() {
+     return data;
+ }
+ function _RevisionNotFoundError() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/IncrementalBundler/RevisionNotFoundError"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/IncrementalBundler/RevisionNotFoundError"));
+     _RevisionNotFoundError = function() {
+         return data;
+     };
+     return data;
+ }
+ function _formatBundlingError() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/lib/formatBundlingError"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/lib/formatBundlingError"));
+     _formatBundlingError = function() {
+         return data;
+     };
+@@ -307,7 +307,7 @@ async function instantiateMetroAsync(metroBundler, options, { isExporting, exp =
+         } catch  {
+             // Add fallback for monorepo tests up until the fork is merged.
+             _log.Log.warn('Failed to load HMR serializer from @expo/metro-config, using fallback version.');
+-            hmrJSBundle = require('metro/src/DeltaBundler/Serializers/hmrJSBundle');
++            hmrJSBundle = require('metro/private/DeltaBundler/Serializers/hmrJSBundle');
+         }
+         // Patch HMR Server to send more info to the `_createModuleId` function for deterministic module IDs and add support for serializing HMR updates the same as all other bundles.
+         hmrServer._prepareMessage = async function(group, options, changeEvent) {
+diff --git a/build/src/start/server/metro/runServer-fork.js b/build/src/start/server/metro/runServer-fork.js
+index 842b1c7e39c989f3483d89bf6dfc3ea767d68139..c8a106aff57eafeaddf2eaa7509e9795c8f4c536 100644
+--- a/build/src/start/server/metro/runServer-fork.js
++++ b/build/src/start/server/metro/runServer-fork.js	
+@@ -42,14 +42,14 @@ function _metro() {
+     return data;
+ }
+ function _HmrServer() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/HmrServer"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/HmrServer"));
+     _HmrServer = function() {
+         return data;
+     };
+     return data;
+ }
+ function _createWebsocketServer() {
+-    const data = /*#__PURE__*/ _interop_require_default(require("metro/src/lib/createWebsocketServer"));
++    const data = /*#__PURE__*/ _interop_require_default(require("metro/private/lib/createWebsocketServer"));
+     _createWebsocketServer = function() {
+         return data;
+     };

@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@expo/cli@0.24.24':
+    hash: kytsmn6avkt4oqiagpxuw4kdca
+    path: patches/@expo__cli@0.24.24.patch
+
 importers:
 
   .:
@@ -5905,7 +5910,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@expo/cli@0.24.24':
+  '@expo/cli@0.24.24(patch_hash=kytsmn6avkt4oqiagpxuw4kdca)':
     dependencies:
       '@0no-co/graphql.web': 1.2.0
       '@babel/runtime': 7.29.7
@@ -7896,7 +7901,7 @@ snapshots:
   expo@53.0.27(@babel/core@7.29.7)(react-native@0.83.0(@babel/core@7.29.7)(@types/react@19.2.15)(react@19.2.0))(react@19.2.0):
     dependencies:
       '@babel/runtime': 7.29.7
-      '@expo/cli': 0.24.24
+      '@expo/cli': 0.24.24(patch_hash=kytsmn6avkt4oqiagpxuw4kdca)
       '@expo/config': 11.0.13
       '@expo/config-plugins': 10.1.2
       '@expo/fingerprint': 0.13.4
