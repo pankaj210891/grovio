@@ -1,0 +1,22 @@
+{
+  "name": "@grovio/config",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./eslint-preset.js",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig.base.json",
+    "./tsconfig/react.json": "./tsconfig.react.json",
+    "./tsconfig/node.json": "./tsconfig.node.json",
+    "./eslint-preset": "./eslint-preset.js"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.0"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "grovio-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.2.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "format:check": "turbo run format:check",
+    "format:write": "turbo run format:write",
+    "test": "turbo run test",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.0.0",
+    "turbo": "^2.9.0",
+    "typescript": "^5.8.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
