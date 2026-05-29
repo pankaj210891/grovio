@@ -1171,7 +1171,7 @@ Test mock pattern: mirror `FeatureFlagService.test.ts` — mock `db`, `redis`, `
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `category_metadata` be auto-created on category creation (empty row) or lazily on first save?**
    - What we know: Lazy creation avoids rows with all-null content; auto-creation avoids null-check in every metadata read.
