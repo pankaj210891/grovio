@@ -15,7 +15,6 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@fastify/awilix": "^4.0.0",
     "@grovio/contracts": "workspace:*",
     "awilix": "^13.0.0",
     "drizzle-orm": "^0.45.0",
