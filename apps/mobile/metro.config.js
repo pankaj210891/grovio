@@ -15,10 +15,11 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ];
 
-// Map @grovio/contracts directly to its TypeScript source.
-// This avoids a build step during development; plan 01-10 verifies the release build path.
+// Point to the package root so Metro uses the package.json exports map in both
+// dev and release modes. Metro 0.80+ (RN 0.83) resolves exports map entries,
+// which directs it to dist/ in release mode and supports package-level imports.
 config.resolver.extraNodeModules = {
-  '@grovio/contracts': path.resolve(monorepoRoot, 'packages/contracts/src'),
+  '@grovio/contracts': path.resolve(monorepoRoot, 'packages/contracts'),
 };
 
 module.exports = config;
