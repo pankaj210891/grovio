@@ -37,8 +37,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 10 plans in 5 waves
 
 **Wave 1** (parallel from clean slate):
-- [ ] 01-01-PLAN.md — Monorepo scaffold: pnpm workspace, Turborepo pipeline, shared tsconfig/ESLint/Prettier in packages/config, docker-compose infra
-- [ ] 01-02-PLAN.md — packages/contracts: health types, feature-flag types, auth token shapes, request/response envelope, MarketplaceConfig, money utils + allocate()
+- [x] 01-01-PLAN.md — Monorepo scaffold: pnpm workspace, Turborepo pipeline, shared tsconfig/ESLint/Prettier in packages/config, docker-compose infra
+- [x] 01-02-PLAN.md — packages/contracts: health types, feature-flag types, auth token shapes, request/response envelope, MarketplaceConfig, money utils + allocate()
 
 **Wave 2** *(blocked on Wave 1 completion)*:
 - [ ] 01-03-PLAN.md — Backend skeleton: Fastify + Awilix DI, Drizzle ORM + Redis setup, GET /health, Zod env config
@@ -166,7 +166,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/10 | Planned | - |
+| 1. Foundation | 2/10 | In Progress|  |
 | 2. Category Engine | 0/TBD | Not started | - |
 | 3. Catalog & Search | 0/TBD | Not started | - |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
