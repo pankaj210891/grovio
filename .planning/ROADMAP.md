@@ -69,7 +69,17 @@ Cross-cutting constraints: All apps import from @grovio/contracts (D-03); FEATUR
   3. Admin can specify which attributes become storefront filter facets for a category, and the filter schema is returned per-category by the API
   4. Admin can restrict specific vendors to specific categories, and the restriction is enforced when a vendor attempts to create a product
   5. Admin can configure banners, SEO fields, and merchandising blocks per category and retrieve them via API
-**Plans**: TBD
+**Plans**: 8 plans in 6 waves
+
+Plans:
+- [ ] 02-01-PLAN.md — packages/contracts category subfolder: blocks, tree, attribute-definition, filter-schema, product-template, vendor-restriction, metadata + barrel
+- [ ] 02-02-PLAN.md — 6 Drizzle schema tables + attr_type/filter_display_type pgEnums + barrel + CATEGORY_TREE_TTL_SECONDS env var
+- [ ] 02-03-PLAN.md — [BLOCKING] db:generate + db:migrate; CategoryService (depth guard, tree builder, Redis cache) + tests
+- [ ] 02-04-PLAN.md — AttributeDefinitionService + FilterSchemaService + tests
+- [ ] 02-05-PLAN.md — ProductTemplateService + VendorRestrictionService + CategoryMetadataService + tests
+- [ ] 02-06-PLAN.md — Awilix registration + public category routes + guarded admin routes + app.ts wiring
+- [ ] 02-07-PLAN.md — web-admin: dnd-kit/react-router install (legitimacy checkpoint), router/query scaffold, category tree CRUD UI
+- [ ] 02-08-PLAN.md — web-admin: attribute builder, filter schema, product template, vendor restriction, metadata/blocks editors
 
 ### Phase 3: Catalog & Search
 **Goal**: Vendors can create and manage products whose fields are driven by the category schema, admin can moderate them, and customers can discover products via full-text search and dynamic faceted filters
@@ -167,7 +177,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/10 | In Progress|  |
-| 2. Category Engine | 0/TBD | Not started | - |
+| 2. Category Engine | 0/8 | Not started | - |
 | 3. Catalog & Search | 0/TBD | Not started | - |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
 | 5. Commerce Core | 0/TBD | Not started | - |
