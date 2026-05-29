@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "grovio",
+    "slug": "grovio",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "grovio",
+    "sdkVersion": "53.0.0",
+    "jsEngine": "hermes",
+    "platforms": ["ios", "android"],
+    "assetBundlePatterns": ["**/*"]
+  }
+}
