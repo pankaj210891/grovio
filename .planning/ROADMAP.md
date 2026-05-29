@@ -41,9 +41,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 01-02-PLAN.md — packages/contracts: health types, feature-flag types, auth token shapes, request/response envelope, MarketplaceConfig, money utils + allocate()
 
 **Wave 2** *(blocked on Wave 1 completion)*:
-- [ ] 01-03-PLAN.md — Backend skeleton: Fastify + Awilix DI, Drizzle ORM + Redis setup, GET /health, Zod env config
-- [ ] 01-04-PLAN.md — Web app shells: storefront, admin, vendor — Vite 8 + React 19 + Tailwind v4 + health screens
-- [ ] 01-05-PLAN.md — React Native app shell: Expo bare + React Navigation v7, Metro workspace config for contracts
+- [x] 01-03-PLAN.md — Backend skeleton: Fastify + Awilix DI, Drizzle ORM + Redis setup, GET /health, Zod env config
+- [x] 01-04-PLAN.md — Web app shells: storefront, admin, vendor — Vite 8 + React 19 + Tailwind v4 + health screens
+- [x] 01-05-PLAN.md — React Native app shell: Expo bare + React Navigation v7, Metro workspace config for contracts
 
 **Wave 3** *(blocked on Wave 2 completion)*:
 - [ ] 01-06-PLAN.md — Feature-flag infrastructure: FeatureFlags Drizzle schema + migration, FeatureFlagService (Redis cache + DB fallback, configurable TTL)
@@ -166,7 +166,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 2/10 | In Progress|  |
+| 1. Foundation | 5/10 | In Progress|  |
 | 2. Category Engine | 0/TBD | Not started | - |
 | 3. Catalog & Search | 0/TBD | Not started | - |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
