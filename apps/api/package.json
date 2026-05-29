@@ -1,0 +1,37 @@
+{
+  "name": "@grovio/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@fastify/awilix": "^4.0.0",
+    "@grovio/contracts": "workspace:*",
+    "awilix": "^13.0.0",
+    "drizzle-orm": "^0.45.0",
+    "fastify": "^5.8.0",
+    "fastify-plugin": "^5.0.0",
+    "ioredis": "^5.11.0",
+    "pg": "^8.0.0",
+    "zod": "^4.4.0"
+  },
+  "devDependencies": {
+    "@grovio/config": "workspace:*",
+    "@types/node": "^22",
+    "@types/pg": "^8.0.0",
+    "drizzle-kit": "^1.0.0-beta.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.0"
+  }
+}
