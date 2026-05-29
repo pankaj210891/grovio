@@ -21,7 +21,7 @@ export default function App() {
           <span className="inline-flex h-3 w-3 rounded-full bg-green-500" />
           <span className="text-sm font-medium text-green-700">Running</span>
         </div>
-        <h1 className="mb-2 text-3xl font-bold tracking-tight text-gray-900">
+        <h1 className="mb-2 rounded-md bg-grovio-primary px-3 py-1 text-3xl font-bold tracking-tight text-white">
           Grovio Admin Panel
         </h1>
         <p className="mb-6 text-gray-500">Marketplace administration panel</p>

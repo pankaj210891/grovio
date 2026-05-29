@@ -1,3 +1,2 @@
 @import "tailwindcss";
-/* Design tokens — populated by plan 01-07 when packages/ui is created */
 @import "@grovio/ui/tokens";
