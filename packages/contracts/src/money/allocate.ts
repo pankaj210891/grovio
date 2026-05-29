@@ -61,7 +61,8 @@ export function allocate(total: bigint, ratios: readonly number[]): bigint[] {
   let remainder = total - sliceSum;
 
   for (let i = 0; i < slices.length && remainder > 0n; i++) {
-    slices[i] += 1n;
+    // slices[i] is always defined here since i < slices.length
+    slices[i] = (slices[i] ?? 0n) + 1n;
     remainder -= 1n;
   }
 

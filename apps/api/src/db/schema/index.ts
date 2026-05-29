@@ -12,3 +12,5 @@
  * Example (how to add a schema in a future plan):
  *   export * from "./feature-flags.js";
  */
+
+export * from "./feature-flags.js";

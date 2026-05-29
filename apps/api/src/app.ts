@@ -1,8 +1,9 @@
 import type { ApiError } from "@grovio/contracts";
-import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
+import Fastify, { type FastifyError, type FastifyInstance, type FastifyServerOptions } from "fastify";
 import awilixPlugin from "./plugins/awilix.js";
 import drizzlePlugin from "./plugins/drizzle.js";
 import redisPlugin from "./plugins/redis.js";
+import { featureFlagRoutes } from "./routes/feature-flags.js";
 import healthRoutes from "./routes/health.js";
 
 /**
@@ -33,6 +34,7 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
 
   // --- Routes ---
   await fastify.register(healthRoutes);
+  await fastify.register(featureFlagRoutes);
 
   // --- 404 handler ---
   fastify.setNotFoundHandler((_req, reply) => {
@@ -47,7 +49,7 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   });
 
   // --- Error handler ---
-  fastify.setErrorHandler((error, _req, reply) => {
+  fastify.setErrorHandler((error: FastifyError, _req, reply) => {
     fastify.log.error(error);
 
     const isProd = process.env["NODE_ENV"] === "production";

@@ -1,5 +1,7 @@
-import { asValue, createContainer, InjectionMode } from "awilix";
+import { asClass, asValue, createContainer, InjectionMode } from "awilix";
 import type { FastifyInstance } from "fastify";
+import { env } from "./config/env.js";
+import { FeatureFlagService } from "./modules/feature-flags/index.js";
 
 /**
  * Create the Awilix DI container for the application.
@@ -23,6 +25,13 @@ export function createAppContainer(fastify: FastifyInstance) {
     db: asValue(fastify.db),
     redis: asValue(fastify.redis),
     logger: asValue(fastify.log),
+    env: asValue(env),
+  });
+
+  // Domain services — registered as classes so Awilix handles instantiation
+  // and injects constructor dependencies via PROXY injection mode.
+  container.register({
+    featureFlagService: asClass(FeatureFlagService).singleton(),
   });
 
   return container;
