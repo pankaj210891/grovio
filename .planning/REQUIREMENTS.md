@@ -197,13 +197,117 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (to be filled by roadmapper) | — | Pending |
+| FND-01 | Phase 1 | Pending |
+| FND-02 | Phase 1 | Pending |
+| FND-03 | Phase 1 | Pending |
+| FND-04 | Phase 1 | Pending |
+| FND-05 | Phase 1 | Pending |
+| FND-06 | Phase 1 | Pending |
+| FND-07 | Phase 1 | Pending |
+| FND-08 | Phase 1 | Pending |
+| CAT-01 | Phase 2 | Pending |
+| CAT-02 | Phase 2 | Pending |
+| CAT-03 | Phase 2 | Pending |
+| CAT-04 | Phase 2 | Pending |
+| CAT-05 | Phase 2 | Pending |
+| CAT-06 | Phase 2 | Pending |
+| CAT-07 | Phase 2 | Pending |
+| PROD-01 | Phase 3 | Pending |
+| PROD-02 | Phase 3 | Pending |
+| PROD-03 | Phase 3 | Pending |
+| PROD-04 | Phase 3 | Pending |
+| PROD-05 | Phase 3 | Pending |
+| PROD-06 | Phase 3 | Pending |
+| SRCH-01 | Phase 3 | Pending |
+| SRCH-02 | Phase 3 | Pending |
+| SRCH-03 | Phase 3 | Pending |
+| SRCH-04 | Phase 3 | Pending |
+| STORE-01 | Phase 4 | Pending |
+| STORE-02 | Phase 4 | Pending |
+| STORE-03 | Phase 4 | Pending |
+| STORE-04 | Phase 4 | Pending |
+| STORE-05 | Phase 4 | Pending |
+| STORE-06 | Phase 4 | Pending |
+| AUTH-01 | Phase 4 | Pending |
+| AUTH-02 | Phase 4 | Pending |
+| AUTH-03 | Phase 4 | Pending |
+| AUTH-04 | Phase 4 | Pending |
+| AUTH-05 | Phase 4 | Pending |
+| AUTH-06 | Phase 4 | Pending |
+| CHK-01 | Phase 5 | Pending |
+| CHK-02 | Phase 5 | Pending |
+| CHK-03 | Phase 5 | Pending |
+| CHK-04 | Phase 5 | Pending |
+| CHK-05 | Phase 5 | Pending |
+| CHK-06 | Phase 5 | Pending |
+| PAY-01 | Phase 5 | Pending |
+| PAY-02 | Phase 5 | Pending |
+| PAY-03 | Phase 5 | Pending |
+| PAY-04 | Phase 5 | Pending |
+| WAL-01 | Phase 5 | Pending |
+| WAL-02 | Phase 5 | Pending |
+| WAL-03 | Phase 5 | Pending |
+| WAL-04 | Phase 5 | Pending |
+| WAL-05 | Phase 5 | Pending |
+| ORD-01 | Phase 5 | Pending |
+| ORD-02 | Phase 5 | Pending |
+| ORD-03 | Phase 5 | Pending |
+| ORD-04 | Phase 5 | Pending |
+| ORD-05 | Phase 5 | Pending |
+| MKT-01 | Phase 5 | Pending |
+| MKT-02 | Phase 5 | Pending |
+| MKT-03 | Phase 5 | Pending |
+| MKT-04 | Phase 6 | Pending |
+| MKT-05 | Phase 6 | Pending |
+| VEN-01 | Phase 6 | Pending |
+| VEN-02 | Phase 6 | Pending |
+| VEN-03 | Phase 6 | Pending |
+| VEN-04 | Phase 6 | Pending |
+| VEN-05 | Phase 6 | Pending |
+| VEN-06 | Phase 6 | Pending |
+| ADM-01 | Phase 6 | Pending |
+| ADM-02 | Phase 6 | Pending |
+| ADM-03 | Phase 6 | Pending |
+| ADM-04 | Phase 6 | Pending |
+| ADM-05 | Phase 6 | Pending |
+| ADM-06 | Phase 6 | Pending |
+| ADM-07 | Phase 6 | Pending |
+| MOB-01 | Phase 7 | Pending |
+| MOB-02 | Phase 7 | Pending |
+| MOB-03 | Phase 7 | Pending |
+| MOB-04 | Phase 7 | Pending |
+| MOB-05 | Phase 7 | Pending |
+| MOB-06 | Phase 7 | Pending |
+| MOB-07 | Phase 7 | Pending |
+| FUL-01 | Phase 8 | Pending |
+| FUL-02 | Phase 8 | Pending |
+| FUL-03 | Phase 8 | Pending |
+| FUL-04 | Phase 8 | Pending |
+| NOT-01 | Phase 8 | Pending |
+| NOT-02 | Phase 8 | Pending |
+| PRD-01 | Phase 9 | Pending |
+| PRD-02 | Phase 9 | Pending |
+| PRD-03 | Phase 9 | Pending |
+| PRD-04 | Phase 9 | Pending |
+| PRD-05 | Phase 9 | Pending |
+| PRD-06 | Phase 9 | Pending |
 
 **Coverage:**
-- v1 requirements: 73 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 73 ⚠️ (resolved when ROADMAP.md is created)
+- v1 requirements: 94 total (note: 94 requirements counted across 17 categories; original header estimated 73)
+- Mapped to phases: 94
+- Unmapped: 0 ✓
+
+**Phase distribution:**
+- Phase 1 (Foundation): 8 requirements
+- Phase 2 (Category Engine): 7 requirements
+- Phase 3 (Catalog & Search): 10 requirements
+- Phase 4 (Customer Storefront Web): 12 requirements
+- Phase 5 (Commerce Core): 23 requirements
+- Phase 6 (Vendor & Admin Tools): 15 requirements
+- Phase 7 (React Native App): 7 requirements
+- Phase 8 (Fulfillment & Communications): 6 requirements
+- Phase 9 (Productization & Release): 6 requirements
 
 ---
 *Requirements defined: 2026-05-29*
-*Last updated: 2026-05-29 after initial definition*
+*Last updated: 2026-05-29 — Traceability populated after roadmap creation*
