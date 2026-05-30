@@ -13,7 +13,7 @@ Grovio is a horizontal-layer infrastructure product. The roadmap builds complete
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Monorepo scaffold, shared contracts, all five app shells booting, proven Metro RN resolution, CI, feature-flag layer, branding config
-- [ ] **Phase 2: Category Engine** - Admin-managed category tree, per-category attribute/filter schemas, product templates, vendor-category restrictions
+- [x] **Phase 2: Category Engine** - Admin-managed category tree, per-category attribute/filter schemas, product templates, vendor-category restrictions (completed 2026-05-30)
 - [ ] **Phase 3: Catalog & Search** - Vendor product CRUD with dynamic attribute forms, admin moderation, OpenSearch index, full-text + faceted search API
 - [ ] **Phase 4: Customer Storefront (Web)** - Complete customer web experience: homepage, category pages, PLP, PDP, search, auth flows, responsive + animated UI
 - [ ] **Phase 5: Commerce Core** - Basket, inventory reservation, checkout, PaymentProvider abstraction, wallet ledger, order placement + multi-vendor splitting, commission engine, coupon engine
@@ -79,7 +79,7 @@ Plans:
 - [x] 02-05-PLAN.md — ProductTemplateService + VendorRestrictionService + CategoryMetadataService + tests
 - [x] 02-06-PLAN.md — Awilix registration + public category routes + guarded admin routes + app.ts wiring
 - [x] 02-07-PLAN.md — web-admin: dnd-kit/react-router install (legitimacy checkpoint), router/query scaffold, category tree CRUD UI
-- [ ] 02-08-PLAN.md — web-admin: attribute builder, filter schema, product template, vendor restriction, metadata/blocks editors
+- [x] 02-08-PLAN.md — web-admin: attribute builder, filter schema, product template, vendor restriction, metadata/blocks editors
 
 ### Phase 3: Catalog & Search
 **Goal**: Vendors can create and manage products whose fields are driven by the category schema, admin can moderate them, and customers can discover products via full-text search and dynamic faceted filters
@@ -177,7 +177,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/10 | In Progress|  |
-| 2. Category Engine | 7/8 | In Progress|  |
+| 2. Category Engine | 8/8 | Complete   | 2026-05-30 |
 | 3. Catalog & Search | 0/TBD | Not started | - |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
 | 5. Commerce Core | 0/TBD | Not started | - |
