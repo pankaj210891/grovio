@@ -27,7 +27,11 @@ export function requiresSsl(connectionString: string): boolean {
  */
 const drizzlePlugin = fp(
   async (fastify) => {
-    const pool = new Pool({ connectionString: env.DATABASE_URL });
+    const ssl = requiresSsl(env.DATABASE_URL);
+    const pool = new Pool({
+      connectionString: env.DATABASE_URL,
+      ...(ssl ? { ssl: true } : {}),
+    });
 
     // Verify connectivity at startup so missing DATABASE_URL fails fast.
     await pool.query("SELECT 1");
@@ -41,7 +45,7 @@ const drizzlePlugin = fp(
       await pool.end();
     });
 
-    fastify.log.info("Drizzle ORM connected to PostgreSQL");
+    fastify.log.info(`Drizzle ORM connected to PostgreSQL (ssl=${ssl})`);
   },
   { name: "drizzle" },
 );

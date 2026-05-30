@@ -26,9 +26,14 @@ export function detectRedisTls(url: string): boolean {
  */
 const redisPlugin = fp(
   async (fastify) => {
+    const isTls = detectRedisTls(env.REDIS_URL);
+
     const redis = new Redis(env.REDIS_URL, {
       lazyConnect: true,
       enableReadyCheck: true,
+      // Explicit tls: {} is required as belt-and-suspenders: some ioredis versions strip TLS
+      // during URL parsing even when the rediss:// scheme is present (Pitfall 3).
+      ...(isTls ? { tls: {} } : {}),
     });
 
     // Verify connectivity at startup.
@@ -41,7 +46,7 @@ const redisPlugin = fp(
       await redis.quit();
     });
 
-    fastify.log.info("Redis client connected");
+    fastify.log.info(`Redis client connected (tls=${isTls})`);
   },
   { name: "redis" },
 );
