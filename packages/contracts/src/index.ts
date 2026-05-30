@@ -7,6 +7,7 @@
  * Import examples:
  *   import { HealthCheckResponse } from "@grovio/contracts";
  *   import { JwtPayload } from "@grovio/contracts";
+ *   import { MerchandisingBlock, AttrType, CategoryTreeNode } from "@grovio/contracts";
  *   import { allocate } from "@grovio/contracts/money";
  */
 
@@ -15,3 +16,4 @@ export * from "./feature-flags.js";
 export * from "./auth.js";
 export * from "./envelope.js";
 export * from "./marketplace-config.js";
+export * from "./category/index.js";
