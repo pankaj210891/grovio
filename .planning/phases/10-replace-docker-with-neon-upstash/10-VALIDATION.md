@@ -42,9 +42,10 @@ created: 2026-05-30
 | 10-01-02 | 01 | 1 | — | T-10-02 | TLS detection returns `true` for `rediss://`; `false` for `redis://` | unit | `pnpm --filter @grovio/api test` | ❌ W0 | ⬜ pending |
 | 10-01-03 | 01 | 1 | — | — | N/A — env schema change; type-checked by compiler | unit | `pnpm --filter @grovio/api typecheck` | ✅ | ⬜ pending |
 | 10-01-04 | 01 | 1 | — | — | N/A — config file change; verified by `db:generate` dry-run | manual | Manual: `pnpm db:generate` | ✅ | ⬜ pending |
-| 10-01-05 | 01 | 1 | — | — | N/A — env example update; no automated test | manual | Manual: visual inspection of `.env.example` | ✅ | ⬜ pending |
-| 10-01-06 | 01 | 1 | — | T-10-03 | Secrets injected as env vars; no secrets echoed in CI logs | manual | Manual: inspect CI run after committing | ✅ | ⬜ pending |
-| 10-01-07 | 01 | 1 | — | — | `docker-compose.yml` deleted; no Docker references remain in buyer-facing docs | manual | `grep -r "docker-compose" . --include="*.md" --exclude-dir=".planning"` | ✅ | ⬜ pending |
+| 10-02-01 | 02 | 1 | — | — | N/A — env example update; no automated test | manual | Manual: visual inspection of `.env.example` | ✅ | ⬜ pending |
+| 10-02-02 | 02 | 1 | — | T-10-03 | Secrets injected as env vars; no secrets echoed in CI logs | manual | Manual: inspect CI run after committing | ✅ | ⬜ pending |
+| 10-03-01 | 03 | 2 | — | — | `docker-compose.yml` deleted; no Docker references remain in buyer-facing docs | manual | `grep -r "docker-compose" . --include="*.md" --exclude-dir=".planning"` | ✅ | ⬜ pending |
+| 10-03-02 | 03 | 2 | — | — | ROADMAP.md updated; no `docker-compose` in Phase 1 one-liner | manual | `grep "cloud infra setup" .planning/ROADMAP.md` | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

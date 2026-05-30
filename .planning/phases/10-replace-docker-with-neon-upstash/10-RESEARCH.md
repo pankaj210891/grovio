@@ -530,24 +530,24 @@ The SSL/TLS detection helpers (`requiresSsl`, `isTls`) should be extracted to pu
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **DATABASE_DIRECT_URL in CI secrets**
+1. **DATABASE_DIRECT_URL in CI secrets** — RESOLVED: `DATABASE_DIRECT_URL` is added to CI env vars (10-02 Task 2) because the CI `db:generate` turbo task may run drizzle-kit; added to `.env.example` with a comment explaining it is required for `pnpm db:migrate`. See Plan 10-02.
    - What we know: Neon recommends direct URL for drizzle-kit migrations; `drizzle.config.ts` runs `db:migrate` and `db:generate` in CI via `pnpm turbo run ...`
    - What's unclear: Does the CI pipeline currently run `db:migrate` as part of the `test` turbo task? If not, `DATABASE_DIRECT_URL` is only needed locally for migration runs — not required as a CI secret yet.
    - Recommendation: Check `apps/api/package.json` `test` script — it runs `vitest run`, not `drizzle-kit`. So `DATABASE_DIRECT_URL` is needed locally for migrations but NOT as a CI secret for the current CI workflow. Add `DATABASE_DIRECT_URL` to `.env.example` with a comment that it is only needed when running `pnpm db:migrate`.
 
-2. **Upstash Fixed vs Starter plan**
+2. **Upstash Fixed vs Starter plan** — RESOLVED: Both Free and Fixed tiers documented in README Infrastructure Setup section (10-03 Task 1). Buyer decides when to upgrade based on BullMQ worker load.
    - What we know: Upstash recommends Fixed plan for BullMQ to avoid per-command costs.
    - What's unclear: The free tier on Upstash is called "Free" not "Sandbox" — the Fixed plan costs money. The buyer README should document: use Free plan for initial setup/testing, upgrade to Fixed plan before putting BullMQ workers into production.
    - Recommendation: Document both tiers in README. Do not gate on Fixed plan — let buyer decide when worker load warrants the upgrade.
 
-3. **OPENSEARCH_URL in env.ts envSchema**
+3. **OPENSEARCH_URL in env.ts envSchema** — RESOLVED: `OPENSEARCH_URL` added as `z.string().url().optional()` in `apps/api/src/config/env.ts` in this phase (10-01 Task 2). Optional so backend boots without it until Phase 3.
    - What we know: `OPENSEARCH_URL` is in `.env.example` but NOT in `apps/api/src/config/env.ts` envSchema (verified by inspection). It was never added because no OpenSearch client code exists yet.
    - What's unclear: Should this phase add `OPENSEARCH_URL` to `envSchema`? Or leave it for Phase 3?
    - Recommendation: Add `OPENSEARCH_URL` as an optional (`.optional()`) field in `envSchema` in this phase, so the `.env.example` value is parsed and validated. This avoids a silent misconfiguration in Phase 3. Mark it optional because the backend currently starts fine without it (search is Phase 3).
 
-4. **ROADMAP.md Phase 1 plan description**
+4. **ROADMAP.md Phase 1 plan description** — RESOLVED: ROADMAP.md Phase 1 one-liner updated in 10-03 Task 2 to replace `docker-compose infra` with `cloud infra setup (Neon/Upstash/Bonsai)`.
    - What we know: ROADMAP.md `Phase 1` entry includes `"docker-compose infra"` in the `01-01-PLAN.md` description.
    - What's unclear: The planner must decide whether to update this historical description in ROADMAP.md.
    - Recommendation: Update the ROADMAP.md Phase 1 one-liner to remove `docker-compose infra` and replace with `cloud infra setup (Neon/Upstash/Bonsai)` — this is current-facing documentation, not an immutable execution record.
