@@ -262,13 +262,20 @@ export class CategoryService {
   ): Promise<void> {
     const { db } = this.deps;
 
-    // Batch update sort_order for each sibling.
-    for (let i = 0; i < orderedIds.length; i++) {
-      await db
-        .update(categories)
-        .set({ sortOrder: i, updatedAt: new Date() })
-        .where(eq(categories.id, orderedIds[i]!));
-    }
+    // Wrap all sort_order updates in a transaction so a mid-loop failure does not
+    // leave siblings with a mix of old and new sort_order values (WR-05). Without
+    // a transaction, a crash or connection drop between updates corrupts the tree
+    // until the next successful reorder. Cache invalidation happens after the
+    // transaction commits — a concurrent read during the transaction sees the old
+    // (consistent) cache values, not a partial update.
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < orderedIds.length; i++) {
+        await tx
+          .update(categories)
+          .set({ sortOrder: i, updatedAt: new Date() })
+          .where(eq(categories.id, orderedIds[i]!));
+      }
+    });
 
     // Invalidate tree cache after all updates (Pitfall 2).
     await this.invalidateTree();
