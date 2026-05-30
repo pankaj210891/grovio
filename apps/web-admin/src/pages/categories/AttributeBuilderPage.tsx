@@ -133,13 +133,10 @@ export default function AttributeBuilderPage({ categoryId }: AttributeBuilderPag
       const rowServerIds = new Set(rows.flatMap((r) => (r.serverId ? [r.serverId] : [])));
       const toDelete = [...serverIds].filter((id) => !rowServerIds.has(id));
 
-      // Delete removed attributes
-      await Promise.all(
-        toDelete.map((attrId) =>
-          del<unknown>(`/admin/categories/${categoryId}/attributes/${attrId}`),
-        ),
-      );
-
+      // WR-06: Create/update FIRST, then delete. If creates/updates fail midway, no
+      // existing data has been lost yet. Deleting first and then failing creates an
+      // unrecoverable partial state where removed attributes are gone but new ones
+      // were never created.
       // Create or update each row
       const savedRows: (AttributeRowData & { serverId: string })[] = [];
       for (let i = 0; i < rows.length; i++) {
@@ -163,6 +160,13 @@ export default function AttributeBuilderPage({ categoryId }: AttributeBuilderPag
           savedRows.push({ ...row, sortOrder: i, serverId: created.id, localId: created.id });
         }
       }
+
+      // Delete removed attributes only after all creates/updates succeed
+      await Promise.all(
+        toDelete.map((attrId) =>
+          del<unknown>(`/admin/categories/${categoryId}/attributes/${attrId}`),
+        ),
+      );
 
       // Reorder call if there are multiple saved rows
       if (savedRows.length > 1) {
