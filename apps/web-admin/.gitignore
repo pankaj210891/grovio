@@ -1,0 +1,6 @@
+# Generated TypeScript output files (tsc -b in composite mode)
+src/**/*.js
+src/**/*.d.ts
+src/**/*.js.map
+src/**/*.d.ts.map
+tsconfig.tsbuildinfo
