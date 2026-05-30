@@ -43,13 +43,19 @@ export default function ProductTemplatePage({ categoryId }: ProductTemplatePageP
 
   const { data: attributes, isLoading: attrsLoading } = useQuery<AttributeDefinition[]>({
     queryKey: ['categories', categoryId, 'attributes'],
-    queryFn: () => get<AttributeDefinition[]>(`/categories/${categoryId}/attributes`),
+    queryFn: async () => {
+      const data = await get<{ attributes: AttributeDefinition[] }>(`/categories/${categoryId}/attributes`);
+      return data.attributes;
+    },
     enabled: Boolean(categoryId),
   });
 
   const { data: template, isLoading: templateLoading } = useQuery<ProductTemplateMeta | null>({
     queryKey: ['categories', categoryId, 'template'],
-    queryFn: () => get<ProductTemplateMeta | null>(`/categories/${categoryId}/template`),
+    queryFn: async () => {
+      const data = await get<{ template: ProductTemplateMeta | null }>(`/categories/${categoryId}/template`);
+      return data.template;
+    },
     enabled: Boolean(categoryId),
   });
 

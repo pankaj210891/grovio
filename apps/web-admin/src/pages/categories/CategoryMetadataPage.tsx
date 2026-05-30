@@ -47,7 +47,10 @@ export default function CategoryMetadataPage({ categoryId }: CategoryMetadataPag
 
   const { data: metadata, isLoading } = useQuery<CategoryMetadata | null>({
     queryKey: ['categories', categoryId, 'metadata'],
-    queryFn: () => get<CategoryMetadata | null>(`/categories/${categoryId}/metadata`),
+    queryFn: async () => {
+      const data = await get<{ metadata: CategoryMetadata | null }>(`/categories/${categoryId}/metadata`);
+      return data.metadata;
+    },
     enabled: Boolean(categoryId),
   });
 

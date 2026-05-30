@@ -13,7 +13,6 @@
  *   DELETE /admin/categories/:id/restrictions/vendors/:vendorId → remove vendor
  */
 
-import type { VendorCategoryRestriction } from '@grovio/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
@@ -36,9 +35,15 @@ export default function VendorRestrictionsPage({ categoryId, isRestricted: initi
   const [addError, setAddError] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState<string | null>(null);
 
-  const { data: restrictions, isLoading: restrictionsLoading } = useQuery<VendorCategoryRestriction[]>({
+  // API returns { isRestricted, approvedVendorIds: string[] } — we surface just the IDs
+  const { data: approvedVendorIds, isLoading: restrictionsLoading } = useQuery<string[]>({
     queryKey: ['categories', categoryId, 'restrictions'],
-    queryFn: () => get<VendorCategoryRestriction[]>(`/categories/${categoryId}/restrictions`),
+    queryFn: async () => {
+      const data = await get<{ isRestricted: boolean; approvedVendorIds: string[] }>(
+        `/categories/${categoryId}/restrictions`,
+      );
+      return data.approvedVendorIds;
+    },
     enabled: Boolean(categoryId),
   });
 
@@ -65,7 +70,7 @@ export default function VendorRestrictionsPage({ categoryId, isRestricted: initi
 
   const addVendorMutation = useMutation({
     mutationFn: (vendorId: string) =>
-      post<VendorCategoryRestriction>(`/admin/categories/${categoryId}/restrictions/vendors`, { vendorId }),
+      post<unknown>(`/admin/categories/${categoryId}/restrictions/vendors`, { vendorId }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['categories', categoryId, 'restrictions'] });
       setNewVendorId('');
@@ -102,7 +107,7 @@ export default function VendorRestrictionsPage({ categoryId, isRestricted: initi
     }
 
     // Check for duplicate
-    if (restrictions?.some((r) => r.vendorId === trimmed)) {
+    if (approvedVendorIds?.includes(trimmed)) {
       setAddError('This vendor is already on the allowlist.');
       return;
     }
@@ -173,7 +178,7 @@ export default function VendorRestrictionsPage({ categoryId, isRestricted: initi
           </div>
         )}
 
-        {!restrictionsLoading && (restrictions ?? []).length === 0 && (
+        {!restrictionsLoading && (approvedVendorIds ?? []).length === 0 && (
           <p className="mb-4 text-sm text-grovio-text-muted">
             No vendors on the allowlist yet.
             {isRestricted
@@ -182,21 +187,18 @@ export default function VendorRestrictionsPage({ categoryId, isRestricted: initi
           </p>
         )}
 
-        {!restrictionsLoading && (restrictions ?? []).length > 0 && (
+        {!restrictionsLoading && (approvedVendorIds ?? []).length > 0 && (
           <ul className="mb-4 flex flex-col gap-2">
-            {(restrictions ?? []).map((r) => (
+            {(approvedVendorIds ?? []).map((vendorId) => (
               <li
-                key={r.id}
+                key={vendorId}
                 className="flex items-center gap-3 rounded border border-grovio-border bg-grovio-surface px-3 py-2"
               >
-                <code className="flex-1 text-xs font-mono text-grovio-text">{r.vendorId}</code>
-                <span className="text-xs text-grovio-text-muted">
-                  Added {new Date(r.createdAt).toLocaleDateString()}
-                </span>
+                <code className="flex-1 text-xs font-mono text-grovio-text">{vendorId}</code>
                 <button
                   type="button"
-                  onClick={() => removeVendorMutation.mutate(r.vendorId)}
-                  disabled={removeVendorMutation.isPending && removeVendorMutation.variables === r.vendorId}
+                  onClick={() => removeVendorMutation.mutate(vendorId)}
+                  disabled={removeVendorMutation.isPending && removeVendorMutation.variables === vendorId}
                   className="text-xs text-grovio-error hover:underline disabled:opacity-40"
                 >
                   Remove

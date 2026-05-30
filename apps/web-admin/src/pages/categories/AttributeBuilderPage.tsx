@@ -55,7 +55,10 @@ export default function AttributeBuilderPage({ categoryId }: AttributeBuilderPag
 
   const { data: attributes, isLoading } = useQuery<AttributeDefinition[]>({
     queryKey: ['categories', categoryId, 'attributes'],
-    queryFn: () => get<AttributeDefinition[]>(`/categories/${categoryId}/attributes`),
+    queryFn: async () => {
+      const data = await get<{ attributes: AttributeDefinition[] }>(`/categories/${categoryId}/attributes`);
+      return data.attributes;
+    },
     enabled: Boolean(categoryId),
   });
 

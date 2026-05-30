@@ -130,13 +130,19 @@ export default function FilterSchemaPage({ categoryId }: FilterSchemaPageProps) 
 
   const { data: attributes, isLoading: attrsLoading } = useQuery<AttributeDefinition[]>({
     queryKey: ['categories', categoryId, 'attributes'],
-    queryFn: () => get<AttributeDefinition[]>(`/categories/${categoryId}/attributes`),
+    queryFn: async () => {
+      const data = await get<{ attributes: AttributeDefinition[] }>(`/categories/${categoryId}/attributes`);
+      return data.attributes;
+    },
     enabled: Boolean(categoryId),
   });
 
   const { data: filters, isLoading: filtersLoading } = useQuery<FilterSchemaDef[]>({
     queryKey: ['categories', categoryId, 'filters'],
-    queryFn: () => get<FilterSchemaDef[]>(`/categories/${categoryId}/filters`),
+    queryFn: async () => {
+      const data = await get<{ filters: FilterSchemaDef[] }>(`/categories/${categoryId}/filters`);
+      return data.filters;
+    },
     enabled: Boolean(categoryId),
   });
 
