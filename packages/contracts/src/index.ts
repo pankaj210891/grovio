@@ -15,3 +15,4 @@ export * from "./feature-flags.js";
 export * from "./auth.js";
 export * from "./envelope.js";
 export * from "./marketplace-config.js";
+export * from "./category/index.js";
