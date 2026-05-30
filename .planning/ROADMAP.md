@@ -185,3 +185,15 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
 | 9. Productization & Release | 0/TBD | Not started | - |
+
+### Phase 10: Replace Docker with Neon + Upstash
+
+**Goal:** Local Docker is fully removed; PostgreSQL, Redis, and OpenSearch run on cloud free tiers (Neon, Upstash, Bonsai), the backend auto-detects TLS from the connection URL, and a buyer can set up all infrastructure from the README without Docker
+**Requirements**: None (infrastructure/config migration)
+**Depends on:** Phase 9
+**Plans:** 3 plans in 2 waves
+
+Plans:
+- [ ] 10-01-PLAN.md — Backend TLS auto-detection (requiresSsl/detectRedisTls helpers + tests), DATABASE_DIRECT_URL/OPENSEARCH_URL env fields, drizzle.config direct URL
+- [ ] 10-02-PLAN.md — Both .env.example files to Neon/Upstash/Bonsai formats + docker-compose sweep; CI credentials from GitHub Actions secrets
+- [ ] 10-03-PLAN.md — Delete docker-compose.yml; create README Infrastructure Setup section; update ROADMAP Phase 1 cloud-infra description
