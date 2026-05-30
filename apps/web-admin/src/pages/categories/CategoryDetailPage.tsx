@@ -1,6 +1,6 @@
 /**
  * CategoryDetailPage — edit form for a single category plus a tab container
- * that plan 02-08 fills in with attribute/filter/template/metadata/restriction editors.
+ * with attribute/filter/template/metadata/restriction editors (plan 02-08).
  *
  * Routes: /categories/:id
  * Data:
@@ -14,6 +14,11 @@ import { motion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { get, patch, post } from '../../lib/apiClient.js';
+import AttributeBuilderPage from './AttributeBuilderPage.js';
+import FilterSchemaPage from './FilterSchemaPage.js';
+import ProductTemplatePage from './ProductTemplatePage.js';
+import VendorRestrictionsPage from './VendorRestrictionsPage.js';
+import CategoryMetadataPage from './CategoryMetadataPage.js';
 
 interface CategoryDetail {
   id: string;
@@ -30,13 +35,13 @@ interface CategoryDetail {
 
 type Tab = 'details' | 'attributes' | 'filters' | 'template' | 'metadata' | 'restrictions';
 
-const TABS: { id: Tab; label: string; comingSoon?: boolean }[] = [
+const TABS: { id: Tab; label: string }[] = [
   { id: 'details', label: 'Details' },
-  { id: 'attributes', label: 'Attributes', comingSoon: true },
-  { id: 'filters', label: 'Filters', comingSoon: true },
-  { id: 'template', label: 'Template', comingSoon: true },
-  { id: 'metadata', label: 'Metadata', comingSoon: true },
-  { id: 'restrictions', label: 'Restrictions', comingSoon: true },
+  { id: 'attributes', label: 'Attributes' },
+  { id: 'filters', label: 'Filters' },
+  { id: 'template', label: 'Template' },
+  { id: 'metadata', label: 'Metadata' },
+  { id: 'restrictions', label: 'Restrictions' },
 ];
 
 export default function CategoryDetailPage() {
@@ -198,11 +203,6 @@ export default function CategoryDetailPage() {
                 ].join(' ')}
               >
                 {tab.label}
-                {tab.comingSoon && (
-                  <span className="ml-1.5 rounded-full bg-grovio-border px-1.5 py-0.5 text-[10px] font-normal text-grovio-text-muted">
-                    soon
-                  </span>
-                )}
               </button>
             ))}
           </div>
@@ -295,14 +295,37 @@ export default function CategoryDetailPage() {
             </div>
           )}
 
-          {/* Coming-soon tabs — scaffolded for plan 02-08 */}
-          {activeTab !== 'details' && (
-            <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised p-12 text-center">
-              <p className="text-sm text-grovio-text-muted">
-                The{' '}
-                <strong className="font-medium text-grovio-text capitalize">{activeTab}</strong>{' '}
-                editor is coming in plan 02-08.
-              </p>
+          {/* Editor tabs — wired in plan 02-08 */}
+          {activeTab === 'attributes' && (
+            <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised p-6">
+              <AttributeBuilderPage categoryId={category.id} />
+            </div>
+          )}
+
+          {activeTab === 'filters' && (
+            <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised p-6">
+              <FilterSchemaPage categoryId={category.id} />
+            </div>
+          )}
+
+          {activeTab === 'template' && (
+            <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised p-6">
+              <ProductTemplatePage categoryId={category.id} />
+            </div>
+          )}
+
+          {activeTab === 'metadata' && (
+            <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised p-6">
+              <CategoryMetadataPage categoryId={category.id} />
+            </div>
+          )}
+
+          {activeTab === 'restrictions' && (
+            <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised p-6">
+              <VendorRestrictionsPage
+                categoryId={category.id}
+                isRestricted={category.isRestricted}
+              />
             </div>
           )}
         </>
