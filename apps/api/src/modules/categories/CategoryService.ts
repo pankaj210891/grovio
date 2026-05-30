@@ -342,9 +342,13 @@ export class CategoryService {
           parent.hasChildren = true;
           parent.childCount += 1;
         } else {
-          // Parent not in result set (e.g., parent was archived). Treat as root.
-          node.depth = 0;
-          roots.push(node);
+          // WR-08: Parent not in result set (e.g., parent was archived).
+          // Promoting orphaned nodes to depth=0 is misleading — a depth-2 node
+          // promoted to root would incorrectly offer "+ Sub" (node.depth < 2 guard
+          // in CategoryTreeNode.tsx). Exclude them from the tree instead.
+          // They will not appear in the UI until their parent is restored or they
+          // are reassigned to an active parent.
+          continue;
         }
       }
     }
