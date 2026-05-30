@@ -78,7 +78,7 @@ Plans:
 - [x] 02-04-PLAN.md — AttributeDefinitionService + FilterSchemaService + tests
 - [x] 02-05-PLAN.md — ProductTemplateService + VendorRestrictionService + CategoryMetadataService + tests
 - [x] 02-06-PLAN.md — Awilix registration + public category routes + guarded admin routes + app.ts wiring
-- [ ] 02-07-PLAN.md — web-admin: dnd-kit/react-router install (legitimacy checkpoint), router/query scaffold, category tree CRUD UI
+- [x] 02-07-PLAN.md — web-admin: dnd-kit/react-router install (legitimacy checkpoint), router/query scaffold, category tree CRUD UI
 - [ ] 02-08-PLAN.md — web-admin: attribute builder, filter schema, product template, vendor restriction, metadata/blocks editors
 
 ### Phase 3: Catalog & Search
@@ -177,7 +177,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/10 | In Progress|  |
-| 2. Category Engine | 6/8 | In Progress|  |
+| 2. Category Engine | 7/8 | In Progress|  |
 | 3. Catalog & Search | 0/TBD | Not started | - |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
 | 5. Commerce Core | 0/TBD | Not started | - |
