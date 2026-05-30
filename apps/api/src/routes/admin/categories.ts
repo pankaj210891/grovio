@@ -7,7 +7,7 @@ import {
   UpdateCategoryInputSchema,
 } from "@grovio/contracts";
 import type { FastifyInstance } from "fastify";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import type { AttributeDefinitionService } from "../../modules/attribute-definitions/index.js";
 import type { CategoryMetadataService } from "../../modules/category-metadata/index.js";
 import { CategoryDepthError } from "../../modules/categories/CategoryService.js";
@@ -143,10 +143,11 @@ export async function adminCategoryRoutes(
 
   // ── POST /admin/categories/:id/reorder ────────────────────────────────────
   // Reorder siblings by providing the new ordered array of category IDs.
+  const ReorderInputSchema = z.object({ orderedIds: z.array(z.string().uuid()) });
   fastify.post<{ Params: { id: string }; Body: { orderedIds: string[] } }>(
     "/admin/categories/:id/reorder",
     async (request, reply) => {
-      const { orderedIds } = request.body as { orderedIds: string[] };
+      const { orderedIds } = ReorderInputSchema.parse(request.body);
       const categoryService =
         fastify.diContainer.resolve<CategoryService>("categoryService");
       await categoryService.reorderCategories(request.params.id, orderedIds);
@@ -227,10 +228,11 @@ export async function adminCategoryRoutes(
 
   // ── POST /admin/categories/:id/attributes/reorder ─────────────────────────
   // Reorder attribute definitions within a category.
+  const AttributeReorderInputSchema = z.object({ orderedIds: z.array(z.string().uuid()) });
   fastify.post<{ Params: { id: string }; Body: { orderedIds: string[] } }>(
     "/admin/categories/:id/attributes/reorder",
     async (request, reply) => {
-      const { orderedIds } = request.body as { orderedIds: string[] };
+      const { orderedIds } = AttributeReorderInputSchema.parse(request.body);
       const attributeDefinitionService =
         fastify.diContainer.resolve<AttributeDefinitionService>(
           "attributeDefinitionService"
@@ -318,13 +320,16 @@ export async function adminCategoryRoutes(
 
   // ── POST /admin/categories/:id/restrictions/vendors ───────────────────────
   // Approve a vendor to sell in a restricted category (CAT-06).
-  fastify.post<{ Params: { id: string }; Body: { vendorId: string; createdByAdminId: string } }>(
+  const AddVendorInputSchema = z.object({
+    vendorId: z.string().uuid(),
+    // createdByAdminId is optional in Phase 2 (no real auth yet — Phase 4 derives
+    // this from the JWT sub claim). uuid() validates format when present.
+    createdByAdminId: z.string().uuid().optional(),
+  });
+  fastify.post<{ Params: { id: string }; Body: { vendorId: string; createdByAdminId?: string } }>(
     "/admin/categories/:id/restrictions/vendors",
     async (request, reply) => {
-      const { vendorId, createdByAdminId } = request.body as {
-        vendorId: string;
-        createdByAdminId: string;
-      };
+      const { vendorId, createdByAdminId } = AddVendorInputSchema.parse(request.body);
       const vendorRestrictionService =
         fastify.diContainer.resolve<VendorRestrictionService>(
           "vendorRestrictionService"
@@ -332,7 +337,9 @@ export async function adminCategoryRoutes(
       const result = await vendorRestrictionService.addVendorToCategory({
         categoryId: request.params.id,
         vendorId,
-        createdByAdminId,
+        // Phase 2: no real auth; createdByAdminId is a placeholder UUID until
+        // Phase 4 JWT provides the real admin sub claim.
+        createdByAdminId: createdByAdminId ?? "00000000-0000-0000-0000-000000000000",
       });
       return reply.status(201).send({ success: true, data: result });
     }
