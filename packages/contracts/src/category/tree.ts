@@ -64,3 +64,36 @@ export const CategoryTreeResponseSchema = z.object({
 
 /** TypeScript type inferred from CategoryTreeResponseSchema */
 export type CategoryTreeResponse = z.infer<typeof CategoryTreeResponseSchema>;
+
+// ---------------------------------------------------------------------------
+// Category CRUD input schemas (admin mutation contracts)
+// ---------------------------------------------------------------------------
+
+/**
+ * Input schema for creating a new category (POST /admin/categories).
+ * slug is optional — derived from name if omitted.
+ */
+export const CreateCategoryInputSchema = z.object({
+  name: z.string().min(1),
+  slug: z.string().optional(),
+  parentId: z.string().uuid().nullable().optional(),
+  sortOrder: z.number().int().optional(),
+  isRestricted: z.boolean().optional(),
+});
+
+/** TypeScript type inferred from CreateCategoryInputSchema */
+export type CreateCategoryInputContract = z.infer<typeof CreateCategoryInputSchema>;
+
+/**
+ * Input schema for updating an existing category (PATCH /admin/categories/:id).
+ * All fields are optional — partial updates only.
+ */
+export const UpdateCategoryInputSchema = z.object({
+  name: z.string().min(1).optional(),
+  slug: z.string().optional(),
+  sortOrder: z.number().int().optional(),
+  isRestricted: z.boolean().optional(),
+});
+
+/** TypeScript type inferred from UpdateCategoryInputSchema */
+export type UpdateCategoryInputContract = z.infer<typeof UpdateCategoryInputSchema>;
