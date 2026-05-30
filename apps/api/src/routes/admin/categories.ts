@@ -41,11 +41,29 @@ import type { VendorRestrictionService } from "../../modules/vendor-restrictions
 export async function adminCategoryRoutes(
   fastify: FastifyInstance
 ): Promise<void> {
+  // ── Startup assertion: fail fast in production if the admin token is absent ──
+  // Reading the token at request-time (in the preHandler below) means a missing
+  // env var would lock out ALL legitimate admin requests with a 401 flood and no
+  // startup-time warning. Throwing here surfaces the misconfiguration immediately.
+  if (
+    process.env["NODE_ENV"] === "production" &&
+    !process.env["INTERNAL_ADMIN_TOKEN"]
+  ) {
+    throw new Error(
+      "INTERNAL_ADMIN_TOKEN must be set in production. " +
+        "Admin routes cannot start without it."
+    );
+  }
+
   // ── Placeholder admin guard (Phase 4 JWT replacement) ───────────────────
   fastify.addHook("preHandler", async (request, reply) => {
     const isProd = process.env["NODE_ENV"] === "production";
     if (!isProd) {
-      // Development/test: allow all requests through.
+      // Development/test: allow all requests through — log so it is visible.
+      fastify.log.warn(
+        { path: request.url, method: request.method },
+        "Admin auth bypassed (non-production NODE_ENV)"
+      );
       return;
     }
     // Production: require a valid X-Internal-Admin-Token header.
