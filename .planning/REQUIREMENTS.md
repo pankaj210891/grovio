@@ -20,13 +20,13 @@ Requirements for the initial commercial release (the Envato-ready starter kit). 
 
 ### Category Engine
 
-- [ ] **CAT-01**: Admin can create, edit, archive, and reorder categories
-- [ ] **CAT-02**: Admin can create nested subcategories (category tree)
-- [ ] **CAT-03**: Admin can define category-specific attribute schemas (typed attributes per category)
-- [ ] **CAT-04**: Admin can define per-category filter schemas controlling which attributes become storefront filters
-- [ ] **CAT-05**: Admin can define product templates per category to speed vendor product creation
-- [ ] **CAT-06**: Admin can restrict which vendors may sell in which categories
-- [ ] **CAT-07**: Admin can configure category banners, descriptions, SEO fields, and merchandising blocks
+- [x] **CAT-01**: Admin can create, edit, archive, and reorder categories
+- [x] **CAT-02**: Admin can create nested subcategories (category tree)
+- [x] **CAT-03**: Admin can define category-specific attribute schemas (typed attributes per category)
+- [x] **CAT-04**: Admin can define per-category filter schemas controlling which attributes become storefront filters
+- [x] **CAT-05**: Admin can define product templates per category to speed vendor product creation
+- [x] **CAT-06**: Admin can restrict which vendors may sell in which categories
+- [x] **CAT-07**: Admin can configure category banners, descriptions, SEO fields, and merchandising blocks
 
 ### Catalog & Products
 
@@ -205,13 +205,13 @@ Which phases cover which requirements. Populated during roadmap creation.
 | FND-06 | Phase 1 | Pending |
 | FND-07 | Phase 1 | Pending |
 | FND-08 | Phase 1 | Pending |
-| CAT-01 | Phase 2 | Pending |
-| CAT-02 | Phase 2 | Pending |
-| CAT-03 | Phase 2 | Pending |
-| CAT-04 | Phase 2 | Pending |
-| CAT-05 | Phase 2 | Pending |
-| CAT-06 | Phase 2 | Pending |
-| CAT-07 | Phase 2 | Pending |
+| CAT-01 | Phase 2 | Complete |
+| CAT-02 | Phase 2 | Complete |
+| CAT-03 | Phase 2 | Complete |
+| CAT-04 | Phase 2 | Complete |
+| CAT-05 | Phase 2 | Complete |
+| CAT-06 | Phase 2 | Complete |
+| CAT-07 | Phase 2 | Complete |
 | PROD-01 | Phase 3 | Pending |
 | PROD-02 | Phase 3 | Pending |
 | PROD-03 | Phase 3 | Pending |
