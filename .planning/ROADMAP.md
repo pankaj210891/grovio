@@ -42,7 +42,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 1** (parallel from clean slate):
 
-- [x] 01-01-PLAN.md — Monorepo scaffold: pnpm workspace, Turborepo pipeline, shared tsconfig/ESLint/Prettier in packages/config, docker-compose infra
+- [x] 01-01-PLAN.md — Monorepo scaffold: pnpm workspace, Turborepo pipeline, shared tsconfig/ESLint/Prettier in packages/config, cloud infra setup (Neon/Upstash/Bonsai)
 - [x] 01-02-PLAN.md — packages/contracts: health types, feature-flag types, auth token shapes, request/response envelope, MarketplaceConfig, money utils + allocate()
 
 **Wave 2** *(blocked on Wave 1 completion)*:
@@ -225,7 +225,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 **Goal:** Local Docker is fully removed; PostgreSQL, Redis, and OpenSearch run on cloud free tiers (Neon, Upstash, Bonsai), the backend auto-detects TLS from the connection URL, and a buyer can set up all infrastructure from the README without Docker
 **Requirements**: None (infrastructure/config migration)
 **Depends on:** Phase 9
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 **Wave 1**
 
@@ -234,4 +234,4 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 10-03-PLAN.md — Delete docker-compose.yml; create README Infrastructure Setup section; update ROADMAP Phase 1 cloud-infra description
+- [x] 10-03-PLAN.md — Delete docker-compose.yml; create README Infrastructure Setup section; update ROADMAP Phase 1 cloud-infra description
