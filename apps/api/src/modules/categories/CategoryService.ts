@@ -360,9 +360,13 @@ export class CategoryService {
 
     let depth = 0;
     let currentId: string | null = categoryId;
+    // MAX_DEPTH is one more than the allowed limit (3 levels → max depth index 2).
+    // The guard stops the loop if data corruption creates a parentId cycle or a
+    // chain longer than the depth limit allows — preventing an infinite loop.
+    const MAX_DEPTH = 4;
 
-    // Walk up the parent chain. Max 3 iterations for the 3-level limit.
-    while (currentId !== null) {
+    // Walk up the parent chain. Bounded by MAX_DEPTH to handle cycles.
+    while (currentId !== null && depth <= MAX_DEPTH) {
       const rows: SelectCategory[] = await db
         .select()
         .from(categories)
