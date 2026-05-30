@@ -1,42 +1,42 @@
-import type { HealthCheckResponse } from '@grovio/contracts';
-import { motion } from 'motion/react';
-
-// TypeScript assertion that the HealthCheckResponse contract shape is usable
-const _check: HealthCheckResponse = {
-  status: 'ok',
-  version: '0.1.0',
-  timestamp: new Date().toISOString(),
-};
+import { motion } from 'framer-motion';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import CategoryDetailPage from './pages/categories/CategoryDetailPage.js';
+import CategoryListPage from './pages/categories/CategoryListPage.js';
 
 export default function App() {
   return (
-    <motion.div
-      className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
-        <div className="mb-4 flex items-center gap-3">
-          <span className="inline-flex h-3 w-3 rounded-full bg-green-500" />
-          <span className="text-sm font-medium text-green-700">Running</span>
-        </div>
-        <h1 className="mb-2 rounded-md bg-grovio-primary px-3 py-1 text-3xl font-bold tracking-tight text-white">
-          Grovio Admin Panel
-        </h1>
-        <p className="mb-6 text-gray-500">Marketplace administration panel</p>
-        <div className="rounded-lg bg-gray-100 p-4">
-          <p className="mb-1 text-xs font-medium uppercase tracking-wider text-gray-500">
-            Environment
-          </p>
-          <p className="font-mono text-sm text-gray-700">
-            {import.meta.env['MODE'] ?? 'development'}
-          </p>
-        </div>
-        <p className="mt-4 text-xs text-gray-400">
-          Health contract: {_check.status} · v{_check.version}
-        </p>
-      </div>
-    </motion.div>
+    <div className="min-h-screen bg-grovio-surface text-grovio-text">
+      {/* Top navigation bar */}
+      <header className="border-b border-grovio-border bg-grovio-surface-raised px-6 py-4">
+        <motion.div
+          className="flex items-center gap-3"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+        >
+          <span className="rounded-md bg-grovio-primary px-3 py-1 text-lg font-bold text-white">
+            Grovio
+          </span>
+          <span className="text-sm font-medium text-grovio-text-muted">Admin Panel</span>
+        </motion.div>
+      </header>
+
+      {/* Page content */}
+      <main className="mx-auto max-w-6xl px-6 py-8">
+        <Routes>
+          {/* Redirect root to categories */}
+          <Route path="/" element={<Navigate to="/categories" replace />} />
+
+          {/* Category list / tree view */}
+          <Route path="/categories" element={<CategoryListPage />} />
+
+          {/* Category detail / edit */}
+          <Route path="/categories/:id" element={<CategoryDetailPage />} />
+
+          {/* Catch-all redirect */}
+          <Route path="*" element={<Navigate to="/categories" replace />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
