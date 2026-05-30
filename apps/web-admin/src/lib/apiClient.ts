@@ -10,7 +10,20 @@
  */
 
 const API_BASE = import.meta.env['VITE_API_BASE_URL'] ?? 'http://localhost:3000';
+
+// SECURITY NOTE (T-02-18 / Phase 2 dev-only placeholder):
+// VITE_* variables are inlined into the browser bundle at build time and are
+// publicly visible in DevTools and the compiled JS. This token is a Phase 2
+// development convenience ONLY and must NOT be deployed to any externally
+// accessible URL until Phase 4 replaces it with JWT (jose, admin role claim).
+// Any user who can access the admin panel URL can extract this token.
+// Do NOT treat it as a secret in non-localhost environments.
 const ADMIN_TOKEN = import.meta.env['VITE_INTERNAL_ADMIN_TOKEN'] ?? '';
+if (!ADMIN_TOKEN) {
+  console.warn(
+    '[apiClient] VITE_INTERNAL_ADMIN_TOKEN is not set — admin mutations will be rejected by the server in production',
+  );
+}
 
 export class ApiError extends Error {
   readonly code: string;
