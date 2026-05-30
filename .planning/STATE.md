@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-last_updated: 2026-05-30T12:05:03.827Z
-last_activity: 2026-05-30 -- Phase 02 execution started
+status: planning
+last_updated: "2026-05-30T14:28:36.022Z"
+last_activity: 2026-05-30
 progress:
-  total_phases: 9
-  completed_phases: 1
+  total_phases: 10
+  completed_phases: 2
   total_plans: 18
   completed_plans: 18
-  percent: 11
-stopped_at: Phase 02 complete (8/8) — ready to discuss Phase 3
+  percent: 20
 ---
 
 # Project State — Grovio
@@ -63,6 +62,10 @@ Recent decisions affecting current work:
 - All phases: Wallet is append-only ledger; no direct balance-edit code path
 - All phases: Integer minor-unit allocation for commission splits (allocate() for residuals)
 
+### Roadmap Evolution
+
+- Phase 10 added: Replace Docker with Neon + Upstash
+
 ### Pending Todos
 
 None yet.
@@ -77,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-29T18:30:00.000Z
-Stopped at: Phase 1 — all 10 plans executed; waiting for human checkpoint (FND-03 expo export + FND-04 full-stack boot on Node 22)
-Resume file: .planning/phases/01-foundation/01-10-SUMMARY.md
+Last session: 2026-05-30T14:28:36.010Z
+Stopped at: Phase 10 context gathered
+Resume file: .planning/phases/10-replace-docker-with-neon-upstash/10-CONTEXT.md
