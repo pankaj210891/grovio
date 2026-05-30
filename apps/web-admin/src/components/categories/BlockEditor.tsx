@@ -80,14 +80,19 @@ function BannerBlockForm({ block, onChange }: BannerBlockFormProps) {
 
 interface ProductGridBlockFormProps {
   block: ProductGridBlock;
+  /** Stable localId used as the radio group name — prevents re-renders from breaking
+   *  radio exclusivity (WR-01) and avoids the stale-rawIds anti-pattern (WR-02). */
+  localId: string;
   onChange: (updated: ProductGridBlock) => void;
 }
 
-function ProductGridBlockForm({ block, onChange }: ProductGridBlockFormProps) {
-  const [rawIds, setRawIds] = useState(block.productIds.join('\n'));
+function ProductGridBlockForm({ block, localId, onChange }: ProductGridBlockFormProps) {
+  // WR-02: derive display value from block.productIds directly rather than storing
+  // a separate rawIds state that goes stale when the block is replaced externally
+  // (e.g., after a dnd-kit reorder triggers arrayMove + onChange in the parent).
+  const rawIds = block.productIds.join('\n');
 
   function handleIdsChange(value: string) {
-    setRawIds(value);
     const ids = value
       .split(/[\n,]+/)
       .map((s) => s.trim())
@@ -125,7 +130,7 @@ function ProductGridBlockForm({ block, onChange }: ProductGridBlockFormProps) {
             <label key={layout} className="flex items-center gap-1.5 text-sm text-grovio-text">
               <input
                 type="radio"
-                name={`layout_${Math.random()}`}
+                name={`layout_${localId}`}
                 value={layout}
                 checked={block.layout === layout}
                 onChange={() => onChange({ ...block, layout })}
@@ -289,6 +294,7 @@ function BlockItem({ item, onBlockChange, onRemove }: BlockItemProps) {
           {item.block.type === 'product_grid' && (
             <ProductGridBlockForm
               block={item.block}
+              localId={item.localId}
               onChange={onBlockChange}
             />
           )}
