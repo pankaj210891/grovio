@@ -47,10 +47,10 @@ interface CategoryServiceDeps {
 
 export interface CreateCategoryInput {
   name: string;
-  slug?: string;
-  parentId?: string | null;
-  sortOrder?: number;
-  isRestricted?: boolean;
+  slug?: string | undefined;
+  parentId?: string | null | undefined;
+  sortOrder?: number | undefined;
+  isRestricted?: boolean | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -58,10 +58,10 @@ export interface CreateCategoryInput {
 // ---------------------------------------------------------------------------
 
 export interface UpdateCategoryInput {
-  name?: string;
-  slug?: string;
-  sortOrder?: number;
-  isRestricted?: boolean;
+  name?: string | undefined;
+  slug?: string | undefined;
+  sortOrder?: number | undefined;
+  isRestricted?: boolean | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -202,10 +202,10 @@ export class CategoryService {
   ): Promise<SelectCategory | null> {
     const { db } = this.deps;
 
-    const updateValues: Partial<InsertCategory> = {
-      ...input,
-      updatedAt: new Date(),
-    };
+    const updateValues: Partial<InsertCategory> = { updatedAt: new Date() };
+    if (input.name !== undefined) updateValues.name = input.name;
+    if (input.sortOrder !== undefined) updateValues.sortOrder = input.sortOrder;
+    if (input.isRestricted !== undefined) updateValues.isRestricted = input.isRestricted;
 
     // Re-resolve slug if a new slug value was provided.
     if (input.slug !== undefined) {
