@@ -225,12 +225,12 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 **Goal:** Local Docker is fully removed; PostgreSQL, Redis, and OpenSearch run on cloud free tiers (Neon, Upstash, Bonsai), the backend auto-detects TLS from the connection URL, and a buyer can set up all infrastructure from the README without Docker
 **Requirements**: None (infrastructure/config migration)
 **Depends on:** Phase 9
-**Plans:** 3 plans in 2 waves
+**Plans:** 2/3 plans executed
 Plans:
 **Wave 1**
 
-- [ ] 10-01-PLAN.md — Backend TLS auto-detection (requiresSsl/detectRedisTls helpers + tests), DATABASE_DIRECT_URL/OPENSEARCH_URL env fields, drizzle.config direct URL
-- [ ] 10-02-PLAN.md — Both .env.example files to Neon/Upstash/Bonsai formats + docker-compose sweep; CI credentials from GitHub Actions secrets
+- [x] 10-01-PLAN.md — Backend TLS auto-detection (requiresSsl/detectRedisTls helpers + tests), DATABASE_DIRECT_URL/OPENSEARCH_URL env fields, drizzle.config direct URL
+- [x] 10-02-PLAN.md — Both .env.example files to Neon/Upstash/Bonsai formats + docker-compose sweep; CI credentials from GitHub Actions secrets
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
