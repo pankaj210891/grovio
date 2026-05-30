@@ -71,12 +71,12 @@ export default function CategoryMetadataPage({ categoryId }: CategoryMetadataPag
 
   const saveMutation = useMutation({
     mutationFn: (payload: {
-      seoTitle?: string;
-      seoDescription?: string;
-      seoKeywords?: string;
-      canonicalUrl?: string;
-      description?: string;
-      imageUrl?: string;
+      seoTitle?: string | null;
+      seoDescription?: string | null;
+      seoKeywords?: string | null;
+      canonicalUrl?: string | null;
+      description?: string | null;
+      imageUrl?: string | null;
       blocks?: MerchandisingBlock[];
     }) => put<CategoryMetadata>(`/admin/categories/${categoryId}/metadata`, payload),
     onSuccess: (updated) => {
@@ -98,13 +98,15 @@ export default function CategoryMetadataPage({ categoryId }: CategoryMetadataPag
     setSaveSuccess(false);
     setSaveError(null);
 
+    // Always send every field so that clearing an input actively nulls the DB column
+    // (previously omitting empty fields meant clearing a value had no effect — WR-03).
     saveMutation.mutate({
-      ...(seoTitle.trim() ? { seoTitle: seoTitle.trim() } : {}),
-      ...(seoDescription.trim() ? { seoDescription: seoDescription.trim() } : {}),
-      ...(seoKeywords.trim() ? { seoKeywords: seoKeywords.trim() } : {}),
-      ...(canonicalUrl.trim() ? { canonicalUrl: canonicalUrl.trim() } : {}),
-      ...(description.trim() ? { description: description.trim() } : {}),
-      ...(imageUrl.trim() ? { imageUrl: imageUrl.trim() } : {}),
+      seoTitle: seoTitle.trim() || null,
+      seoDescription: seoDescription.trim() || null,
+      seoKeywords: seoKeywords.trim() || null,
+      canonicalUrl: canonicalUrl.trim() || null,
+      description: description.trim() || null,
+      imageUrl: imageUrl.trim() || null,
       blocks: blocks.map((b) => b.block),
     });
   }

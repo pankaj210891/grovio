@@ -45,14 +45,16 @@ export type CategoryMetadata = z.infer<typeof CategoryMetadataSchema>;
  * All fields are optional — partial updates replace only the provided fields.
  */
 export const UpsertMetadataInputSchema = z.object({
-  seoTitle: z.string().optional(),
-  seoDescription: z.string().optional(),
-  seoKeywords: z.string().optional(),
-  canonicalUrl: z.string().url().optional(),
+  // Nullable strings allow the admin to explicitly clear an existing field value.
+  // undefined = "do not change"; null or '' = "clear to null in the DB".
+  seoTitle: z.string().nullable().optional(),
+  seoDescription: z.string().nullable().optional(),
+  seoKeywords: z.string().nullable().optional(),
+  canonicalUrl: z.string().url().nullable().optional().or(z.literal('')),
   /** Block array replaces the entire blocks column on each save */
   blocks: z.array(MerchandisingBlockSchema).optional(),
-  description: z.string().optional(),
-  imageUrl: z.string().url().optional(),
+  description: z.string().nullable().optional(),
+  imageUrl: z.string().url().nullable().optional().or(z.literal('')),
 });
 
 /** TypeScript type inferred from UpsertMetadataInputSchema */
