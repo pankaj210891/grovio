@@ -4,6 +4,22 @@ import { Pool } from "pg";
 import { env } from "../config/env.js";
 
 /**
+ * Returns true when the given PostgreSQL connection string requires SSL.
+ *
+ * Triggers on:
+ * - Neon hostname (contains `.neon.tech`) — Neon requires SSL on all connections
+ * - Explicit `sslmode=require` query parameter — any cloud Postgres requiring SSL
+ *
+ * Pure function (no Fastify dependency) so it can be unit-tested independently.
+ */
+export function requiresSsl(connectionString: string): boolean {
+  return (
+    connectionString.includes(".neon.tech") ||
+    connectionString.includes("sslmode=require")
+  );
+}
+
+/**
  * Fastify plugin that creates a PostgreSQL connection pool and a Drizzle ORM
  * instance, then decorates the Fastify instance with `fastify.db`.
  *

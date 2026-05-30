@@ -3,6 +3,22 @@ import { Redis } from "ioredis";
 import { env } from "../config/env.js";
 
 /**
+ * Returns true when the given Redis connection URL requires TLS.
+ *
+ * Triggers on the `rediss://` scheme (two s's), which is the standard scheme
+ * for TLS-encrypted Redis connections (Upstash, AWS ElastiCache TLS, etc.).
+ *
+ * Pure function (no Fastify dependency) so it can be unit-tested independently.
+ *
+ * Note: ioredis does parse `rediss://` internally and enables TLS, but some
+ * versions strip TLS during URL parsing. The explicit `tls: {}` option passed
+ * alongside the URL is belt-and-suspenders defense against that bug.
+ */
+export function detectRedisTls(url: string): boolean {
+  return url.startsWith("rediss://");
+}
+
+/**
  * Fastify plugin that creates an ioredis client and decorates the Fastify
  * instance with `fastify.redis`.
  *
