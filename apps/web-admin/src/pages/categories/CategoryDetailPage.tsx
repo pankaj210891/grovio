@@ -11,7 +11,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { get, patch, post } from '../../lib/apiClient.js';
 import AttributeBuilderPage from './AttributeBuilderPage.js';
@@ -68,9 +68,14 @@ export default function CategoryDetailPage() {
     enabled: Boolean(id),
   });
 
-  // Sync form state when category loads
+  // Sync form state only on first load — not on every subsequent refetch/mutation.
+  // Without this guard, updateMutation.onSuccess calls setQueryData which changes
+  // the category reference, re-triggering this effect and silently overwriting any
+  // unsaved edits the admin may have made while the mutation was in flight (WR-04).
+  const hasInitialized = useRef(false);
   useEffect(() => {
-    if (category) {
+    if (category && !hasInitialized.current) {
+      hasInitialized.current = true;
       setName(category.name);
       setSlug(category.slug);
       setSortOrder(category.sortOrder);
