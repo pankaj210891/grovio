@@ -12,18 +12,62 @@ export const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
 
   /**
-   * PostgreSQL connection string.
-   * Format: postgresql://USER:PASSWORD@HOST:PORT/DATABASE
-   * Obtain: run docker-compose up postgres, then use the credentials in docker-compose.yml
+   * PostgreSQL connection string — pooled endpoint for the application server.
+   * Neon format: postgresql://USER:PASSWORD@ep-xxx-pooler.neon.tech/DBNAME?sslmode=require
+   * Local format: postgresql://USER:PASSWORD@localhost:5432/DBNAME
+   *
+   * TLS is enabled automatically when the URL contains `.neon.tech` or `sslmode=require`
+   * (see requiresSsl() in plugins/drizzle.ts). No code change required when switching
+   * between local and cloud — only the URL needs to change.
+   *
+   * Obtain: Create a Neon project at neon.tech and copy the pooled connection string.
    */
   DATABASE_URL: z.string().url(),
 
   /**
-   * Redis connection string.
-   * Format: redis://HOST:PORT or redis://:PASSWORD@HOST:PORT
-   * Obtain: run docker-compose up redis
+   * PostgreSQL direct (non-pooled) connection string — used exclusively by drizzle-kit
+   * for schema migrations and the db:generate / db:migrate commands.
+   *
+   * Neon format: postgresql://USER:PASSWORD@ep-xxx.REGION.aws.neon.tech/DBNAME?sslmode=require
+   * (no `-pooler` in the hostname — a direct connection bypasses PgBouncer)
+   *
+   * Why separate from DATABASE_URL: Neon's pooler runs PgBouncer in transaction mode,
+   * which does not support the SET statements and session-level state that drizzle-kit
+   * migrations rely on. Using the pooled URL for migrations causes hangs or errors.
+   *
+   * Optional: backend boots without it. Required only when running pnpm db:migrate.
+   * Local Postgres does not need a separate direct URL — omit this var locally.
+   *
+   * Obtain: In Neon dashboard, copy the "Direct connection" string (not the pooled one).
+   */
+  DATABASE_DIRECT_URL: z.string().url().optional(),
+
+  /**
+   * Redis connection string — TLS-enabled endpoint for Upstash or any rediss:// provider.
+   * Upstash format: rediss://:TOKEN@HOST.upstash.io:6380
+   * Local format:   redis://localhost:6379
+   *
+   * TLS is enabled automatically when the URL starts with `rediss://`
+   * (see detectRedisTls() in plugins/redis.ts). No code change required when switching
+   * between local and cloud — only the URL needs to change.
+   *
+   * Obtain: Create an Upstash Redis database at upstash.com and copy the rediss:// URL.
    */
   REDIS_URL: z.string().url(),
+
+  /**
+   * OpenSearch / Bonsai connection URL including credentials.
+   * Bonsai format: https://USER:PASSWORD@CLUSTER.bonsai.io
+   *
+   * Credentials are embedded in the URL (Basic Auth). Bonsai uses publicly trusted CA
+   * certificates — do not set rejectUnauthorized: false.
+   *
+   * Optional: backend boots without it. Required only when OpenSearch client is
+   * initialized (Phase 3 — Catalog & Search).
+   *
+   * Obtain: Create a Bonsai Sandbox cluster at bonsai.io and copy the access URL.
+   */
+  OPENSEARCH_URL: z.string().url().optional(),
 
   /**
    * HS256 JWT signing secret. Minimum 32 characters.
