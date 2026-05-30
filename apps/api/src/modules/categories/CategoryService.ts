@@ -363,13 +363,13 @@ export class CategoryService {
 
     // Walk up the parent chain. Max 3 iterations for the 3-level limit.
     while (currentId !== null) {
-      const rows = await db
+      const rows: SelectCategory[] = await db
         .select()
         .from(categories)
         .where(eq(categories.id, currentId))
         .limit(1);
 
-      const row = rows[0];
+      const row: SelectCategory | undefined = rows[0];
       if (!row) break; // Category not found — treat as depth 0.
 
       currentId = row.parentId ?? null;
