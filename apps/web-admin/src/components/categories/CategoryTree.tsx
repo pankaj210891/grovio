@@ -168,10 +168,13 @@ export default function CategoryTree({ tree, onCreateSubcategory }: CategoryTree
     const newOrder = computeNewOrder(flatItems, activeId, overId);
     if (!newOrder) return;
 
-    // Use the active node's ID as the "categoryId" for the reorder endpoint
-    // (API: POST /admin/categories/:id/reorder with { orderedIds })
+    // Use the parentId of the sibling group as the "categoryId" for the reorder
+    // endpoint (API: POST /admin/categories/:id/reorder expects the parent's ID,
+    // not the dragged node's own ID). Fall back to activeId only for root-level
+    // nodes where parentId is null — the server's reorderCategories ignores the
+    // param for root reorders but still requires a non-empty :id segment.
     reorderMutation.mutate({
-      categoryId: activeId,
+      categoryId: newOrder.parentId ?? activeId,
       orderedIds: newOrder.orderedIds,
     });
   }
