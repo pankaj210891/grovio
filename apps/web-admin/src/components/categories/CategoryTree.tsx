@@ -243,9 +243,13 @@ function applyReorderToTree(
 
 function reorderByIds(nodes: CategoryTreeNode[], orderedIds: string[]): CategoryTreeNode[] {
   const map = new Map(nodes.map((n) => [n.id, n]));
-  return orderedIds.flatMap((id) => {
+  // WR-07: also update sortOrder on each node so the optimistic cache reflects
+  // the new positions. Without this, a re-sort by sortOrder (e.g., after a
+  // mutation triggers an invalidation and the stale cache is read before fresh
+  // data arrives) would flash the nodes back to their original order.
+  return orderedIds.flatMap((id, i) => {
     const node = map.get(id);
-    return node ? [node] : [];
+    return node ? [{ ...node, sortOrder: i }] : [];
   });
 }
 
