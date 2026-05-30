@@ -8,6 +8,10 @@ on:
 
 env:
   CI: "true"
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DATABASE_DIRECT_URL: ${{ secrets.DATABASE_DIRECT_URL }}
+  REDIS_URL: ${{ secrets.REDIS_URL }}
+  OPENSEARCH_URL: ${{ secrets.OPENSEARCH_URL }}
 
 jobs:
   quality:
