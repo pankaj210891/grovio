@@ -1,7 +1,13 @@
 import { asClass, asValue, createContainer, InjectionMode } from "awilix";
 import type { FastifyInstance } from "fastify";
 import { env } from "./config/env.js";
+import { AttributeDefinitionService } from "./modules/attribute-definitions/index.js";
+import { CategoryMetadataService } from "./modules/category-metadata/index.js";
+import { CategoryService } from "./modules/categories/index.js";
 import { FeatureFlagService } from "./modules/feature-flags/index.js";
+import { FilterSchemaService } from "./modules/filter-schema/index.js";
+import { ProductTemplateService } from "./modules/product-templates/index.js";
+import { VendorRestrictionService } from "./modules/vendor-restrictions/index.js";
 
 /**
  * Create the Awilix DI container for the application.
@@ -32,6 +38,12 @@ export function createAppContainer(fastify: FastifyInstance) {
   // and injects constructor dependencies via PROXY injection mode.
   container.register({
     featureFlagService: asClass(FeatureFlagService).singleton(),
+    categoryService: asClass(CategoryService).singleton(),
+    attributeDefinitionService: asClass(AttributeDefinitionService).singleton(),
+    filterSchemaService: asClass(FilterSchemaService).singleton(),
+    productTemplateService: asClass(ProductTemplateService).singleton(),
+    vendorRestrictionService: asClass(VendorRestrictionService).singleton(),
+    categoryMetadataService: asClass(CategoryMetadataService).singleton(),
   });
 
   return container;

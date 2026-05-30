@@ -3,6 +3,8 @@ import Fastify, { type FastifyError, type FastifyInstance, type FastifyServerOpt
 import awilixPlugin from "./plugins/awilix.js";
 import drizzlePlugin from "./plugins/drizzle.js";
 import redisPlugin from "./plugins/redis.js";
+import { adminCategoryRoutes } from "./routes/admin/categories.js";
+import { categoryRoutes } from "./routes/categories.js";
 import { featureFlagRoutes } from "./routes/feature-flags.js";
 import healthRoutes from "./routes/health.js";
 
@@ -35,6 +37,8 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   // --- Routes ---
   await fastify.register(healthRoutes);
   await fastify.register(featureFlagRoutes);
+  await fastify.register(categoryRoutes);
+  await fastify.register(adminCategoryRoutes);
 
   // --- 404 handler ---
   fastify.setNotFoundHandler((_req, reply) => {
