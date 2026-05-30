@@ -1,4 +1,5 @@
 import {
+  AnyPgColumn,
   boolean,
   integer,
   pgTable,
@@ -30,7 +31,7 @@ export const categories = pgTable("categories", {
    * admin must archive or reassign children first.
    * null = root category.
    */
-  parentId: uuid("parent_id").references(() => categories.id, {
+  parentId: uuid("parent_id").references((): AnyPgColumn => categories.id, {
     onDelete: "restrict",
   }),
 
