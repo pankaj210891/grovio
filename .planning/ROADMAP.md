@@ -72,8 +72,8 @@ Cross-cutting constraints: All apps import from @grovio/contracts (D-03); FEATUR
 **Plans**: 8 plans in 6 waves
 
 Plans:
-- [ ] 02-01-PLAN.md — packages/contracts category subfolder: blocks, tree, attribute-definition, filter-schema, product-template, vendor-restriction, metadata + barrel
-- [ ] 02-02-PLAN.md — 6 Drizzle schema tables + attr_type/filter_display_type pgEnums + barrel + CATEGORY_TREE_TTL_SECONDS env var
+- [x] 02-01-PLAN.md — packages/contracts category subfolder: blocks, tree, attribute-definition, filter-schema, product-template, vendor-restriction, metadata + barrel
+- [x] 02-02-PLAN.md — 6 Drizzle schema tables + attr_type/filter_display_type pgEnums + barrel + CATEGORY_TREE_TTL_SECONDS env var
 - [ ] 02-03-PLAN.md — [BLOCKING] db:generate + db:migrate; CategoryService (depth guard, tree builder, Redis cache) + tests
 - [ ] 02-04-PLAN.md — AttributeDefinitionService + FilterSchemaService + tests
 - [ ] 02-05-PLAN.md — ProductTemplateService + VendorRestrictionService + CategoryMetadataService + tests
@@ -177,7 +177,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/10 | In Progress|  |
-| 2. Category Engine | 0/8 | Not started | - |
+| 2. Category Engine | 2/8 | In Progress|  |
 | 3. Catalog & Search | 0/TBD | Not started | - |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
 | 5. Commerce Core | 0/TBD | Not started | - |
