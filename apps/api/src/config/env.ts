@@ -38,6 +38,18 @@ export const envSchema = z.object({
    * Per architecture decision D-05: feature flags are DB-backed + Redis-cached.
    */
   FEATURE_FLAG_TTL_SECONDS: z.coerce.number().default(60),
+
+  /**
+   * Redis TTL in seconds for the cached category tree (the "cat:tree" key).
+   * Controls how quickly category tree changes propagate to consumers on a Redis miss.
+   * Defaults to 300 seconds (5 minutes).
+   *
+   * Note: CategoryService uses write-through invalidation — every admin mutation
+   * (create, update, archive, reorder) calls redis.del("cat:tree") immediately after
+   * the DB write. This TTL is therefore a safety net only (handles rare crash/gap
+   * scenarios), not the primary propagation mechanism (D-03).
+   */
+  CATEGORY_TREE_TTL_SECONDS: z.coerce.number().default(300),
 });
 
 /** TypeScript type inferred from envSchema */
