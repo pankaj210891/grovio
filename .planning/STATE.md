@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-30T17:35:20.798Z"
+last_updated: "2026-05-31T06:11:35.929Z"
 last_activity: 2026-05-30 -- Phase 10 execution started
 progress:
-  total_phases: 10
-  completed_phases: 2
+  total_phases: 11
+  completed_phases: 3
   total_plans: 21
-  completed_plans: 18
-  percent: 20
+  completed_plans: 21
+  percent: 27
 ---
 
 # Project State — Grovio
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-28)
 
 **Core value:** A buyer can rebrand and reconfigure the entire marketplace for a new product vertical — categories, attributes, filters, branding, integrations — without rewriting core code.
-**Current focus:** Phase 10 — replace-docker-with-neon-upstash
+**Current focus:** Phase 2.1 — postgresql-to-mongodb-migration (planning)
 
 ## Current Position
 
@@ -65,6 +65,7 @@ Recent decisions affecting current work:
 ### Roadmap Evolution
 
 - Phase 10 added: Replace Docker with Neon + Upstash
+- Phase 2.1 inserted: PostgreSQL → MongoDB migration (overrides CLAUDE.md PostgreSQL decision; user confirmed intent)
 
 ### Pending Todos
 
@@ -80,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-30T14:28:36.010Z
-Stopped at: Phase 10 context gathered
-Resume file: .planning/phases/10-replace-docker-with-neon-upstash/10-CONTEXT.md
+Last session: 2026-05-31T06:11:35.919Z
+Stopped at: Phase 2.1 context gathered
+Resume file: .planning/phases/02.1-postgresql-to-mongodb-migration-inserted/02.1-CONTEXT.md
