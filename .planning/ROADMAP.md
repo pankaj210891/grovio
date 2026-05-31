@@ -109,7 +109,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*:
 
-- [ ] 03-03-PLAN.md — Drizzle schema: vendors, products (+productStatusEnum +GIN index), product_variants, product_images; is_variant column; S3/image/filter-cache env vars
+- [x] 03-03-PLAN.md — Drizzle schema: vendors, products (+productStatusEnum +GIN index), product_variants, product_images; is_variant column; S3/image/filter-cache env vars
 
 **Wave 3** *(blocked on Wave 2)*:
 
@@ -227,7 +227,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/10 | In Progress|  |
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
-| 3. Catalog & Search | 2/7 | In Progress|  |
+| 3. Catalog & Search | 3/7 | In Progress|  |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
 | 5. Commerce Core | 0/TBD | Not started | - |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
