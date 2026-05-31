@@ -34,7 +34,14 @@ const drizzlePlugin = fp(
     });
 
     // Verify connectivity at startup so missing DATABASE_URL fails fast.
-    await pool.query("SELECT 1");
+    // Wrap in try/catch so the pool is cleanly ended if the check fails —
+    // without this, the onClose hook is never registered and the pool leaks.
+    try {
+      await pool.query("SELECT 1");
+    } catch (err) {
+      await pool.end();
+      throw err;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db: NodePgDatabase<any> = drizzle(pool);
