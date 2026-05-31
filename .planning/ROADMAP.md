@@ -100,7 +100,29 @@ Plans:
   4. A customer full-text search query returns ranked results with type-ahead suggestions within acceptable latency
   5. A customer can filter a product listing using facets derived exclusively from the target category's filter schema, and can apply, remove, and combine filters with sort options
 
-**Plans**: TBD
+**Plans**: 7 plans in 5 waves
+
+**Wave 1** (parallel from clean slate):
+
+- [ ] 03-01-PLAN.md — packages/contracts catalog + search domains (product/variant/image, query/suggest/filter) + is_variant on attribute-definition contract
+- [ ] 03-02-PLAN.md — Install 5 Phase 3 packages (opensearch, bullmq, aws-sdk/client-s3, s3-request-presigner, argon2) behind legitimacy checkpoint
+
+**Wave 2** *(blocked on Wave 1)*:
+
+- [ ] 03-03-PLAN.md — Drizzle schema: vendors, products (+productStatusEnum +GIN index), product_variants, product_images; is_variant column; S3/image/filter-cache env vars
+
+**Wave 3** *(blocked on Wave 2)*:
+
+- [ ] 03-04-PLAN.md — [BLOCKING] db:generate + db:migrate + deferred vendor FK (D-18); is_variant/is_filterable mutual-exclusivity guard; filter-schema Redis cache invalidation
+
+**Wave 4** *(blocked on Wave 3)*:
+
+- [ ] 03-05-PLAN.md — vendor-auth (VendorAuthService: argon2 + jose JWT) + catalog (ProductService state machine/ownership/restrictions/auto-approve, ImageService presign flow)
+- [ ] 03-06-PLAN.md — OpenSearch plugin + index mapping; BullMQ queue/worker + ProductIndexJob (is_searchable projection); SearchService (post_filter facets, suggest, cached filters)
+
+**Wave 5** *(blocked on Wave 4)*:
+
+- [ ] 03-07-PLAN.md — vendor JWT middleware + vendor/admin/search routes + /categories/:id/filters; DI container + app.ts + main.ts worker startup
 
 ### Phase 4: Customer Storefront (Web)
 
