@@ -35,4 +35,16 @@ describe("requiresSsl", () => {
       ),
     ).toBe(true);
   });
+
+  it("returns true for a URL with sslmode=verify-full (e.g. Supabase, RDS)", () => {
+    expect(
+      requiresSsl("postgresql://user:pass@host/db?sslmode=verify-full"),
+    ).toBe(true);
+  });
+
+  it("returns true for a URL with sslmode=verify-ca", () => {
+    expect(
+      requiresSsl("postgresql://user:pass@host/db?sslmode=verify-ca"),
+    ).toBe(true);
+  });
 });

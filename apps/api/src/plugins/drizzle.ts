@@ -9,13 +9,17 @@ import { env } from "../config/env.js";
  * Triggers on:
  * - Neon hostname (contains `.neon.tech`) — Neon requires SSL on all connections
  * - Explicit `sslmode=require` query parameter — any cloud Postgres requiring SSL
+ * - `sslmode=verify-full` — full certificate verification (Supabase, RDS, Railway, etc.)
+ * - `sslmode=verify-ca` — CA certificate verification
  *
  * Pure function (no Fastify dependency) so it can be unit-tested independently.
  */
 export function requiresSsl(connectionString: string): boolean {
   return (
     connectionString.includes(".neon.tech") ||
-    connectionString.includes("sslmode=require")
+    connectionString.includes("sslmode=require") ||
+    connectionString.includes("sslmode=verify-full") ||
+    connectionString.includes("sslmode=verify-ca")
   );
 }
 
