@@ -94,6 +94,101 @@ export const envSchema = z.object({
    * scenarios), not the primary propagation mechanism (D-03).
    */
   CATEGORY_TREE_TTL_SECONDS: z.coerce.number().default(300),
+
+  // ---------------------------------------------------------------------------
+  // S3 / Cloudflare R2 — image upload flow (Phase 3, D-09 through D-11)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * S3-compatible endpoint URL for the bucket.
+   * Cloudflare R2: https://<account-id>.r2.cloudflarestorage.com
+   * AWS S3: https://s3.<region>.amazonaws.com
+   * Local MinIO: http://localhost:9000
+   *
+   * Optional: backend boots without it. Required only when generating presigned upload
+   * URLs. ImageService returns a 503 when this and related S3 vars are not configured.
+   */
+  S3_BUCKET_URL: z.string().url().optional(),
+
+  /**
+   * S3 / R2 access key ID for API authentication.
+   * For Cloudflare R2: obtain from R2 API Tokens page in the Cloudflare dashboard.
+   * For AWS S3: IAM access key with s3:PutObject permission on the bucket.
+   *
+   * Optional (see S3_BUCKET_URL note above).
+   */
+  S3_ACCESS_KEY_ID: z.string().optional(),
+
+  /**
+   * S3 / R2 secret access key paired with S3_ACCESS_KEY_ID.
+   * Never logged or returned in any API response.
+   *
+   * Optional (see S3_BUCKET_URL note above).
+   */
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
+
+  /**
+   * AWS region for the bucket. Defaults to "auto" which is the correct value
+   * for Cloudflare R2 (R2 is region-agnostic). For AWS S3, set to the bucket's
+   * region (e.g., "us-east-1", "ap-south-1").
+   */
+  S3_REGION: z.string().default("auto"),
+
+  /**
+   * S3 bucket name used for all product image uploads.
+   * For R2: the bucket name created in the Cloudflare dashboard.
+   *
+   * Optional (see S3_BUCKET_URL note above).
+   */
+  S3_BUCKET_NAME: z.string().optional(),
+
+  /**
+   * Public CDN base URL for images served to the storefront (D-10).
+   * Cloudflare R2: https://<bucket-name>.<subdomain>.r2.dev (or custom domain)
+   * AWS S3: https://<bucket-name>.s3.<region>.amazonaws.com
+   *
+   * The final image URL stored in product_images.url is constructed as:
+   *   `${S3_PUBLIC_URL}/${key}`
+   *
+   * Optional (see S3_BUCKET_URL note above).
+   */
+  S3_PUBLIC_URL: z.string().url().optional(),
+
+  // ---------------------------------------------------------------------------
+  // Image upload constraints (Phase 3, D-11)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Maximum number of images allowed per product.
+   * Enforced at presigned URL generation time — if the product already has
+   * MAX_IMAGES_PER_PRODUCT images, the presign request is rejected (429).
+   * Defaults to 8.
+   */
+  MAX_IMAGES_PER_PRODUCT: z.coerce.number().default(8),
+
+  /**
+   * Maximum allowed image file size in bytes.
+   * Passed as ContentLength on the PutObjectCommand so R2/S3 rejects oversized
+   * PUT requests at the storage layer without proxying through the backend.
+   * Defaults to 5242880 (5MB).
+   */
+  MAX_IMAGE_SIZE_BYTES: z.coerce.number().default(5242880),
+
+  // ---------------------------------------------------------------------------
+  // Filter schema cache TTL (Phase 3, SRCH-02)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Redis TTL in seconds for the cached category filter schema
+   * (the "category_filter_schema:{categoryId}" key).
+   * Controls how quickly filter schema changes propagate after admin edits.
+   * Defaults to 300 seconds (5 minutes).
+   *
+   * Note: FilterSchemaService uses write-through invalidation — replaceFilterSchema()
+   * calls redis.del(`category_filter_schema:${categoryId}`) after the DB write.
+   * This TTL is therefore a safety net, not the primary propagation mechanism.
+   */
+  FILTER_SCHEMA_TTL_SECONDS: z.coerce.number().default(300),
 });
 
 /** TypeScript type inferred from envSchema */
