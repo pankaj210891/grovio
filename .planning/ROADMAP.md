@@ -117,8 +117,8 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3)*:
 
-- [ ] 03-05-PLAN.md — vendor-auth (VendorAuthService: argon2 + jose JWT) + catalog (ProductService state machine/ownership/restrictions/auto-approve, ImageService presign flow)
-- [ ] 03-06-PLAN.md — OpenSearch plugin + index mapping; BullMQ queue/worker + ProductIndexJob (is_searchable projection); SearchService (post_filter facets, suggest, cached filters)
+- [x] 03-05-PLAN.md — vendor-auth (VendorAuthService: argon2 + jose JWT) + catalog (ProductService state machine/ownership/restrictions/auto-approve, ImageService presign flow)
+- [x] 03-06-PLAN.md — OpenSearch plugin + index mapping; BullMQ queue/worker + ProductIndexJob (is_searchable projection); SearchService (post_filter facets, suggest, cached filters)
 
 **Wave 5** *(blocked on Wave 4)*:
 
@@ -227,7 +227,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/10 | In Progress|  |
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
-| 3. Catalog & Search | 4/7 | In Progress|  |
+| 3. Catalog & Search | 6/7 | In Progress|  |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
 | 5. Commerce Core | 0/TBD | Not started | - |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
