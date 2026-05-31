@@ -17,3 +17,5 @@ export * from "./auth.js";
 export * from "./envelope.js";
 export * from "./marketplace-config.js";
 export * from "./category/index.js";
+export * from "./catalog/index.js";
+export * from "./search/index.js";

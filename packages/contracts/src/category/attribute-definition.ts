@@ -65,6 +65,13 @@ export const AttributeDefinitionSchema = z.object({
   isFilterable: z.boolean(),
   /** Whether this attribute is projected into OpenSearch (Phase 3) */
   isSearchable: z.boolean(),
+  /**
+   * Whether this attribute generates variant axes for the product (D-02).
+   * When true, vendors must provide a value for this attribute per variant.
+   * Note: is_variant is mutually exclusive with is_filterable for the same
+   * attribute — the service layer enforces this guard (plan 03-04).
+   */
+  isVariant: z.boolean(),
   /** Display order within the category attribute list */
   sortOrder: z.number().int(),
 });
@@ -85,8 +92,37 @@ export const CreateAttributeInputSchema = z.object({
   isRequired: z.boolean().optional(),
   isFilterable: z.boolean().optional(),
   isSearchable: z.boolean().optional(),
+  /**
+   * Whether this attribute generates variant axes (D-02).
+   * Mutually exclusive with is_filterable — service layer enforces (plan 03-04).
+   */
+  isVariant: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
 });
 
 /** TypeScript type inferred from CreateAttributeInputSchema */
 export type CreateAttributeInput = z.infer<typeof CreateAttributeInputSchema>;
+
+/**
+ * Input schema for updating an existing attribute definition.
+ * All fields optional. attrType changes are discouraged after product data exists.
+ */
+export const UpdateAttributeInputSchema = z.object({
+  key: z.string().min(1).optional(),
+  label: z.string().min(1).optional(),
+  attrType: AttrTypeSchema.optional(),
+  /** Required when attrType is enum or multi_select; omit for other types */
+  options: z.array(AttributeOptionSchema).optional(),
+  isRequired: z.boolean().optional(),
+  isFilterable: z.boolean().optional(),
+  isSearchable: z.boolean().optional(),
+  /**
+   * Whether this attribute generates variant axes (D-02).
+   * Mutually exclusive with is_filterable — service layer enforces (plan 03-04).
+   */
+  isVariant: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+});
+
+/** TypeScript type inferred from UpdateAttributeInputSchema */
+export type UpdateAttributeInput = z.infer<typeof UpdateAttributeInputSchema>;
