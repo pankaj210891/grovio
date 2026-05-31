@@ -30,7 +30,7 @@ const redisPlugin = fp(
 
     const redis = new Redis(env.REDIS_URL, {
       lazyConnect: true,
-      enableReadyCheck: true,
+      enableReadyCheck: false, // must be false for Upstash managed Redis — Upstash does not support the READY check
       // Explicit tls: {} is required as belt-and-suspenders: some ioredis versions strip TLS
       // during URL parsing even when the rediss:// scheme is present (Pitfall 3).
       ...(isTls ? { tls: {} } : {}),
