@@ -27,6 +27,7 @@ export interface UpdateAttributeInput {
   isRequired?: boolean;
   isFilterable?: boolean;
   isSearchable?: boolean;
+  isVariant?: boolean;
   sortOrder?: number;
 }
 
@@ -43,6 +44,11 @@ export interface UpdateAttributeInput {
  * - attrType "enum" or "multi_select" MUST have a non-empty options array.
  * - All other attr types MUST NOT carry an options array.
  *
+ * Enforces the variant/filter mutual exclusivity rule (D-02, Pitfall 5):
+ * - An attribute marked is_variant cannot also be is_filterable.
+ * - A variant axis is a product dimension (size, color), not a standalone filter facet.
+ * - Violation is checked at create time (resolved values) and at update time (merged values).
+ *
  * Key uniqueness per category is enforced by the unique(category_id, key) DB
  * constraint. When an insert raises a unique violation, a clear Error is
  * surfaced to the caller.
@@ -50,7 +56,7 @@ export interface UpdateAttributeInput {
  * No Redis caching in Phase 2 — attribute definitions change infrequently and
  * are not on a hot read path at this stage.
  *
- * Covers CAT-03, T-02-09, T-02-11.
+ * Covers CAT-03, D-02, T-02-09, T-02-11, T-03-G1.
  */
 export class AttributeDefinitionService {
   constructor(private deps: AttributeDefinitionServiceDeps) {}
@@ -77,15 +83,23 @@ export class AttributeDefinitionService {
    * - "enum" and "multi_select" require a non-empty options array (D-07).
    * - All other types must not carry an options field.
    *
+   * Validates the variant/filter mutual exclusivity rule (D-02, Pitfall 5):
+   * - An attribute cannot have both isVariant=true and isFilterable=true.
+   *
    * The unique(category_id, key) DB constraint backs key uniqueness (T-02-11).
    * If the insert raises a unique violation, the error propagates to the caller.
    *
-   * @throws Error when options validation fails.
+   * @throws Error when options validation or variant exclusivity fails.
    */
   async createAttribute(
     input: CreateAttributeInput & { categoryId: string }
   ): Promise<SelectAttributeDefinition> {
     this.validateOptions(input.attrType, input.options);
+
+    const resolvedIsVariant = input.isVariant ?? false;
+    const resolvedIsFilterable = input.isFilterable ?? false;
+
+    this.validateVariantExclusivity(resolvedIsVariant, resolvedIsFilterable);
 
     const insertValues: InsertAttributeDefinition = {
       categoryId: input.categoryId,
@@ -94,8 +108,9 @@ export class AttributeDefinitionService {
       attrType: input.attrType,
       options: input.options ?? null,
       isRequired: input.isRequired ?? false,
-      isFilterable: input.isFilterable ?? false,
+      isFilterable: resolvedIsFilterable,
       isSearchable: input.isSearchable ?? false,
+      isVariant: resolvedIsVariant,
       sortOrder: input.sortOrder ?? 0,
     };
 
@@ -109,12 +124,38 @@ export class AttributeDefinitionService {
 
   /**
    * Partially update an existing attribute definition.
+   *
+   * Loads the current row first to perform merged-value validation of the
+   * variant/filter mutual exclusivity rule (D-02, Pitfall 5):
+   * - Merges incoming partial over the current row's flags.
+   * - Rejects if the merged isVariant + isFilterable would both be true.
+   *
    * Returns null if the attribute is not found.
+   *
+   * @throws Error when variant exclusivity is violated on the merged values.
    */
   async updateAttribute(
     id: string,
     input: UpdateAttributeInput
   ): Promise<SelectAttributeDefinition | null> {
+    // Load the current row to validate merged variant/filterable flags.
+    const currentRows = await this.deps.db
+      .select()
+      .from(attributeDefinitions)
+      .where(eq(attributeDefinitions.id, id))
+      .limit(1);
+
+    const current = currentRows[0];
+    if (!current) return null;
+
+    // Merge: incoming partial overrides current values for the two exclusive flags.
+    const mergedIsVariant =
+      input.isVariant !== undefined ? input.isVariant : current.isVariant;
+    const mergedIsFilterable =
+      input.isFilterable !== undefined ? input.isFilterable : current.isFilterable;
+
+    this.validateVariantExclusivity(mergedIsVariant, mergedIsFilterable);
+
     const updateValues: Partial<InsertAttributeDefinition> = {
       ...input,
       updatedAt: new Date(),
@@ -193,6 +234,29 @@ export class AttributeDefinitionService {
           `Attribute type "${attrType}" must not have options.`
         );
       }
+    }
+  }
+
+  /**
+   * Enforce the is_variant / is_filterable mutual exclusivity rule (D-02, Pitfall 5, T-03-G1).
+   *
+   * An attribute marked is_variant cannot also be is_filterable.
+   * A variant axis (size, color) drives product_variants.option_values and is selected
+   * on the product detail page — it is NOT a standalone filter facet on the PLP.
+   * Mixing the two roles produces inconsistent UI (a filter chip that is also a variant
+   * selector) and incorrect OpenSearch facet aggregations.
+   *
+   * @throws Error when both flags are true.
+   */
+  private validateVariantExclusivity(
+    isVariant: boolean,
+    isFilterable: boolean
+  ): void {
+    if (isVariant && isFilterable) {
+      throw new Error(
+        "An attribute marked is_variant cannot also be is_filterable — " +
+          "a variant axis is not a standalone filter facet."
+      );
     }
   }
 }
