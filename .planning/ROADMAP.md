@@ -113,7 +113,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*:
 
-- [ ] 03-04-PLAN.md — [BLOCKING] db:generate + db:migrate + deferred vendor FK (D-18); is_variant/is_filterable mutual-exclusivity guard; filter-schema Redis cache invalidation
+- [x] 03-04-PLAN.md — [BLOCKING] db:generate + db:migrate + deferred vendor FK (D-18); is_variant/is_filterable mutual-exclusivity guard; filter-schema Redis cache invalidation
 
 **Wave 4** *(blocked on Wave 3)*:
 
@@ -227,7 +227,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/10 | In Progress|  |
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
-| 3. Catalog & Search | 3/7 | In Progress|  |
+| 3. Catalog & Search | 4/7 | In Progress|  |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
 | 5. Commerce Core | 0/TBD | Not started | - |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
