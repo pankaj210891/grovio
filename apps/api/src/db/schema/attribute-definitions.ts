@@ -97,6 +97,20 @@ export const attributeDefinitions = pgTable(
      */
     isSearchable: boolean("is_searchable").notNull().default(false),
 
+    /**
+     * Whether this attribute drives product variant axes (D-02, Phase 3).
+     * When true, the attribute becomes a variant selector dimension (size, color, etc.).
+     * Product variants store their option values for is_variant=true attributes
+     * in product_variants.option_values JSONB (e.g., { size: 'L', color: 'Red' }).
+     *
+     * MUTUALLY EXCLUSIVE with is_filterable (same attribute cannot be both a variant
+     * axis and a facet filter chip). This mutual exclusivity is enforced in
+     * AttributeDefinitionService in plan 03-04 — not at the DB level (simpler migration).
+     *
+     * Default false: all existing Phase 2 attributes are non-variant.
+     */
+    isVariant: boolean("is_variant").notNull().default(false),
+
     /** Display order within a category's attribute list (lower = first). Default 0. */
     sortOrder: integer("sort_order").notNull().default(0),
 
