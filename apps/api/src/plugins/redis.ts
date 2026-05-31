@@ -37,8 +37,16 @@ const redisPlugin = fp(
     });
 
     // Verify connectivity at startup.
-    await redis.connect();
-    await redis.ping();
+    // Wrap in try/catch so the client is cleanly quit if the check fails —
+    // without this, the onClose hook is never registered and the ioredis
+    // socket + retry timer are both leaked.
+    try {
+      await redis.connect();
+      await redis.ping();
+    } catch (err) {
+      await redis.quit();
+      throw err;
+    }
 
     fastify.decorate("redis", redis);
 
