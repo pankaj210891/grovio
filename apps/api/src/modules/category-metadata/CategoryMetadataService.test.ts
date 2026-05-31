@@ -164,7 +164,7 @@ describe("CategoryMetadataService", () => {
         {
           type: "product_grid" as const,
           title: "Trending",
-          productIds: ["prod-uuid-1"],
+          productIds: ["00000000-0000-4000-8000-000000000001"],
           layout: "carousel" as const,
         },
         {

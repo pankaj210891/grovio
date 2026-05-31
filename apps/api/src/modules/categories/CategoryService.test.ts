@@ -132,7 +132,18 @@ describe("CategoryService", () => {
     it("returns cached tree on Redis hit — no DB query", async () => {
       const db = makeDbMock([rootCategory]);
       const redis = makeRedisMock();
-      const cachedTree = [{ ...rootCategory, depth: 0, hasChildren: false, childCount: 0, children: [] }];
+      // buildTree strips SelectCategory fields (dates, isRestricted, archivedAt) — use tree-only shape
+      const cachedTree = [{
+        id: rootCategory.id,
+        name: rootCategory.name,
+        slug: rootCategory.slug,
+        parentId: rootCategory.parentId,
+        sortOrder: rootCategory.sortOrder,
+        depth: 0,
+        hasChildren: false,
+        childCount: 0,
+        children: [],
+      }];
       redis.get.mockResolvedValue(JSON.stringify(cachedTree));
 
       const svc = new CategoryService({ db: db as never, redis: redis as never, env: ENV });
@@ -251,6 +262,40 @@ describe("CategoryService", () => {
               finally: vi.fn(),
             }),
           }),
+        })
+        // Second createCategory call walks the same leaf→sub→root chain
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([leafCategory]),
+              limit: vi.fn().mockResolvedValue([leafCategory]),
+              then: (resolve: (v: SelectCategory[]) => void) => resolve([leafCategory]),
+              catch: vi.fn(),
+              finally: vi.fn(),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([subCategory]),
+              limit: vi.fn().mockResolvedValue([subCategory]),
+              then: (resolve: (v: SelectCategory[]) => void) => resolve([subCategory]),
+              catch: vi.fn(),
+              finally: vi.fn(),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([rootCategory]),
+              limit: vi.fn().mockResolvedValue([rootCategory]),
+              then: (resolve: (v: SelectCategory[]) => void) => resolve([rootCategory]),
+              catch: vi.fn(),
+              finally: vi.fn(),
+            }),
+          }),
         });
 
       const db = { select: selectMock };
@@ -337,24 +382,26 @@ describe("CategoryService", () => {
 
   describe("reorderCategories", () => {
     it("updates sort_order and invalidates the cat:tree cache key", async () => {
-      // Update mock must handle multiple sequential updates
       const updateSetMock = vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([rootCategory]),
-        }),
+        where: vi.fn().mockResolvedValue([rootCategory]),
       });
+      const txUpdateMock = vi.fn().mockReturnValue({ set: updateSetMock });
       const db = {
         ...makeDbMock([]),
         update: vi.fn().mockReturnValue({ set: updateSetMock }),
+        // reorderCategories wraps updates in a transaction; callback receives tx
+        transaction: vi.fn().mockImplementation(async (fn: (tx: unknown) => Promise<void>) => {
+          await fn({ update: txUpdateMock });
+        }),
       };
       const redis = makeRedisMock();
 
       const svc = new CategoryService({ db: db as never, redis: redis as never, env: ENV });
       await svc.reorderCategories(null, ["root-uuid-1", "sub-uuid-1"]);
 
-      // update called once per ID
-      expect(db.update).toHaveBeenCalledTimes(2);
-      // Tree invalidated exactly once after all updates
+      // tx.update called once per ID inside the transaction
+      expect(txUpdateMock).toHaveBeenCalledTimes(2);
+      // Tree invalidated exactly once after the transaction commits
       expect(redis.del).toHaveBeenCalledWith("cat:tree");
     });
   });
