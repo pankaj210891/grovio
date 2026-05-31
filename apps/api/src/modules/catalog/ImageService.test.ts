@@ -10,10 +10,19 @@ vi.mock("@aws-sdk/s3-request-presigner", () => ({
   getSignedUrl: vi.fn().mockResolvedValue("https://r2.example.com/presigned-put-url"),
 }));
 
-vi.mock("@aws-sdk/client-s3", () => ({
-  S3Client: vi.fn().mockImplementation(() => ({})),
-  PutObjectCommand: vi.fn().mockImplementation((params: unknown) => ({ ...params as object })),
-}));
+vi.mock("@aws-sdk/client-s3", () => {
+  // S3Client and PutObjectCommand must be classes (used with `new`)
+  class MockS3Client {
+    constructor(_config: unknown) {}
+  }
+  class MockPutObjectCommand {
+    constructor(public params: unknown) {}
+  }
+  return {
+    S3Client: MockS3Client,
+    PutObjectCommand: MockPutObjectCommand,
+  };
+});
 
 import {
   ImageService,
