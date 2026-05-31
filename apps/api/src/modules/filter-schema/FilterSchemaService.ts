@@ -1,5 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type { Redis } from "ioredis";
 import type { FilterSchemaDef } from "@grovio/contracts";
 import {
   attributeDefinitions,
@@ -9,12 +10,19 @@ import {
 } from "../../db/schema/index.js";
 
 // ---------------------------------------------------------------------------
-// Deps interface (db-only — no Redis/env; filter schemas are not cached)
+// Deps interface — db + redis for write-through cache invalidation (Pitfall 6)
 // ---------------------------------------------------------------------------
 
 interface FilterSchemaServiceDeps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db: NodePgDatabase<any>;
+  /**
+   * Redis client used for write-through cache invalidation.
+   * After any filter-schema mutation, the cached filter schema for the affected
+   * category is deleted so the next SearchService read fetches a fresh version.
+   * Redis key convention: "category_filter_schema:{categoryId}" (PATTERNS.md).
+   */
+  redis: Redis;
 }
 
 // ---------------------------------------------------------------------------
@@ -42,15 +50,18 @@ export interface UpsertFilterEntryInput {
  * - Before any write, the service loads the attribute row and rejects the
  *   operation when `is_filterable` is false.
  *
+ * Provides write-through Redis cache invalidation (Pitfall 6, T-03-G2):
+ * - Every mutation (replaceFilterSchema, upsertFilterEntry, removeFilterEntry,
+ *   reorderFilterEntries) calls invalidateFilterCache(categoryId) to delete the
+ *   "category_filter_schema:{categoryId}" Redis key.
+ * - The SearchService (plan 03-06) caches filter schemas under this key. Stale
+ *   cache would cause the search facet panel to show removed or outdated facets.
+ *
  * getFilterSchema() joins filter_schema_definitions with attribute_definitions
  * to return the `attribute` sub-object (key/label/attrType/options) per the
  * FilterSchemaDef contract shape — what the storefront filter panel needs.
  *
- * No Redis caching in Phase 2 — filter schemas change infrequently and are
- * not on a hot read path at this stage. (Phase 3 search service will cache
- * the derived OpenSearch mapping, not the raw filter schema.)
- *
- * Covers CAT-04, T-02-10.
+ * Covers CAT-04, T-02-10, Pitfall 6, T-03-G2.
  */
 export class FilterSchemaService {
   constructor(private deps: FilterSchemaServiceDeps) {}
@@ -109,6 +120,9 @@ export class FilterSchemaService {
    * `is_filterable` is false — prevents adding attributes to filter schemas
    * that the admin never marked filterable (CAT-04 / SRCH-04 alignment).
    *
+   * Invalidates the "category_filter_schema:{categoryId}" Redis cache key after
+   * the insert so SearchService reads a fresh schema on the next request (Pitfall 6).
+   *
    * Uses INSERT with ON CONFLICT DO UPDATE (upsert) semantics when possible;
    * falls back to plain INSERT in Phase 2 (unique constraint on category+attribute).
    *
@@ -153,6 +167,9 @@ export class FilterSchemaService {
       .values(insertValues)
       .returning();
 
+    // Invalidate after successful insert (Pitfall 6, T-03-G2).
+    await this.invalidateFilterCache(input.categoryId);
+
     return row!;
   }
 
@@ -161,6 +178,9 @@ export class FilterSchemaService {
    *
    * Deletes all existing filter entries for the category, then inserts the
    * new set in order. Each entry is validated for the is_filterable gate.
+   *
+   * Invalidates the "category_filter_schema:{categoryId}" Redis cache key after
+   * all inserts so SearchService reads a fresh schema (Pitfall 6, T-03-G2).
    *
    * Atomic within a single transaction boundary when the DB supports it.
    * In Phase 2, this is a sequential delete + insert (no transaction support
@@ -215,33 +235,60 @@ export class FilterSchemaService {
       results.push(row!);
     }
 
+    // Invalidate after all inserts complete (Pitfall 6, T-03-G2).
+    await this.invalidateFilterCache(categoryId);
+
     return results;
   }
 
   /**
    * Remove a single filter schema entry by ID.
-   * Returns null if the entry was not found.
+   *
+   * Loads the entry's categoryId before deletion so the correct Redis cache key
+   * can be invalidated after the delete (Pitfall 6, T-03-G2).
+   *
+   * Returns null if the entry was not found (cache is not touched in this case).
    */
   async removeFilterEntry(
     id: string
   ): Promise<SelectFilterSchemaDefinition | null> {
+    // Load the entry first to capture its categoryId for cache invalidation.
+    const existing = await this.deps.db
+      .select()
+      .from(filterSchemaDefinitions)
+      .where(eq(filterSchemaDefinitions.id, id))
+      .limit(1);
+
+    const entry = existing[0];
+    if (!entry) return null;
+
     const rows = await this.deps.db
       .delete(filterSchemaDefinitions)
       .where(eq(filterSchemaDefinitions.id, id))
       .returning();
 
-    return rows[0] ?? null;
+    const deleted = rows[0] ?? null;
+
+    // Invalidate cache for the affected category (Pitfall 6, T-03-G2).
+    if (deleted) {
+      await this.invalidateFilterCache(entry.categoryId);
+    }
+
+    return deleted;
   }
 
   /**
    * Batch-update sort_order for an ordered list of filter entry IDs.
    * Each ID receives sort_order = its index (0-based).
    *
-   * @param _categoryId - Included for caller clarity; not used in DB queries.
+   * Invalidates the "category_filter_schema:{categoryId}" Redis cache key after
+   * reordering so SearchService reads the updated sort order (Pitfall 6, T-03-G2).
+   *
+   * @param categoryId - Category whose filter schema is being reordered.
    * @param orderedIds - Filter entry IDs in their new display order.
    */
   async reorderFilterEntries(
-    _categoryId: string,
+    categoryId: string,
     orderedIds: string[]
   ): Promise<void> {
     for (let i = 0; i < orderedIds.length; i++) {
@@ -250,5 +297,22 @@ export class FilterSchemaService {
         .set({ sortOrder: i })
         .where(eq(filterSchemaDefinitions.id, orderedIds[i]!));
     }
+
+    // Invalidate cache after reorder (Pitfall 6, T-03-G2).
+    await this.invalidateFilterCache(categoryId);
+  }
+
+  // ── Private helpers ───────────────────────────────────────────────────────
+
+  /**
+   * Invalidate the Redis cache key for a category's filter schema (Pitfall 6).
+   *
+   * Key convention: "category_filter_schema:{categoryId}" — must match the key
+   * SearchService uses when caching filter schemas (plan 03-06, PATTERNS.md).
+   * Deleting this key causes the next SearchService.getFilterSchema() call to
+   * re-read from the DB and repopulate the cache.
+   */
+  private async invalidateFilterCache(categoryId: string): Promise<void> {
+    await this.deps.redis.del(`category_filter_schema:${categoryId}`);
   }
 }
