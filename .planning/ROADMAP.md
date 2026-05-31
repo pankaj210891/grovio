@@ -104,7 +104,7 @@ Plans:
 
 **Wave 1** (parallel from clean slate):
 
-- [ ] 03-01-PLAN.md — packages/contracts catalog + search domains (product/variant/image, query/suggest/filter) + is_variant on attribute-definition contract
+- [x] 03-01-PLAN.md — packages/contracts catalog + search domains (product/variant/image, query/suggest/filter) + is_variant on attribute-definition contract
 - [x] 03-02-PLAN.md — Install 5 Phase 3 packages (opensearch, bullmq, aws-sdk/client-s3, s3-request-presigner, argon2) behind legitimacy checkpoint
 
 **Wave 2** *(blocked on Wave 1)*:
@@ -227,7 +227,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/10 | In Progress|  |
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
-| 3. Catalog & Search | 1/7 | In Progress|  |
+| 3. Catalog & Search | 2/7 | In Progress|  |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
 | 5. Commerce Core | 0/TBD | Not started | - |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
