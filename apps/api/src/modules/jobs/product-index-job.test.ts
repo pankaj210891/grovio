@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Mock } from "vitest";
 import type { Job } from "bullmq";
+import type { Client as OpenSearchClient } from "@opensearch-project/opensearch";
 import {
   buildSearchDocument,
   processProductIndexJob,
@@ -9,12 +11,27 @@ import {
 // Mock helpers
 // ---------------------------------------------------------------------------
 
-/** Build a minimal mock OpenSearch client with vi.fn() stubs */
-function makeOpenSearchMock() {
+/** Minimal OpenSearch client mock shape — only the methods the job exercises. */
+interface OpenSearchMock {
+  index: Mock;
+  delete: Mock;
+}
+
+/**
+ * Build a minimal mock OpenSearch client with vi.fn() stubs.
+ * The mock is cast to `OpenSearchClient` for passing to processProductIndexJob,
+ * but stored as `OpenSearchMock` so assertions can access `.mock.calls`.
+ */
+function makeOpenSearchMock(): OpenSearchMock {
   return {
     index: vi.fn().mockResolvedValue({ statusCode: 200 }),
     delete: vi.fn().mockResolvedValue({ statusCode: 200 }),
   };
+}
+
+/** Helper to convert the mock to the OpenSearchClient type for passing to processProductIndexJob */
+function asClient(mock: OpenSearchMock): OpenSearchClient {
+  return mock as unknown as OpenSearchClient;
 }
 
 /**
@@ -170,7 +187,7 @@ describe("processProductIndexJob", () => {
       const env = { NODE_ENV: "test" as const };
       const job = makeJob({ productId: "prod-123", action: "delete" });
 
-      await processProductIndexJob(job, { db: db as never, opensearch, env });
+      await processProductIndexJob(job, { db: db as never, opensearch: asClient(opensearch), env });
 
       expect(opensearch.delete).toHaveBeenCalledOnce();
       const call = opensearch.delete.mock.calls[0]![0];
@@ -183,7 +200,7 @@ describe("processProductIndexJob", () => {
       const env = { NODE_ENV: "test" as const };
       const job = makeJob({ productId: "prod-456", action: "delete" });
 
-      await processProductIndexJob(job, { db: db as never, opensearch, env });
+      await processProductIndexJob(job, { db: db as never, opensearch: asClient(opensearch), env });
 
       expect(opensearch.index).not.toHaveBeenCalled();
     });
@@ -222,7 +239,7 @@ describe("processProductIndexJob", () => {
       const env = { NODE_ENV: "test" as const };
       const job = makeJob({ productId: baseProduct.id, action: "index" });
 
-      await processProductIndexJob(job, { db: db as never, opensearch, env });
+      await processProductIndexJob(job, { db: db as never, opensearch: asClient(opensearch), env });
 
       expect(opensearch.index).toHaveBeenCalledOnce();
       const call = opensearch.index.mock.calls[0]![0];
@@ -235,7 +252,7 @@ describe("processProductIndexJob", () => {
       const env = { NODE_ENV: "test" as const };
       const job = makeJob({ productId: baseProduct.id, action: "index" });
 
-      await processProductIndexJob(job, { db: db as never, opensearch, env });
+      await processProductIndexJob(job, { db: db as never, opensearch: asClient(opensearch), env });
 
       const call = opensearch.index.mock.calls[0]![0];
       const body = call.body as Record<string, unknown>;
@@ -255,7 +272,7 @@ describe("processProductIndexJob", () => {
       const env = { NODE_ENV: "test" as const };
       const job = makeJob({ productId: baseProduct.id, action: "index" });
 
-      await processProductIndexJob(job, { db: db as never, opensearch, env });
+      await processProductIndexJob(job, { db: db as never, opensearch: asClient(opensearch), env });
 
       const call = opensearch.index.mock.calls[0]![0];
       const body = call.body as Record<string, unknown>;
@@ -271,7 +288,7 @@ describe("processProductIndexJob", () => {
       const env = { NODE_ENV: "test" as const };
       const job = makeJob({ productId: baseProduct.id, action: "index" });
 
-      await processProductIndexJob(job, { db: db as never, opensearch, env });
+      await processProductIndexJob(job, { db: db as never, opensearch: asClient(opensearch), env });
 
       expect(opensearch.delete).not.toHaveBeenCalled();
     });
