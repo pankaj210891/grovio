@@ -18,11 +18,25 @@ import { defineConfig } from "drizzle-kit";
  * Set DATABASE_DIRECT_URL to the Neon direct connection string before running
  * `pnpm db:migrate` or `pnpm db:generate` against Neon.
  */
+
+// Explicit guard instead of non-null assertion: drizzle.config.ts is loaded
+// directly by drizzle-kit without going through env.ts / Zod validation, so
+// if both vars are unset the undefined would produce a misleading CLI error
+// rather than identifying the missing variable as the root cause.
+const migrationUrl =
+  process.env["DATABASE_DIRECT_URL"] ??
+  process.env["DATABASE_URL"];
+
+if (!migrationUrl) {
+  throw new Error(
+    "DATABASE_DIRECT_URL (or DATABASE_URL as fallback) must be set before running drizzle-kit.\n" +
+    "Copy apps/api/.env.example to apps/api/.env and fill in the Neon connection strings.",
+  );
+}
+
 export default defineConfig({
   dialect: "postgresql",
   schema: "./src/db/schema/index.ts",
   out: "./src/db/migrations",
-  dbCredentials: {
-    url: process.env["DATABASE_DIRECT_URL"] ?? process.env["DATABASE_URL"]!,
-  },
+  dbCredentials: { url: migrationUrl },
 });
