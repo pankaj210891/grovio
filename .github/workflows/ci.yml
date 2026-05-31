@@ -12,6 +12,7 @@ env:
   DATABASE_DIRECT_URL: ${{ secrets.DATABASE_DIRECT_URL }}
   REDIS_URL: ${{ secrets.REDIS_URL }}
   OPENSEARCH_URL: ${{ secrets.OPENSEARCH_URL }}
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
 jobs:
   quality:

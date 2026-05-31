@@ -154,6 +154,7 @@ CI reads all four cloud credentials from GitHub Actions repository secrets. Befo
 - `DATABASE_DIRECT_URL` — Neon direct connection string
 - `REDIS_URL` — Upstash connection string
 - `OPENSEARCH_URL` — Bonsai cluster URL
+- `JWT_SECRET` — HS256 signing secret (generate: `openssl rand -hex 32`)
 
 ## Rebranding
 
