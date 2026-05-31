@@ -15,8 +15,13 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1057.0",
+    "@aws-sdk/s3-request-presigner": "^3.1057.0",
     "@grovio/contracts": "workspace:*",
+    "@opensearch-project/opensearch": "^3.6.0",
+    "argon2": "^0.44.0",
     "awilix": "^13.0.0",
+    "bullmq": "^5.77.6",
     "drizzle-orm": "1.0.0-rc.3",
     "fastify": "^5.8.0",
     "fastify-plugin": "^5.0.0",
