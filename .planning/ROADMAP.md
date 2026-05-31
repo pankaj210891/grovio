@@ -6,13 +6,6 @@ Grovio is a horizontal-layer infrastructure product. The roadmap builds complete
 
 ## Phases
 
-**Phase Numbering:**
-
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
-
-Decimal phases appear between their surrounding integers in numeric order.
-
 - [ ] **Phase 1: Foundation** - Monorepo scaffold, shared contracts, all five app shells booting, proven Metro RN resolution, CI, feature-flag layer, branding config
 - [x] **Phase 2: Category Engine** - Admin-managed category tree, per-category attribute/filter schemas, product templates, vendor-category restrictions (completed 2026-05-30)
 - [ ] **Phase 3: Catalog & Search** - Vendor product CRUD with dynamic attribute forms, admin moderation, OpenSearch index, full-text + faceted search API
