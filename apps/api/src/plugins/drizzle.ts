@@ -48,7 +48,7 @@ const drizzlePlugin = fp(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db: NodePgDatabase<any> = drizzle(pool);
+    const db: NodePgDatabase<any> = drizzle({ client: pool });
 
     fastify.decorate("db", db);
 
