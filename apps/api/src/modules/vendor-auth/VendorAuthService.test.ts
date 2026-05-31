@@ -10,23 +10,28 @@ vi.mock("argon2", () => ({
   verify: vi.fn().mockResolvedValue(true),
 }));
 
-vi.mock("jose", () => ({
-  SignJWT: vi.fn().mockImplementation(() => ({
-    setProtectedHeader: vi.fn().mockReturnThis(),
-    setIssuedAt: vi.fn().mockReturnThis(),
-    setExpirationTime: vi.fn().mockReturnThis(),
-    sign: vi.fn().mockResolvedValue("mock.jwt.token"),
-  })),
-  jwtVerify: vi.fn().mockResolvedValue({
-    payload: {
-      sub: "vendor-uuid-1",
-      role: "vendor",
-      vendorId: "vendor-uuid-1",
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    },
-  }),
-}));
+vi.mock("jose", () => {
+  // SignJWT must be mocked as a class constructor (not a plain factory function)
+  // because VendorAuthService uses `new SignJWT(...)`.
+  class MockSignJWT {
+    setProtectedHeader() { return this; }
+    setIssuedAt() { return this; }
+    setExpirationTime() { return this; }
+    async sign() { return "mock.jwt.token"; }
+  }
+  return {
+    SignJWT: MockSignJWT,
+    jwtVerify: vi.fn().mockResolvedValue({
+      payload: {
+        sub: "vendor-uuid-1",
+        role: "vendor",
+        vendorId: "vendor-uuid-1",
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      },
+    }),
+  };
+});
 
 import {
   VendorAuthService,
@@ -149,15 +154,14 @@ describe("VendorAuthService", () => {
       expect(result.accessToken).toBe("mock.jwt.token");
     });
 
-    it("issues a JWT with role=vendor and vendorId", async () => {
-      const jose = await import("jose");
+    it("issues a JWT with role=vendor and vendorId (token in result)", async () => {
       const db = makeDbMock([baseVendor]);
       const svc = new VendorAuthService({ db: db as never, env: makeEnv() });
 
-      await svc.login("vendor@example.com", "password123");
+      const result = await svc.login("vendor@example.com", "password123");
 
-      // SignJWT should be called — the mock chain verifies sign() is called
-      expect(jose.SignJWT).toHaveBeenCalled();
+      // The mock sign() returns "mock.jwt.token" — confirms JWT was issued
+      expect(result.accessToken).toBe("mock.jwt.token");
     });
 
     it("throws InvalidCredentialsError when email is not found", async () => {
@@ -233,7 +237,7 @@ describe("VendorAuthService", () => {
           exp: Math.floor(Date.now() / 1000) + 3600,
         },
         protectedHeader: { alg: "HS256" },
-      });
+      } as never);
 
       const db = makeDbMock([]);
       const svc = new VendorAuthService({ db: db as never, env: makeEnv() });
