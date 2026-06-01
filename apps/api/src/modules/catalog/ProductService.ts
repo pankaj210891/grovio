@@ -413,6 +413,13 @@ export class ProductService {
     const product = rows[0];
     if (!product) throw new ProductNotFoundError();
 
+    // Guard: only pending_review products can be rejected (D-08, state machine)
+    if (product.status !== "pending_review") {
+      throw new ProductStateError(
+        `Only pending_review products can be rejected. Current status: ${product.status}`
+      );
+    }
+
     const wasApproved = product.status === "approved";
 
     const [updated] = await db
