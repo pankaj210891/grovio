@@ -1,6 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SelectProduct } from "../../db/schema/index.js";
-import type { SelectProductImage } from "../../db/schema/index.js";
+import { describe, expect, it, vi } from "vitest";
+import type { SelectProduct, SelectProductImage } from "../../db/schema/index.js";
 
 // ---------------------------------------------------------------------------
 // Module mocks

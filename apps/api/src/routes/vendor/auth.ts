@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { FastifyInstance } from "fastify";
 import {
-  VendorAuthService,
+  type VendorAuthService,
   InvalidCredentialsError,
   VendorAlreadyExistsError,
 } from "../../modules/vendor-auth/index.js";

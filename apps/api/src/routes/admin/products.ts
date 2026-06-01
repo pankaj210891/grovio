@@ -1,7 +1,7 @@
 import { RejectProductInputSchema } from "@grovio/contracts";
 import type { FastifyInstance } from "fastify";
 import {
-  ProductService,
+  type ProductService,
   ProductStateError,
   ProductNotFoundError,
 } from "../../modules/catalog/index.js";

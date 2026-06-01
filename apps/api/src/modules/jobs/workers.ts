@@ -1,5 +1,4 @@
-import { Worker } from "bullmq";
-import type { Job } from "bullmq";
+import { Worker, type Job } from "bullmq";
 import type { FastifyBaseLogger } from "fastify";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Client } from "@opensearch-project/opensearch";

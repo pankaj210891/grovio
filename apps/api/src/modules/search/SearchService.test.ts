@@ -1,5 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import type { Mock } from "vitest";
+import { describe, expect, it, vi, type Mock } from "vitest";
 import type { Client as OpenSearchClient } from "@opensearch-project/opensearch";
 import { SearchService } from "./SearchService.js";
 

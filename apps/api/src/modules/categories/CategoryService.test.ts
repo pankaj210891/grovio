@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { SelectCategory } from "../../db/schema/index.js";
 import { CategoryService, CategoryDepthError } from "./CategoryService.js";
 
@@ -40,7 +40,7 @@ function makeDbMock(rows: SelectCategory[]) {
  * Build a Drizzle INSERT mock for createCategory.
  * CategoryService uses: db.insert(categories).values(...).returning()
  */
-function makeInsertDbMock(returnRow: SelectCategory) {
+function _makeInsertDbMock(returnRow: SelectCategory) {
   const insertChain = {
     values: vi.fn().mockReturnValue({
       returning: vi.fn().mockResolvedValue([returnRow]),

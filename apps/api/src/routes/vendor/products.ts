@@ -9,9 +9,9 @@ import {
 } from "@grovio/contracts";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { requireVendorAuth } from "../../middleware/vendorAuth.js";
-import type { ImageService } from "../../modules/catalog/index.js";
 import {
-  ProductService,
+  type ImageService,
+  type ProductService,
   ProductStateError,
   ProductOwnershipError,
   ProductNotFoundError,

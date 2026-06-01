@@ -1,12 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SelectProduct } from "../../db/schema/index.js";
-import type { SelectAttributeDefinition } from "../../db/schema/index.js";
-import type { SelectCategory } from "../../db/schema/index.js";
+import { describe, expect, it, vi } from "vitest";
+import type { SelectProduct, SelectAttributeDefinition, SelectCategory } from "../../db/schema/index.js";
 import {
   ProductService,
   ProductStateError,
   ProductOwnershipError,
-  ProductNotFoundError,
   ProductRestrictionError,
   ProductValidationError,
 } from "./ProductService.js";
@@ -37,13 +34,13 @@ function makeDbSelectMock(rows: Partial<SelectProduct | SelectAttributeDefinitio
   };
 }
 
-function makeDbMock(selectRows: Partial<SelectProduct | SelectAttributeDefinition | SelectCategory>[] = []) {
+function _makeDbMock(selectRows: Partial<SelectProduct | SelectAttributeDefinition | SelectCategory>[] = []) {
   return {
     select: vi.fn().mockReturnValue(makeDbSelectMock(selectRows)),
   };
 }
 
-function makeInsertDbMock(returnRow: Partial<SelectProduct>) {
+function _makeInsertDbMock(returnRow: Partial<SelectProduct>) {
   const insertChain = {
     values: vi.fn().mockReturnValue({
       returning: vi.fn().mockResolvedValue([returnRow]),
@@ -55,7 +52,7 @@ function makeInsertDbMock(returnRow: Partial<SelectProduct>) {
   };
 }
 
-function makeUpdateDbMock(returnRow: Partial<SelectProduct> | null) {
+function _makeUpdateDbMock(returnRow: Partial<SelectProduct> | null) {
   const updateChain = {
     set: vi.fn().mockReturnValue({
       where: vi.fn().mockReturnValue({
@@ -104,7 +101,7 @@ const baseProduct: SelectProduct = {
 const draftProduct = { ...baseProduct, status: "draft" as const };
 const pendingProduct = { ...baseProduct, status: "pending_review" as const };
 const approvedProduct = { ...baseProduct, status: "approved" as const };
-const rejectedProduct = { ...baseProduct, status: "rejected" as const };
+const _rejectedProduct = { ...baseProduct, status: "rejected" as const };
 
 const baseAttrDef: SelectAttributeDefinition = {
   id: "attr-def-uuid-1",
@@ -281,7 +278,7 @@ describe("ProductService", () => {
       const result = await svc.updateProduct("product-uuid-1", "vendor-uuid-1", { name: "Updated Name" });
 
       // The update call's set arg must include status: 'draft'
-      const setMock = db.update().set;
+      const _setMock = db.update().set;
       // result status should be draft after reset
       expect(result?.status).toBe("draft");
     });
@@ -324,7 +321,7 @@ describe("ProductService", () => {
 
       // Passing status in the input should be stripped/ignored — should not throw
       // but status should NOT be set to 'approved' directly
-      const result = await svc.updateProduct("product-uuid-1", "vendor-uuid-1", {
+      const _result = await svc.updateProduct("product-uuid-1", "vendor-uuid-1", {
         name: "Updated Name",
       });
       // The update set args should not have status: 'approved'

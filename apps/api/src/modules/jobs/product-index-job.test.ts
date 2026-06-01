@@ -1,5 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Mock } from "vitest";
+import { describe, expect, it, vi, type Mock } from "vitest";
 import type { Job } from "bullmq";
 import type { Client as OpenSearchClient } from "@opensearch-project/opensearch";
 import {
