@@ -4,13 +4,21 @@ import type { Queue } from "bullmq";
 import type { FeatureFlagService } from "../feature-flags/FeatureFlagService.js";
 import {
   products,
+  productVariants,
   attributeDefinitions,
   categories,
   vendorCategoryRestrictions,
   type InsertProduct,
+  type InsertProductVariant,
   type SelectProduct,
+  type SelectProductVariant,
 } from "../../db/schema/index.js";
-import type { CreateProductInput, UpdateProductInput } from "@grovio/contracts";
+import type {
+  CreateProductInput,
+  UpdateProductInput,
+  CreateVariantInput,
+  UpdateVariantInput,
+} from "@grovio/contracts";
 
 // ---------------------------------------------------------------------------
 // Domain errors
@@ -508,6 +516,230 @@ export class ProductService {
         : null;
 
     return { products: rows, nextCursor };
+  }
+
+  /**
+   * List products in pending_review status for the admin moderation queue (PROD-06, D-06).
+   *
+   * Ordered by createdAt ASC so oldest submissions appear first.
+   * Cursor is an opaque base64url-encoded { createdAt, id } string.
+   *
+   * [Rule 2 - Missing critical functionality] Admin moderation queue route requires this method.
+   */
+  async listForModeration(
+    limit = 20,
+    cursor?: string
+  ): Promise<{ products: SelectProduct[]; nextCursor: string | null }> {
+    const { db } = this.deps;
+    const pageSize = Math.min(Math.max(1, limit), 100);
+
+    let cursorObj: { createdAt: Date; id: string } | undefined;
+    if (cursor) {
+      try {
+        const decoded = JSON.parse(
+          Buffer.from(cursor, "base64url").toString("utf8")
+        ) as { createdAt: string; id: string };
+        cursorObj = { createdAt: new Date(decoded.createdAt), id: decoded.id };
+      } catch {
+        // Invalid cursor — ignore, start from beginning
+      }
+    }
+
+    const rows = await db
+      .select()
+      .from(products)
+      .where(
+        cursorObj
+          ? and(
+              eq(products.status, "pending_review"),
+              or(
+                lt(products.createdAt, cursorObj.createdAt),
+                and(
+                  eq(products.createdAt, cursorObj.createdAt),
+                  lt(products.id, cursorObj.id)
+                )
+              )
+            )
+          : eq(products.status, "pending_review")
+      )
+      .orderBy(desc(products.createdAt), desc(products.id))
+      .limit(pageSize);
+
+    const lastRow = rows[rows.length - 1];
+    const nextCursor =
+      rows.length === pageSize && lastRow
+        ? Buffer.from(
+            JSON.stringify({ createdAt: lastRow.createdAt, id: lastRow.id })
+          ).toString("base64url")
+        : null;
+
+    return { products: rows, nextCursor };
+  }
+
+  /**
+   * Get a single product by ID scoped to the vendor (ownership check).
+   * Returns null if the product does not exist or does not belong to vendorId.
+   *
+   * [Rule 2 - Missing critical functionality] Added to support GET /vendor/products/:id route
+   * without requiring an expensive list-and-find approach. The route needs this for correctness.
+   */
+  async getVendorProductById(
+    id: string,
+    vendorId: string
+  ): Promise<SelectProduct | null> {
+    const { db } = this.deps;
+
+    const rows = await db
+      .select()
+      .from(products)
+      .where(
+        and(
+          eq(products.id, id),
+          eq(products.vendorId, vendorId),
+          isNull(products.archivedAt)
+        )
+      )
+      .limit(1);
+
+    return rows[0] ?? null;
+  }
+
+  /**
+   * Add a variant to a product (D-04).
+   *
+   * Enforces product ownership: the product must belong to vendorId (V4).
+   *
+   * [Rule 2 - Missing critical functionality] Variant routes in 03-07 plan require this method.
+   *
+   * @throws ProductOwnershipError when vendorId doesn't match or product not found.
+   */
+  async addVariant(
+    productId: string,
+    vendorId: string,
+    input: CreateVariantInput
+  ): Promise<SelectProductVariant> {
+    const { db } = this.deps;
+
+    // Ownership check (V4)
+    const productRows = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.id, productId), eq(products.vendorId, vendorId)))
+      .limit(1);
+
+    if (!productRows[0]) {
+      throw new ProductOwnershipError();
+    }
+
+    const now = new Date();
+    const [row] = await db
+      .insert(productVariants)
+      .values({
+        productId,
+        sku: input.sku,
+        priceMinor: input.priceMinor,
+        optionValues: (input.optionValues ?? {}) as Record<string, unknown>,
+        sortOrder: input.sortOrder ?? 0,
+        createdAt: now,
+        updatedAt: now,
+      } satisfies InsertProductVariant)
+      .returning();
+
+    return row!;
+  }
+
+  /**
+   * Update a product variant (D-04).
+   *
+   * Enforces product ownership: the product must belong to vendorId (V4).
+   *
+   * [Rule 2 - Missing critical functionality] Variant routes in 03-07 plan require this method.
+   *
+   * @throws ProductOwnershipError when vendorId doesn't match or product not found.
+   * @throws ProductNotFoundError when variantId does not exist on the product.
+   */
+  async updateVariant(
+    variantId: string,
+    productId: string,
+    vendorId: string,
+    input: UpdateVariantInput
+  ): Promise<SelectProductVariant> {
+    const { db } = this.deps;
+
+    // Ownership check via product FK (V4)
+    const productRows = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.id, productId), eq(products.vendorId, vendorId)))
+      .limit(1);
+
+    if (!productRows[0]) {
+      throw new ProductOwnershipError();
+    }
+
+    // Build update values from non-undefined input fields
+    const updateValues: Partial<InsertProductVariant> = {
+      updatedAt: new Date(),
+    };
+    if (input.sku !== undefined) updateValues.sku = input.sku;
+    if (input.priceMinor !== undefined) updateValues.priceMinor = input.priceMinor;
+    if (input.optionValues !== undefined)
+      updateValues.optionValues = input.optionValues as Record<string, unknown>;
+    if (input.sortOrder !== undefined) updateValues.sortOrder = input.sortOrder;
+
+    const [updated] = await db
+      .update(productVariants)
+      .set(updateValues)
+      .where(
+        and(
+          eq(productVariants.id, variantId),
+          eq(productVariants.productId, productId)
+        )
+      )
+      .returning();
+
+    if (!updated) {
+      throw new ProductNotFoundError("Variant not found.");
+    }
+
+    return updated;
+  }
+
+  /**
+   * Delete a product variant (D-04).
+   *
+   * Enforces product ownership: the product must belong to vendorId (V4).
+   *
+   * [Rule 2 - Missing critical functionality] Variant routes in 03-07 plan require this method.
+   *
+   * @throws ProductOwnershipError when vendorId doesn't match or product not found.
+   */
+  async deleteVariant(
+    variantId: string,
+    productId: string,
+    vendorId: string
+  ): Promise<void> {
+    const { db } = this.deps;
+
+    // Ownership check via product FK (V4)
+    const productRows = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.id, productId), eq(products.vendorId, vendorId)))
+      .limit(1);
+
+    if (!productRows[0]) {
+      throw new ProductOwnershipError();
+    }
+
+    await db
+      .delete(productVariants)
+      .where(
+        and(
+          eq(productVariants.id, variantId),
+          eq(productVariants.productId, productId)
+        )
+      );
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────

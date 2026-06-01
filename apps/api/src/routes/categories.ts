@@ -4,6 +4,7 @@ import type { CategoryMetadataService } from "../modules/category-metadata/index
 import type { CategoryService } from "../modules/categories/index.js";
 import type { FilterSchemaService } from "../modules/filter-schema/index.js";
 import type { ProductTemplateService } from "../modules/product-templates/index.js";
+import type { SearchService } from "../modules/search/index.js";
 import type { VendorRestrictionService } from "../modules/vendor-restrictions/index.js";
 
 /**
@@ -73,10 +74,26 @@ export async function categoryRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   // ── GET /categories/:id/filters ──────────────────────────────────────────
-  // Returns the filter schema for a category (CAT-04).
+  // Returns the filter schema for a category (CAT-04, SRCH-03).
+  //
+  // Phase 3 extension (plan 03-07): resolves via searchService.getFilterSchema()
+  // which is Redis-cached (category_filter_schema:{categoryId}, FILTER_SCHEMA_TTL_SECONDS).
+  // Falls back to FilterSchemaService when searchService is unavailable (graceful degradation).
+  // The cache key matches FilterSchemaService.invalidateFilterCache() so both paths share
+  // the same invalidation on filter schema updates (Pitfall 6, PATTERNS.md).
   fastify.get<{ Params: { id: string } }>(
     "/categories/:id/filters",
     async (request, reply) => {
+      const searchService =
+        fastify.diContainer.resolve<SearchService>("searchService");
+
+      if (searchService.isAvailable()) {
+        // Use SearchService: returns Redis-cached filter schema (SRCH-03)
+        const filters = await searchService.getFilterSchema(request.params.id);
+        return reply.send({ success: true, data: { filters } });
+      }
+
+      // Graceful fallback: SearchService unavailable — query DB via FilterSchemaService
       const filterSchemaService =
         fastify.diContainer.resolve<FilterSchemaService>("filterSchemaService");
       const filters = await filterSchemaService.getFilterSchema(
