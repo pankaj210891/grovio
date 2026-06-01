@@ -2,11 +2,15 @@ import { asClass, asValue, createContainer, InjectionMode } from "awilix";
 import type { FastifyInstance } from "fastify";
 import { env } from "./config/env.js";
 import { AttributeDefinitionService } from "./modules/attribute-definitions/index.js";
+import { ImageService, ProductService } from "./modules/catalog/index.js";
 import { CategoryMetadataService } from "./modules/category-metadata/index.js";
 import { CategoryService } from "./modules/categories/index.js";
 import { FeatureFlagService } from "./modules/feature-flags/index.js";
 import { FilterSchemaService } from "./modules/filter-schema/index.js";
+import { productIndexQueue } from "./modules/jobs/queues.js";
 import { ProductTemplateService } from "./modules/product-templates/index.js";
+import { SearchService } from "./modules/search/index.js";
+import { VendorAuthService } from "./modules/vendor-auth/index.js";
 import { VendorRestrictionService } from "./modules/vendor-restrictions/index.js";
 
 /**
@@ -20,23 +24,33 @@ import { VendorRestrictionService } from "./modules/vendor-restrictions/index.js
  * from the Fastify instance. Domain service registrations are added in
  * subsequent plans (feature flags in 01-06, auth in 02-x, etc.).
  *
+ * Registration order:
+ *   1. Infrastructure values (db, redis, logger, env, opensearch, productIndexQueue)
+ *   2. Domain services (singleton classes — Awilix injects via PROXY)
+ *
  * @param fastify - The fully-initialised Fastify instance (after plugin registration)
  */
 export function createAppContainer(fastify: FastifyInstance) {
   const container = createContainer({ injectionMode: InjectionMode.PROXY });
 
-  // Register core infrastructure as values so domain services can receive
-  // them via constructor injection without knowing about Fastify internals.
+  // ── Infrastructure values ────────────────────────────────────────────────
+  // Registered first so all domain services can receive them via PROXY injection.
   container.register({
     db: asValue(fastify.db),
     redis: asValue(fastify.redis),
     logger: asValue(fastify.log),
     env: asValue(env),
+    // Phase 3: OpenSearch client (null when OPENSEARCH_URL not set — graceful degradation)
+    opensearch: asValue(fastify.opensearch),
+    // Phase 3: BullMQ product index queue (separate ioredis connection — Pitfall 1)
+    productIndexQueue: asValue(productIndexQueue),
   });
 
-  // Domain services — registered as classes so Awilix handles instantiation
-  // and injects constructor dependencies via PROXY injection mode.
+  // ── Domain services ──────────────────────────────────────────────────────
+  // Registered as classes so Awilix handles instantiation and injects
+  // constructor dependencies via PROXY injection mode (no reflect-metadata needed).
   container.register({
+    // Phase 1-2 services (existing)
     featureFlagService: asClass(FeatureFlagService).singleton(),
     categoryService: asClass(CategoryService).singleton(),
     attributeDefinitionService: asClass(AttributeDefinitionService).singleton(),
@@ -44,6 +58,11 @@ export function createAppContainer(fastify: FastifyInstance) {
     productTemplateService: asClass(ProductTemplateService).singleton(),
     vendorRestrictionService: asClass(VendorRestrictionService).singleton(),
     categoryMetadataService: asClass(CategoryMetadataService).singleton(),
+    // Phase 3 services (new — plan 03-07)
+    vendorAuthService: asClass(VendorAuthService).singleton(),
+    productService: asClass(ProductService).singleton(),
+    imageService: asClass(ImageService).singleton(),
+    searchService: asClass(SearchService).singleton(),
   });
 
   return container;
