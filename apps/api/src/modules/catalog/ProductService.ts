@@ -519,6 +519,64 @@ export class ProductService {
   }
 
   /**
+   * List products in pending_review status for the admin moderation queue (PROD-06, D-06).
+   *
+   * Ordered by createdAt ASC so oldest submissions appear first.
+   * Cursor is an opaque base64url-encoded { createdAt, id } string.
+   *
+   * [Rule 2 - Missing critical functionality] Admin moderation queue route requires this method.
+   */
+  async listForModeration(
+    limit = 20,
+    cursor?: string
+  ): Promise<{ products: SelectProduct[]; nextCursor: string | null }> {
+    const { db } = this.deps;
+    const pageSize = Math.min(Math.max(1, limit), 100);
+
+    let cursorObj: { createdAt: Date; id: string } | undefined;
+    if (cursor) {
+      try {
+        const decoded = JSON.parse(
+          Buffer.from(cursor, "base64url").toString("utf8")
+        ) as { createdAt: string; id: string };
+        cursorObj = { createdAt: new Date(decoded.createdAt), id: decoded.id };
+      } catch {
+        // Invalid cursor — ignore, start from beginning
+      }
+    }
+
+    const rows = await db
+      .select()
+      .from(products)
+      .where(
+        cursorObj
+          ? and(
+              eq(products.status, "pending_review"),
+              or(
+                lt(products.createdAt, cursorObj.createdAt),
+                and(
+                  eq(products.createdAt, cursorObj.createdAt),
+                  lt(products.id, cursorObj.id)
+                )
+              )
+            )
+          : eq(products.status, "pending_review")
+      )
+      .orderBy(desc(products.createdAt), desc(products.id))
+      .limit(pageSize);
+
+    const lastRow = rows[rows.length - 1];
+    const nextCursor =
+      rows.length === pageSize && lastRow
+        ? Buffer.from(
+            JSON.stringify({ createdAt: lastRow.createdAt, id: lastRow.id })
+          ).toString("base64url")
+        : null;
+
+    return { products: rows, nextCursor };
+  }
+
+  /**
    * Get a single product by ID scoped to the vendor (ownership check).
    * Returns null if the product does not exist or does not belong to vendorId.
    *
