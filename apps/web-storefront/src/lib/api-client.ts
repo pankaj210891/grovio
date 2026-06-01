@@ -8,7 +8,8 @@
  * Pattern K — App.tsx line 4 convention).
  */
 
-const BASE_URL = import.meta.env['VITE_API_URL'] as string;
+const BASE_URL: string =
+  (import.meta.env['VITE_API_URL'] as string | undefined) ?? 'http://localhost:3001/api';
 
 /**
  * Error class thrown by apiClient on non-2xx responses.
