@@ -5,9 +5,13 @@ import { AttributeDefinitionService } from "./modules/attribute-definitions/inde
 import { ImageService, ProductService } from "./modules/catalog/index.js";
 import { CategoryMetadataService } from "./modules/category-metadata/index.js";
 import { CategoryService } from "./modules/categories/index.js";
+import { CustomerAddressService } from "./modules/customer-addresses/index.js";
+import { CustomerAuthService } from "./modules/customer-auth/index.js";
 import { FeatureFlagService } from "./modules/feature-flags/index.js";
 import { FilterSchemaService } from "./modules/filter-schema/index.js";
+import { HomepageService } from "./modules/homepage/index.js";
 import { productIndexQueue } from "./modules/jobs/queues.js";
+import { createMailerTransport } from "./modules/mailer/mailer.js";
 import { ProductTemplateService } from "./modules/product-templates/index.js";
 import { SearchService } from "./modules/search/index.js";
 import { VendorAuthService } from "./modules/vendor-auth/index.js";
@@ -44,6 +48,8 @@ export function createAppContainer(fastify: FastifyInstance) {
     opensearch: asValue(fastify.opensearch),
     // Phase 3: BullMQ product index queue (separate ioredis connection — Pitfall 1)
     productIndexQueue: asValue(productIndexQueue),
+    // Phase 4: nodemailer transport — null-safe if SMTP not configured (dev fallback)
+    mailer: asValue(createMailerTransport(env)),
   });
 
   // ── Domain services ──────────────────────────────────────────────────────
@@ -63,6 +69,10 @@ export function createAppContainer(fastify: FastifyInstance) {
     productService: asClass(ProductService).singleton(),
     imageService: asClass(ImageService).singleton(),
     searchService: asClass(SearchService).singleton(),
+    // Phase 4 services (new — plan 04-05)
+    customerAuthService: asClass(CustomerAuthService).singleton(),
+    customerAddressService: asClass(CustomerAddressService).singleton(),
+    homepageService: asClass(HomepageService).singleton(),
   });
 
   return container;
