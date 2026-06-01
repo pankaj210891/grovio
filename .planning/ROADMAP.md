@@ -250,7 +250,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Foundation | 5/10 | In Progress|  |
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
-| 4. Customer Storefront (Web) | 6/9 | In Progress|  |
+| 4. Customer Storefront (Web) | 7/9 | In Progress|  |
 | 5. Commerce Core | 0/TBD | Not started | - |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
 | 7. React Native App | 0/TBD | Not started | - |
