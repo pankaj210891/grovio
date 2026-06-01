@@ -8,7 +8,6 @@
  *   - Add sub: open create slide-over for a subcategory
  */
 
-import type { CategoryTreeNode as CategoryTreeNodeType } from '@grovio/contracts';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

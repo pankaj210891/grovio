@@ -9,7 +9,7 @@
  * Phase 4 replaces the X-Internal-Admin-Token header with JWT middleware.
  */
 
-const API_BASE = import.meta.env['VITE_API_BASE_URL'] ?? 'http://localhost:3000';
+const API_BASE = import.meta.env['VITE_API_BASE_URL'] ?? '/api';
 
 // SECURITY NOTE (T-02-18 / Phase 2 dev-only placeholder):
 // VITE_* variables are inlined into the browser bundle at build time and are

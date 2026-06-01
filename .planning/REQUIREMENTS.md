@@ -30,19 +30,19 @@ Requirements for the initial commercial release (the Envato-ready starter kit). 
 
 ### Catalog & Products
 
-- [ ] **PROD-01**: Vendor can create a product whose fields are driven by the selected category's attribute schema/template
-- [ ] **PROD-02**: Vendor can edit and archive their own products
-- [ ] **PROD-03**: Product attributes are stored so they are queryable for filtering and search (JSONB + indexed)
-- [ ] **PROD-04**: Vendor can manage product variants/options where the category defines them
-- [ ] **PROD-05**: Vendor can upload and manage product images
-- [ ] **PROD-06**: Admin can moderate (approve/reject) vendor products before they go live
+- [x] **PROD-01**: Vendor can create a product whose fields are driven by the selected category's attribute schema/template
+- [x] **PROD-02**: Vendor can edit and archive their own products
+- [x] **PROD-03**: Product attributes are stored so they are queryable for filtering and search (JSONB + indexed)
+- [x] **PROD-04**: Vendor can manage product variants/options where the category defines them
+- [x] **PROD-05**: Vendor can upload and manage product images
+- [x] **PROD-06**: Admin can moderate (approve/reject) vendor products before they go live
 
 ### Search & Discovery
 
-- [ ] **SRCH-01**: Customer can full-text search products with type-ahead suggestions
-- [ ] **SRCH-02**: Customer can filter a product list using dynamic, category-specific facets
-- [ ] **SRCH-03**: Customer can apply and remove filters via filter chips and sort results
-- [ ] **SRCH-04**: Search/index only exposes attributes the category schema marks as searchable/filterable
+- [x] **SRCH-01**: Customer can full-text search products with type-ahead suggestions
+- [x] **SRCH-02**: Customer can filter a product list using dynamic, category-specific facets
+- [x] **SRCH-03**: Customer can apply and remove filters via filter chips and sort results
+- [x] **SRCH-04**: Search/index only exposes attributes the category schema marks as searchable/filterable
 
 ### Customer Storefront (Web)
 
@@ -212,16 +212,16 @@ Which phases cover which requirements. Populated during roadmap creation.
 | CAT-05 | Phase 2 | Complete |
 | CAT-06 | Phase 2 | Complete |
 | CAT-07 | Phase 2 | Complete |
-| PROD-01 | Phase 3 | Pending |
-| PROD-02 | Phase 3 | Pending |
-| PROD-03 | Phase 3 | Pending |
-| PROD-04 | Phase 3 | Pending |
-| PROD-05 | Phase 3 | Pending |
-| PROD-06 | Phase 3 | Pending |
-| SRCH-01 | Phase 3 | Pending |
-| SRCH-02 | Phase 3 | Pending |
-| SRCH-03 | Phase 3 | Pending |
-| SRCH-04 | Phase 3 | Pending |
+| PROD-01 | Phase 3 | Complete |
+| PROD-02 | Phase 3 | Complete |
+| PROD-03 | Phase 3 | Complete |
+| PROD-04 | Phase 3 | Complete |
+| PROD-05 | Phase 3 | Complete |
+| PROD-06 | Phase 3 | Complete |
+| SRCH-01 | Phase 3 | Complete |
+| SRCH-02 | Phase 3 | Complete |
+| SRCH-03 | Phase 3 | Complete |
+| SRCH-04 | Phase 3 | Complete |
 | STORE-01 | Phase 4 | Pending |
 | STORE-02 | Phase 4 | Pending |
 | STORE-03 | Phase 4 | Pending |

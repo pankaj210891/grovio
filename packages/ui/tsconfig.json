@@ -1,7 +1,8 @@
 {
-  "extends": "@grovio/config/tsconfig.react.json",
+  "extends": "@grovio/config/tsconfig/react.json",
   "include": ["src/**/*"],
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "types": []
   }
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { SelectFeatureFlag } from "../../db/schema/index.js";
 import { FeatureFlagService } from "./FeatureFlagService.js";
 
@@ -11,15 +11,6 @@ import { FeatureFlagService } from "./FeatureFlagService.js";
  * Supports: db.select().from().where().limit(n)
  */
 function makeDbMock(rows: SelectFeatureFlag[]) {
-  const chain = {
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue(rows),
-    // getAllFlags path uses .select().from().where() — no .limit()
-    // We make `where` also thenable so it can be awaited directly.
-    then: undefined as unknown,
-  };
-
   // Make `where` awaitable (resolves to rows) so getAllFlags() works without .limit()
   const awaitableChain = {
     from: vi.fn().mockReturnValue({

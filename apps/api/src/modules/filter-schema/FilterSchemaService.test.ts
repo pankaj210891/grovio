@@ -1,7 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
-import type { SelectAttributeDefinition } from "../../db/schema/index.js";
+import type { SelectAttributeDefinition, SelectFilterSchemaDefinition } from "../../db/schema/index.js";
 import type { FilterSchemaDef } from "@grovio/contracts";
 import { FilterSchemaService } from "./FilterSchemaService.js";
+
+// ---------------------------------------------------------------------------
+// Redis mock factory
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a minimal Redis mock with only the methods FilterSchemaService uses.
+ * Each test that expects cache invalidation asserts redis.del was called.
+ */
+function makeRedisMock() {
+  return {
+    del: vi.fn().mockResolvedValue(1),
+    get: vi.fn().mockResolvedValue(null),
+    setex: vi.fn().mockResolvedValue("OK"),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Mock helpers
@@ -112,6 +128,31 @@ function makeFullDbMock(opts: {
   return db;
 }
 
+/**
+ * Build a DB mock that supports removeFilterEntry's two-step pattern:
+ * 1. select().from().where().limit() — for pre-delete entry lookup
+ * 2. delete().where().returning() — for the actual delete
+ */
+function makeRemoveEntryDbMock(
+  entryRow: Partial<SelectFilterSchemaDefinition> | null,
+  deleteResult: SelectFilterSchemaDefinition | null = entryRow as SelectFilterSchemaDefinition | null
+) {
+  return {
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue(entryRow ? [entryRow] : []),
+        }),
+      }),
+    }),
+    delete: vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue(deleteResult ? [deleteResult] : []),
+      }),
+    }),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Test data
 // ---------------------------------------------------------------------------
@@ -148,6 +189,15 @@ const joinedFilterRow = {
   ad_options: [{ value: "red", label: "Red" }],
 };
 
+const filterSchemaEntry: SelectFilterSchemaDefinition = {
+  id: "fsd-uuid-1",
+  categoryId: "cat-uuid-1",
+  attributeDefId: "attr-uuid-1",
+  displayType: "checkbox",
+  sortOrder: 0,
+  createdAt: new Date("2025-01-01T00:00:00Z"),
+};
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -157,7 +207,8 @@ describe("FilterSchemaService", () => {
   describe("upsertFilterEntry — is_filterable gate (CAT-04, T-02-10)", () => {
     it("throws when referenced attribute has is_filterable=false", async () => {
       const db = makeAttrLookupDbMock([nonFilterableAttr]);
-      const svc = new FilterSchemaService({ db: db as never });
+      const redis = makeRedisMock();
+      const svc = new FilterSchemaService({ db: db as never, redis: redis as never });
 
       await expect(
         svc.upsertFilterEntry({
@@ -167,24 +218,20 @@ describe("FilterSchemaService", () => {
           sortOrder: 0,
         })
       ).rejects.toThrow(/not filterable|is_filterable/i);
+
+      // Cache should NOT be invalidated on rejected writes.
+      expect(redis.del).not.toHaveBeenCalled();
     });
 
     it("succeeds when referenced attribute has is_filterable=true", async () => {
-      const insertedRow = {
-        id: "fsd-uuid-1",
-        categoryId: "cat-uuid-1",
-        attributeDefId: "attr-uuid-1",
-        displayType: "checkbox" as const,
-        sortOrder: 0,
-        createdAt: new Date("2025-01-01T00:00:00Z"),
-      };
+      const insertedRow = filterSchemaEntry;
 
       const db = makeFullDbMock({
         attrRows: [filterableAttr],
         insertResult: [insertedRow],
       });
-
-      const svc = new FilterSchemaService({ db: db as never });
+      const redis = makeRedisMock();
+      const svc = new FilterSchemaService({ db: db as never, redis: redis as never });
 
       const result = await svc.upsertFilterEntry({
         categoryId: "cat-uuid-1",
@@ -196,13 +243,59 @@ describe("FilterSchemaService", () => {
       expect(result).toEqual(insertedRow);
       expect(db.insert).toHaveBeenCalledOnce();
     });
+
+    it("invalidates category_filter_schema:{categoryId} after successful upsert", async () => {
+      const insertedRow = filterSchemaEntry;
+
+      const db = makeFullDbMock({
+        attrRows: [filterableAttr],
+        insertResult: [insertedRow],
+      });
+      const redis = makeRedisMock();
+      const svc = new FilterSchemaService({ db: db as never, redis: redis as never });
+
+      await svc.upsertFilterEntry({
+        categoryId: "cat-uuid-1",
+        attributeDefId: "attr-uuid-1",
+        displayType: "checkbox",
+        sortOrder: 0,
+      });
+
+      expect(redis.del).toHaveBeenCalledOnce();
+      expect(redis.del).toHaveBeenCalledWith("category_filter_schema:cat-uuid-1");
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe("replaceFilterSchema — cache invalidation (Pitfall 6, T-03-G2)", () => {
+    it("invalidates category_filter_schema:{categoryId} after replace", async () => {
+      const db = makeFullDbMock({
+        attrRows: [filterableAttr],
+        insertResult: [filterSchemaEntry],
+        deleteResult: [],
+      });
+      const redis = makeRedisMock();
+      const svc = new FilterSchemaService({ db: db as never, redis: redis as never });
+
+      await svc.replaceFilterSchema("cat-uuid-1", [
+        {
+          categoryId: "cat-uuid-1",
+          attributeDefId: "attr-uuid-1",
+          displayType: "checkbox",
+        },
+      ]);
+
+      expect(redis.del).toHaveBeenCalledOnce();
+      expect(redis.del).toHaveBeenCalledWith("category_filter_schema:cat-uuid-1");
+    });
   });
 
   // -------------------------------------------------------------------------
   describe("getFilterSchema — join query (CAT-04)", () => {
     it("returns filter entries joined with attribute key/label/attrType/options", async () => {
       const db = makeJoinDbMock([joinedFilterRow]);
-      const svc = new FilterSchemaService({ db: db as never });
+      const redis = makeRedisMock();
+      const svc = new FilterSchemaService({ db: db as never, redis: redis as never });
 
       const result = await svc.getFilterSchema("cat-uuid-1");
 
@@ -235,13 +328,50 @@ describe("FilterSchemaService", () => {
         ad_options: null,
       };
       const db = makeJoinDbMock([row1, row2]);
-      const svc = new FilterSchemaService({ db: db as never });
+      const redis = makeRedisMock();
+      const svc = new FilterSchemaService({ db: db as never, redis: redis as never });
 
       const result = await svc.getFilterSchema("cat-uuid-1");
 
       expect(result).toHaveLength(2);
       expect(result[0]?.sortOrder).toBe(0);
       expect(result[1]?.sortOrder).toBe(1);
+    });
+
+    it("does NOT call redis.del on a read-only getFilterSchema call", async () => {
+      const db = makeJoinDbMock([joinedFilterRow]);
+      const redis = makeRedisMock();
+      const svc = new FilterSchemaService({ db: db as never, redis: redis as never });
+
+      await svc.getFilterSchema("cat-uuid-1");
+
+      expect(redis.del).not.toHaveBeenCalled();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe("removeFilterEntry — cache invalidation (Pitfall 6, T-03-G2)", () => {
+    it("invalidates cache using the deleted entry's categoryId", async () => {
+      const db = makeRemoveEntryDbMock(filterSchemaEntry);
+      const redis = makeRedisMock();
+      const svc = new FilterSchemaService({ db: db as never, redis: redis as never });
+
+      const result = await svc.removeFilterEntry("fsd-uuid-1");
+
+      expect(result).toEqual(filterSchemaEntry);
+      expect(redis.del).toHaveBeenCalledOnce();
+      expect(redis.del).toHaveBeenCalledWith("category_filter_schema:cat-uuid-1");
+    });
+
+    it("returns null and does not invalidate cache when entry not found", async () => {
+      const db = makeRemoveEntryDbMock(null);
+      const redis = makeRedisMock();
+      const svc = new FilterSchemaService({ db: db as never, redis: redis as never });
+
+      const result = await svc.removeFilterEntry("nonexistent-id");
+
+      expect(result).toBeNull();
+      expect(redis.del).not.toHaveBeenCalled();
     });
   });
 });

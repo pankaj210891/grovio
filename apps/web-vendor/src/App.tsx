@@ -1,12 +1,4 @@
-import type { HealthCheckResponse } from '@grovio/contracts';
 import { motion } from 'motion/react';
-
-// TypeScript assertion that the HealthCheckResponse contract shape is usable
-const _check: HealthCheckResponse = {
-  status: 'ok',
-  version: '0.1.0',
-  timestamp: new Date().toISOString(),
-};
 
 export default function App() {
   return (
@@ -34,7 +26,7 @@ export default function App() {
           </p>
         </div>
         <p className="mt-4 text-xs text-gray-400">
-          Health contract: {_check.status} · v{_check.version}
+          Grovio Vendor Panel v0.1.0
         </p>
       </div>
     </motion.div>

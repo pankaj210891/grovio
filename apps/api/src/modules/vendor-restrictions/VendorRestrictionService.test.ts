@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { SelectCategory, SelectVendorCategoryRestriction } from "../../db/schema/index.js";
 import { VendorRestrictionService } from "./VendorRestrictionService.js";
 

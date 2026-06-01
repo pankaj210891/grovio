@@ -31,9 +31,12 @@ const redisPlugin = fp(
     const redis = new Redis(env.REDIS_URL, {
       lazyConnect: true,
       enableReadyCheck: false, // must be false for Upstash managed Redis — Upstash does not support the READY check
-      // Explicit tls: {} is required as belt-and-suspenders: some ioredis versions strip TLS
-      // during URL parsing even when the rediss:// scheme is present (Pitfall 3).
-      ...(isTls ? { tls: {} } : {}),
+      // Explicit tls options required: some ioredis versions strip TLS during URL parsing
+      // even when the rediss:// scheme is present (Pitfall 3).
+      // rejectUnauthorized is relaxed in non-production because Node.js on Windows does not
+      // use the OS certificate store by default, causing self-signed/intermediate CA failures
+      // on developer machines. Production always enforces certificate verification.
+      ...(isTls ? { tls: { rejectUnauthorized: env.NODE_ENV === "production" } } : {}),
     });
 
     // Verify connectivity at startup.

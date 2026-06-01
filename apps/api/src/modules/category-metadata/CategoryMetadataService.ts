@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { MerchandisingBlockSchema } from "@grovio/contracts";
-import type { UpsertMetadataInput } from "@grovio/contracts";
+import { MerchandisingBlockSchema, type UpsertMetadataInput } from "@grovio/contracts";
 import {
   categoryMetadata,
   type SelectCategoryMetadata,

@@ -49,3 +49,7 @@ pnpm-debug.log*
 # Logs
 *.log
 logs
+
+# Claude Code
+.claude/settings.local.json
+.claude/worktrees/

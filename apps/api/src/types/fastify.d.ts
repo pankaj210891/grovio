@@ -1,13 +1,15 @@
 import type { AwilixContainer } from "awilix";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Redis } from "ioredis";
+import type { Client as OpenSearchClient } from "@opensearch-project/opensearch";
 
 /**
  * Augments the Fastify instance type with custom decorator properties
- * added by the drizzle, redis, and awilix plugins.
+ * added by the drizzle, redis, awilix, and opensearch plugins.
  *
  * These declarations allow TypeScript to resolve `fastify.db`,
- * `fastify.redis`, and `fastify.diContainer` without casting to `any`.
+ * `fastify.redis`, `fastify.diContainer`, and `fastify.opensearch`
+ * without casting to `any`.
  */
 declare module "fastify" {
   interface FastifyInstance {
@@ -21,5 +23,20 @@ declare module "fastify" {
     /** Awilix DI container (PROXY injection mode). */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     diContainer: AwilixContainer<any>;
+
+    /**
+     * OpenSearch client instance. null when OPENSEARCH_URL is not configured
+     * (e.g. local dev or environments where search is disabled).
+     * SearchService.isAvailable() gates all queries on this being non-null.
+     */
+    opensearch: OpenSearchClient | null;
+  }
+
+  interface FastifyRequest {
+    /**
+     * Vendor UUID extracted from the verified JWT by requireVendorAuth preHandler.
+     * Present only on /vendor/* routes after the preHandler runs (T-03-W1, V4).
+     */
+    vendorId?: string;
   }
 }

@@ -1,12 +1,18 @@
 import type { ApiError } from "@grovio/contracts";
 import Fastify, { type FastifyError, type FastifyInstance, type FastifyServerOptions } from "fastify";
+import { ZodError } from "zod";
 import awilixPlugin from "./plugins/awilix.js";
 import drizzlePlugin from "./plugins/drizzle.js";
+import opensearchPlugin from "./plugins/opensearch.js";
 import redisPlugin from "./plugins/redis.js";
 import { adminCategoryRoutes } from "./routes/admin/categories.js";
+import { adminProductRoutes } from "./routes/admin/products.js";
 import { categoryRoutes } from "./routes/categories.js";
 import { featureFlagRoutes } from "./routes/feature-flags.js";
 import healthRoutes from "./routes/health.js";
+import { searchRoutes } from "./routes/search.js";
+import { vendorAuthRoutes } from "./routes/vendor/auth.js";
+import { vendorProductRoutes } from "./routes/vendor/products.js";
 
 /**
  * Build and configure the Fastify application.
@@ -30,15 +36,27 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   });
 
   // --- Plugins (order matters) ---
+  // 1. drizzle  — PostgreSQL connection pool + Drizzle ORM (`fastify.db`)
+  // 2. redis    — ioredis client (`fastify.redis`)
+  // 3. opensearch — OpenSearch client (`fastify.opensearch`); null when URL not set
+  // 4. awilix   — DI container (`fastify.diContainer`), depends on db + redis + opensearch
+  // 5. routes   — HTTP route handlers, use DI container
   await fastify.register(drizzlePlugin);
   await fastify.register(redisPlugin);
+  await fastify.register(opensearchPlugin); // Phase 3: must run AFTER redis, BEFORE awilix
   await fastify.register(awilixPlugin);
 
-  // --- Routes ---
+  // --- Routes (Phase 1-2) ---
   await fastify.register(healthRoutes);
   await fastify.register(featureFlagRoutes);
   await fastify.register(categoryRoutes);
   await fastify.register(adminCategoryRoutes);
+
+  // --- Routes (Phase 3 — plan 03-07) ---
+  await fastify.register(vendorAuthRoutes); // POST /vendor/auth/* (public — no JWT guard)
+  await fastify.register(vendorProductRoutes); // /vendor/products/* (JWT-guarded)
+  await fastify.register(adminProductRoutes); // /admin/products/* (admin token guard)
+  await fastify.register(searchRoutes); // GET /search, GET /search/suggest (public)
 
   // --- 404 handler ---
   fastify.setNotFoundHandler((_req, reply) => {
@@ -53,22 +71,35 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   });
 
   // --- Error handler ---
-  fastify.setErrorHandler((error: FastifyError, _req, reply) => {
+  fastify.setErrorHandler((error: FastifyError | ZodError, _req, reply) => {
     fastify.log.error(error);
 
     const isProd = process.env["NODE_ENV"] === "production";
 
+    // ZodError: bad client input — always 400, structured message
+    if (error instanceof ZodError) {
+      return reply.status(400).send({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: isProd
+            ? "Invalid request parameters"
+            : error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
+        },
+      });
+    }
+
     const body: ApiError = {
       success: false,
       error: {
-        code: error.code ?? "INTERNAL_ERROR",
+        code: (error as FastifyError).code ?? "INTERNAL_ERROR",
         // Suppress raw error messages in production (threat T-03-01).
         message: isProd ? "An unexpected error occurred" : (error.message ?? "Internal server error"),
       },
     };
 
-    const statusCode = (typeof error.statusCode === "number" && error.statusCode >= 400)
-      ? error.statusCode
+    const statusCode = (typeof (error as FastifyError).statusCode === "number" && (error as FastifyError).statusCode! >= 400)
+      ? (error as FastifyError).statusCode!
       : 500;
 
     return reply.status(statusCode).send(body);
