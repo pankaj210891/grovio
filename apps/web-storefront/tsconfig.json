@@ -3,6 +3,7 @@
   "extends": "@grovio/config/tsconfig/react.json",
   "compilerOptions": {
     "composite": false,
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
