@@ -48,7 +48,7 @@ Requirements for the initial commercial release (the Envato-ready starter kit). 
 
 - [x] **STORE-01**: Customer can view a configurable homepage with merchandising/CMS blocks
 - [ ] **STORE-02**: Customer can view category landing pages with category-specific filters
-- [ ] **STORE-03**: Customer can view a product listing page (PLP) with pagination/infinite scroll
+- [x] **STORE-03**: Customer can view a product listing page (PLP) with pagination/infinite scroll
 - [ ] **STORE-04**: Customer can view a product detail page (PDP) showing dynamic, category-specific attributes
 - [x] **STORE-05**: Storefront is responsive/mobile-first and uses Framer Motion micro-interactions
 - [ ] **STORE-06**: Storefront is accessibility-conscious (keyboard nav, semantic markup, contrast)
@@ -224,7 +224,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | SRCH-04 | Phase 3 | Complete |
 | STORE-01 | Phase 4 | Complete |
 | STORE-02 | Phase 4 | Pending |
-| STORE-03 | Phase 4 | Pending |
+| STORE-03 | Phase 4 | Complete |
 | STORE-04 | Phase 4 | Pending |
 | STORE-05 | Phase 4 | Complete |
 | STORE-06 | Phase 4 | Pending |
