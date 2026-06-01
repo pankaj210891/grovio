@@ -137,8 +137,30 @@ Plans:
   4. A customer can manage their profile and save delivery addresses with Google Places autocomplete
   5. All storefront pages are responsive/mobile-first, pass keyboard navigation, use semantic markup, meet contrast requirements, and include Framer Motion micro-interactions
 
-**Plans**: TBD
+**Plans**: 8 plans in 6 waves
 **UI hint**: yes
+
+Plans:
+
+**Wave 1**
+- [ ] 04-01-PLAN.md — featured_categories contract extension + Phase 4 npm installs (legitimacy checkpoint)
+
+**Wave 2** *(blocked on Wave 1)*
+- [ ] 04-02-PLAN.md — Drizzle schemas (customers, password_reset_tokens, customer_addresses, homepage_blocks) + env vars + [BLOCKING] db:generate + db:migrate
+
+**Wave 3** *(blocked on Wave 2)*
+- [ ] 04-03-PLAN.md — CustomerAuthService (argon2/jose, reset flow) + mailer + requireCustomerAuth cookie middleware (TDD)
+- [ ] 04-04-PLAN.md — HomepageService (Redis-first blocks) + CustomerAddressService (per-customer CRUD) (TDD)
+
+**Wave 4** *(blocked on Wave 3)*
+- [ ] 04-05-PLAN.md — Customer auth + account + homepage routes; CORS-with-credentials + cookie plugin + Awilix wiring
+
+**Wave 5** *(blocked on Wave 4)*
+- [ ] 04-06-PLAN.md — Storefront foundation: api-client, query-client, ui-store, hooks, layout shell, shared UI kit, router + providers
+
+**Wave 6** *(blocked on Wave 5)*
+- [ ] 04-07-PLAN.md — Auth + account pages + Google Places autocomplete (human-verify checkpoint)
+- [ ] 04-08-PLAN.md — Homepage block stack + search/PLP components + browse pages (human-verify checkpoint)
 
 ### Phase 5: Commerce Core
 
