@@ -143,7 +143,7 @@ Plans:
 Plans:
 
 **Wave 1**
-- [ ] 04-01-PLAN.md — featured_categories contract extension + Phase 4 npm installs (legitimacy checkpoint)
+- [x] 04-01-PLAN.md — featured_categories contract extension + Phase 4 npm installs (legitimacy checkpoint)
 
 **Wave 2** *(blocked on Wave 1)*
 - [ ] 04-02-PLAN.md — Drizzle schemas (customers, password_reset_tokens, customer_addresses, homepage_blocks) + env vars + [BLOCKING] db:generate + db:migrate
@@ -250,7 +250,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Foundation | 5/10 | In Progress|  |
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
-| 4. Customer Storefront (Web) | 0/TBD | Not started | - |
+| 4. Customer Storefront (Web) | 1/9 | In Progress|  |
 | 5. Commerce Core | 0/TBD | Not started | - |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
 | 7. React Native App | 0/TBD | Not started | - |
