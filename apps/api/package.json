@@ -17,6 +17,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1057.0",
     "@aws-sdk/s3-request-presigner": "^3.1057.0",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.2.0",
     "@grovio/contracts": "workspace:*",
     "@opensearch-project/opensearch": "^3.6.0",
     "argon2": "^0.44.0",
@@ -27,12 +29,14 @@
     "fastify-plugin": "^5.0.0",
     "ioredis": "^5.11.0",
     "jose": "^6.2.3",
+    "nodemailer": "^8.0.0",
     "pg": "^8.0.0",
     "zod": "^4.4.0"
   },
   "devDependencies": {
     "@grovio/config": "workspace:*",
     "@types/node": "^22",
+    "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.0.0",
     "drizzle-kit": "^1.0.0-beta.0",
     "tsx": "^4.0.0",
