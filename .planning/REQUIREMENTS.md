@@ -51,7 +51,7 @@ Requirements for the initial commercial release (the Envato-ready starter kit). 
 - [x] **STORE-03**: Customer can view a product listing page (PLP) with pagination/infinite scroll
 - [ ] **STORE-04**: Customer can view a product detail page (PDP) showing dynamic, category-specific attributes
 - [x] **STORE-05**: Storefront is responsive/mobile-first and uses Framer Motion micro-interactions
-- [ ] **STORE-06**: Storefront is accessibility-conscious (keyboard nav, semantic markup, contrast)
+- [x] **STORE-06**: Storefront is accessibility-conscious (keyboard nav, semantic markup, contrast)
 
 ### Authentication & Accounts
 
@@ -60,7 +60,7 @@ Requirements for the initial commercial release (the Envato-ready starter kit). 
 - [x] **AUTH-03**: Customer can reset password via emailed link
 - [x] **AUTH-04**: Vendor and admin users authenticate with role-appropriate access
 - [x] **AUTH-05**: Customer can manage profile and saved addresses
-- [ ] **AUTH-06**: Address entry uses Google Places autocomplete
+- [x] **AUTH-06**: Address entry uses Google Places autocomplete
 
 ### Basket & Checkout
 
@@ -227,13 +227,13 @@ Which phases cover which requirements. Populated during roadmap creation.
 | STORE-03 | Phase 4 | Complete |
 | STORE-04 | Phase 4 | Pending |
 | STORE-05 | Phase 4 | Complete |
-| STORE-06 | Phase 4 | Pending |
+| STORE-06 | Phase 4 | Complete |
 | AUTH-01 | Phase 4 | Complete |
 | AUTH-02 | Phase 4 | Complete |
 | AUTH-03 | Phase 4 | Complete |
 | AUTH-04 | Phase 4 | Complete |
 | AUTH-05 | Phase 4 | Complete |
-| AUTH-06 | Phase 4 | Pending |
+| AUTH-06 | Phase 4 | Complete |
 | CHK-01 | Phase 5 | Pending |
 | CHK-02 | Phase 5 | Pending |
 | CHK-03 | Phase 5 | Pending |

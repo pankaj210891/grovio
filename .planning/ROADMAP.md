@@ -159,7 +159,7 @@ Plans:
 - [x] 04-06-PLAN.md — Storefront foundation: api-client, query-client, ui-store, hooks, layout shell, shared UI kit, router + providers
 
 **Wave 6** *(blocked on Wave 5)*
-- [ ] 04-07-PLAN.md — Auth + account pages + Google Places autocomplete (human-verify checkpoint)
+- [x] 04-07-PLAN.md — Auth + account pages + Google Places autocomplete (human-verify checkpoint)
 - [ ] 04-08-PLAN.md — Homepage block stack + search/PLP components + browse pages (human-verify checkpoint)
 
 ### Phase 5: Commerce Core
@@ -250,7 +250,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Foundation | 5/10 | In Progress|  |
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
-| 4. Customer Storefront (Web) | 7/9 | In Progress|  |
+| 4. Customer Storefront (Web) | 8/9 | In Progress|  |
 | 5. Commerce Core | 0/TBD | Not started | - |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
 | 7. React Native App | 0/TBD | Not started | - |
