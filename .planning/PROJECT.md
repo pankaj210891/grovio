@@ -14,7 +14,9 @@ A buyer can rebrand and reconfigure the entire marketplace for a new product ver
 
 <!-- Shipped and confirmed valuable. -->
 
-(None yet — ship to validate)
+- [x] Monorepo foundation: shared packages, backend skeleton, web app shells (storefront/admin/vendor), React Native shell, design tokens/branding config, linting/formatting/testing/CI — Validated in Phase 1: Foundation
+- [x] Category engine: category CRUD, subcategory tree, per-category attribute schemas, per-category filter schemas, product templates, merchandising settings, vendor-category restrictions — Validated in Phase 2: Category Engine
+- [x] Vendor catalog + search infrastructure: vendor product CRUD with dynamic attributes, product state machine, admin moderation + approve/reject flow, OpenSearch index, full-text + faceted search, type-ahead suggest, Redis-cached category filter schemas — Validated in Phase 3: Catalog & Search
 
 ### Active
 
@@ -74,9 +76,15 @@ A buyer can rebrand and reconfigure the entire marketplace for a new product ver
 | Configurable tracking (live vs demo/simulation mode) | Buyers without a live logistics provider still get a working demo | — Pending |
 | Horizontal-layer roadmap (foundation → engine → storefront → commerce → tools → mobile → fulfillment → productization) | Infrastructure-heavy, multi-platform starter kit benefits from complete capability layers | — Pending |
 
+## Current State
+
+Phase 3 complete (2026-06-01): Vendor auth, product catalog, image handling, and OpenSearch-backed search are live. 272 tests passing. Next: Phase 4 — Customer Storefront (Web).
+
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
+
+Last updated: 2026-06-01
 
 **After each phase transition** (via `/gsd-transition`):
 1. Requirements invalidated? → Move to Out of Scope with reason
