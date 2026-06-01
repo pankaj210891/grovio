@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, ReactNode } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  error?: string;
+  error?: string | undefined;
   /** If provided, overrides the auto-generated id for label association */
   id?: string;
   /** Trailing icon or element rendered inside the input wrapper */
