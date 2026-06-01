@@ -1,15 +1,22 @@
 import type { ApiError } from "@grovio/contracts";
+import cookiePlugin from "@fastify/cookie";
+import cors from "@fastify/cors";
 import Fastify, { type FastifyError, type FastifyInstance, type FastifyServerOptions } from "fastify";
 import { ZodError } from "zod";
+import { env } from "./config/env.js";
 import awilixPlugin from "./plugins/awilix.js";
 import drizzlePlugin from "./plugins/drizzle.js";
 import opensearchPlugin from "./plugins/opensearch.js";
 import redisPlugin from "./plugins/redis.js";
+import { accountAddressRoutes } from "./routes/account/addresses.js";
+import { accountProfileRoutes } from "./routes/account/profile.js";
 import { adminCategoryRoutes } from "./routes/admin/categories.js";
 import { adminProductRoutes } from "./routes/admin/products.js";
 import { categoryRoutes } from "./routes/categories.js";
+import { customerAuthRoutes } from "./routes/customer/auth.js";
 import { featureFlagRoutes } from "./routes/feature-flags.js";
 import healthRoutes from "./routes/health.js";
+import { homepageRoutes } from "./routes/homepage.js";
 import { searchRoutes } from "./routes/search.js";
 import { vendorAuthRoutes } from "./routes/vendor/auth.js";
 import { vendorProductRoutes } from "./routes/vendor/products.js";
@@ -46,6 +53,16 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   await fastify.register(opensearchPlugin); // Phase 3: must run AFTER redis, BEFORE awilix
   await fastify.register(awilixPlugin);
 
+  // --- Phase 4: CORS + cookie — must be registered BEFORE all routes ---
+  // CORS: credentials mode — origin must be exact (never "*"), T-04-13 / Pitfall 2
+  await fastify.register(cors, {
+    origin: env.STOREFRONT_ORIGIN,
+    credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+  });
+  // Cookie: required before customerAuthRoutes and /account/* (reply.setCookie, request.cookies)
+  await fastify.register(cookiePlugin);
+
   // --- Routes (Phase 1-2) ---
   await fastify.register(healthRoutes);
   await fastify.register(featureFlagRoutes);
@@ -57,6 +74,12 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   await fastify.register(vendorProductRoutes); // /vendor/products/* (JWT-guarded)
   await fastify.register(adminProductRoutes); // /admin/products/* (admin token guard)
   await fastify.register(searchRoutes); // GET /search, GET /search/suggest (public)
+
+  // --- Routes (Phase 4 — plan 04-05) ---
+  await fastify.register(customerAuthRoutes); // POST /auth/* (public — no JWT guard, D-11)
+  await fastify.register(accountProfileRoutes); // GET/PATCH /account/profile (customer cookie guard)
+  await fastify.register(accountAddressRoutes); // /account/addresses/* (customer cookie guard)
+  await fastify.register(homepageRoutes); // GET /homepage (public — Redis-cached, STORE-01)
 
   // --- 404 handler ---
   fastify.setNotFoundHandler((_req, reply) => {
