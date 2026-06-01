@@ -1,5 +1,6 @@
 import type { ApiError } from "@grovio/contracts";
 import Fastify, { type FastifyError, type FastifyInstance, type FastifyServerOptions } from "fastify";
+import { ZodError } from "zod";
 import awilixPlugin from "./plugins/awilix.js";
 import drizzlePlugin from "./plugins/drizzle.js";
 import opensearchPlugin from "./plugins/opensearch.js";
@@ -70,22 +71,35 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   });
 
   // --- Error handler ---
-  fastify.setErrorHandler((error: FastifyError, _req, reply) => {
+  fastify.setErrorHandler((error: FastifyError | ZodError, _req, reply) => {
     fastify.log.error(error);
 
     const isProd = process.env["NODE_ENV"] === "production";
 
+    // ZodError: bad client input — always 400, structured message
+    if (error instanceof ZodError) {
+      return reply.status(400).send({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: isProd
+            ? "Invalid request parameters"
+            : error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
+        },
+      });
+    }
+
     const body: ApiError = {
       success: false,
       error: {
-        code: error.code ?? "INTERNAL_ERROR",
+        code: (error as FastifyError).code ?? "INTERNAL_ERROR",
         // Suppress raw error messages in production (threat T-03-01).
         message: isProd ? "An unexpected error occurred" : (error.message ?? "Internal server error"),
       },
     };
 
-    const statusCode = (typeof error.statusCode === "number" && error.statusCode >= 400)
-      ? error.statusCode
+    const statusCode = (typeof (error as FastifyError).statusCode === "number" && (error as FastifyError).statusCode! >= 400)
+      ? (error as FastifyError).statusCode!
       : 500;
 
     return reply.status(statusCode).send(body);
