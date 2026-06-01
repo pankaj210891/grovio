@@ -413,10 +413,11 @@ export class ProductService {
     const product = rows[0];
     if (!product) throw new ProductNotFoundError();
 
-    // Guard: only pending_review products can be rejected (D-08, state machine)
-    if (product.status !== "pending_review") {
+    // Guard: only pending_review or approved products can be rejected (D-08, state machine)
+    // Approved products may be directly rejected by admin — delete job required (D-13, Pitfall 7)
+    if (product.status !== "pending_review" && product.status !== "approved") {
       throw new ProductStateError(
-        `Only pending_review products can be rejected. Current status: ${product.status}`
+        `Only pending_review or approved products can be rejected. Current status: ${product.status}`
       );
     }
 
