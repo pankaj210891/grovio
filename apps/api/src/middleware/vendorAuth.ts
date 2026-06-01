@@ -46,7 +46,11 @@ export async function requireVendorAuth(
     }
 
     // Set vendorId on the request for downstream ownership checks (V4)
-    request.vendorId = payload["vendorId"] as string;
+    const rawVendorId = payload["vendorId"];
+    if (typeof rawVendorId !== "string" || rawVendorId.length === 0) {
+      throw new Error("Token is missing vendorId claim.");
+    }
+    request.vendorId = rawVendorId;
   } catch {
     // Suppresses raw jose errors in the response — prevents token leakage (T-03-W4)
     return reply.status(401).send({
