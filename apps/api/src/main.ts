@@ -1,6 +1,7 @@
 import type { Worker } from "bullmq";
 import { buildApp } from "./app.js";
 import { env } from "./config/env.js";
+import { productIndexQueue } from "./modules/jobs/queues.js";
 import { startProductIndexWorker } from "./modules/jobs/workers.js";
 
 /**
@@ -59,6 +60,7 @@ async function start() {
         await worker.close();
         fastify.log.info("ProductIndexWorker closed");
       }
+      await productIndexQueue.close(); // drain queue Redis connection
       await fastify.close();
       fastify.log.info("Server closed");
       process.exit(0);
