@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: customer-storefront-web
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-01
+reviewed_at: 2026-06-01
 ---
 
 # Phase 4 — UI Design Contract
@@ -44,7 +45,7 @@ Declared values (all multiples of 4 per 8-point grid):
 | 3xl | 64px | gap-16 / py-16 | Page-level vertical rhythm between sections |
 
 Exceptions:
-- Touch targets (mobile filter button, icon-only nav buttons): minimum 44px height — use `min-h-[44px]` even if the visual element is smaller
+- Touch targets (mobile filter button, icon-only nav buttons): minimum 48px height — use `min-h-[48px]` even if the visual element is smaller (48px = 2xl token; exceeds WCAG 44px minimum)
 - Product image aspect ratio box: 4:5 portrait (`aspect-[4/5]`) on PLP cards; 1:1 square (`aspect-square`) on PDP gallery thumbnails
 - Sidebar filter panel width: 256px (`w-64`) on desktop — fixed, not a spacing token
 
@@ -109,6 +110,8 @@ All pages and the states each must handle:
 - Mobile header collapses search bar to icon; tap expands full-width search overlay
 
 ### Homepage (`/`)
+Focal point: banner block (first visual anchor; product grid is secondary regardless of block order configuration)
+
 | State | Behavior |
 |-------|----------|
 | Loading | Full-page skeleton — one tall banner skeleton + 2 row skeletons |
@@ -285,7 +288,7 @@ All animations use `motion/react` (framer-motion 12.x import path). GPU-accelera
 | Auth error — email already registered | "An account with this email already exists. Sign in instead." |
 | Auth error — weak password | "Password must be at least 8 characters." |
 | Auth error — token expired | "This link has expired or has already been used. Request a new reset link." |
-| Network/server error (generic) | "Something went wrong. Please try again." |
+| Network/server error (generic) | "We're having trouble connecting. Check your connection and try again." |
 | Destructive — delete address | Dialog heading: "Delete this address?" / Body: "This action cannot be undone." / Confirm button: "Delete" (grovio-error color) / Cancel: "Keep it" |
 | Success toast — profile saved | "Profile updated." |
 | Success toast — address saved | "Address saved." |
@@ -324,6 +327,9 @@ All pages in Phase 4 must meet WCAG AA as a baseline (STORE-06, AUTH-06):
 | Loading skeletons | Wrapper has `aria-busy="true"` while loading; removed on content mount |
 | Toast notifications | `role="status"` (informational) or `role="alert"` (errors); `aria-live="polite"` |
 | Infinite scroll sentinel | Hidden from screen readers (`aria-hidden="true"`); screen readers see loaded product count |
+| Icon-only nav — search button | `aria-label="Search"` on the search icon button in the mobile header |
+| Icon-only nav — account button | `aria-label="Account"` on the account icon button in the header nav |
+| Icon-only nav — cart button | `aria-label="View cart"` on the cart placeholder icon button in the header nav |
 
 ---
 
