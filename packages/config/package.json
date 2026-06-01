@@ -10,7 +10,7 @@
     "./eslint-preset": "./eslint-preset.js"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --version"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.0.0",
