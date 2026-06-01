@@ -774,8 +774,9 @@ export class ProductService {
     let candidate = base;
     let suffix = 2;
 
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    const MAX_ATTEMPTS = 100;
+
+    while (suffix <= MAX_ATTEMPTS + 2) {
       const rows = await db
         .select()
         .from(products)
@@ -790,5 +791,9 @@ export class ProductService {
       candidate = `${base}-${suffix}`;
       suffix += 1;
     }
+
+    // Fallback: append a random suffix to guarantee uniqueness
+    candidate = `${base}-${Math.random().toString(36).slice(2, 8)}`;
+    return candidate;
   }
 }
