@@ -55,16 +55,39 @@ export const TextBlockSchema = z.object({
 export type TextBlock = z.infer<typeof TextBlockSchema>;
 
 /**
- * Discriminated union of all v1 merchandising block types.
+ * Featured categories block — curated list of category IDs rendered as a grid or row.
+ *
+ * Phase 4 addition (D-02): Extends the block union with a category showcase block.
+ * categoryIds constrained to UUIDs — non-UUID payloads are rejected at parse time (T-04-01).
+ */
+export const FeaturedCategoriesBlockSchema = z.object({
+  type: z.literal("featured_categories"),
+  /** Section heading */
+  title: z.string(),
+  /** Ordered list of category UUIDs to showcase */
+  categoryIds: z.array(z.string().uuid()),
+  /** Display layout for the category collection */
+  layout: z.enum(["grid", "row"]),
+});
+
+/** TypeScript type inferred from FeaturedCategoriesBlockSchema */
+export type FeaturedCategoriesBlock = z.infer<typeof FeaturedCategoriesBlockSchema>;
+
+/**
+ * Discriminated union of all merchandising block types.
  *
  * Security note (T-02-01): z.discriminatedUnion rejects unknown block types and
  * structurally-invalid blocks at parse time, preventing malformed data from reaching
  * the database via CategoryMetadataService.
+ *
+ * Phase 4 extends with FeaturedCategoriesBlockSchema (D-02). The three Phase 2 types
+ * (banner, product_grid, text_block) are unchanged.
  */
 export const MerchandisingBlockSchema = z.discriminatedUnion("type", [
   BannerBlockSchema,
   ProductGridBlockSchema,
   TextBlockSchema,
+  FeaturedCategoriesBlockSchema,
 ]);
 
 /** TypeScript type inferred from MerchandisingBlockSchema */
