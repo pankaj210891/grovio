@@ -10,6 +10,8 @@
  *                product-templates, vendor-category-restrictions, category-metadata
  * Vendors must be exported before products (FK dependency):
  *   vendors → products → product-variants, product-images
+ * Customers must be exported before tables that reference it:
+ *   customers → password-reset-tokens, customer-addresses
  *
  * Current schema modules:
  *   - Plan 01-06: feature_flags table
@@ -17,6 +19,7 @@
  *                 product_templates, vendor_category_restrictions, category_metadata (+ 2 pgEnums)
  *   - Plan 03-03: vendors, products (+ productStatusEnum + GIN index),
  *                 product_variants, product_images
+ *   - Plan 04-02: customers, password_reset_tokens, customer_addresses, homepage_blocks
  */
 
 // Category domain — exported in FK-dependency order (categories first)
@@ -32,6 +35,12 @@ export * from "./vendors.js";
 export * from "./products.js";
 export * from "./product-variants.js";
 export * from "./product-images.js";
+
+// Customer domain — customers before password-reset-tokens and customer-addresses (FK dependency)
+export * from "./customers.js";
+export * from "./password-reset-tokens.js";
+export * from "./customer-addresses.js";
+export * from "./homepage-blocks.js";
 
 // Other domains
 export * from "./feature-flags.js";
