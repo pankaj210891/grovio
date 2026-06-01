@@ -75,7 +75,10 @@ export async function adminProductRoutes(
       fastify.diContainer.resolve<ProductService>("productService");
 
     const query = request.query as { cursor?: string; limit?: string };
-    const limit = query.limit ? Math.min(Math.max(1, Number(query.limit)), 100) : 20;
+    const rawLimit = Number(query.limit);
+    const limit = query.limit && Number.isFinite(rawLimit)
+      ? Math.min(Math.max(1, rawLimit), 100)
+      : 20;
 
     const result = await productService.listForModeration(limit, query.cursor);
 
