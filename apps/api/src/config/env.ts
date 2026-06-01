@@ -189,6 +189,59 @@ export const envSchema = z.object({
    * This TTL is therefore a safety net, not the primary propagation mechanism.
    */
   FILTER_SCHEMA_TTL_SECONDS: z.coerce.number().default(300),
+
+  // ---------------------------------------------------------------------------
+  // Phase 4 — Customer Storefront vars
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Allowed CORS origin for the customer storefront (D-09 httpOnly cookie flow).
+   * Must be the exact storefront origin — never "*" — because credentials: true
+   * requires a specific origin when cookies are included in cross-origin requests.
+   * Consumed by @fastify/cors with `credentials: true` (registered in Plan 04-04).
+   * Defaults to http://localhost:5173 (Vite dev server default).
+   */
+  STOREFRONT_ORIGIN: z.string().url().default("http://localhost:5173"),
+
+  /**
+   * Nodemailer SMTP host for transactional email (e.g. smtp.gmail.com).
+   * Required by brief: Google SMTP for all transactional email (password reset,
+   * order/payout updates). Optional — API boots without it; CustomerAuthService
+   * logs the reset link to console when SMTP is not configured (dev fallback).
+   */
+  SMTP_HOST: z.string().optional(),
+
+  /**
+   * Nodemailer SMTP user — the Google account email used for authentication.
+   * Optional (see SMTP_HOST note above).
+   */
+  SMTP_USER: z.string().optional(),
+
+  /**
+   * Nodemailer SMTP app password — the Google app-specific password.
+   * Never log or return this value. Optional (see SMTP_HOST note above).
+   *
+   * Generate: Google Account → Security → 2-Step Verification → App passwords.
+   */
+  SMTP_PASS: z.string().optional(),
+
+  /**
+   * From address shown on all transactional emails sent by the platform.
+   * Example: "Grovio <noreply@example.com>"
+   * Optional (see SMTP_HOST note above).
+   */
+  SMTP_FROM: z.string().optional(),
+
+  /**
+   * Redis TTL in seconds for the homepage blocks cache ("homepage:blocks" key).
+   * Controls how quickly homepage content changes propagate after admin edits.
+   * Defaults to 300 seconds (5 minutes).
+   *
+   * Note: HomepageService uses write-through invalidation — admin mutations
+   * (Phase 6) call invalidateBlocks() after the DB write. This TTL is a safety
+   * net, not the primary propagation mechanism (consistent with CATEGORY_TREE_TTL_SECONDS).
+   */
+  HOMEPAGE_BLOCKS_TTL_SECONDS: z.coerce.number().default(300),
 });
 
 /** TypeScript type inferred from envSchema */
