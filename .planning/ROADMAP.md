@@ -150,7 +150,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 - [x] 04-03-PLAN.md — CustomerAuthService (argon2/jose, reset flow) + mailer + requireCustomerAuth cookie middleware (TDD)
-- [ ] 04-04-PLAN.md — HomepageService (Redis-first blocks) + CustomerAddressService (per-customer CRUD) (TDD)
+- [x] 04-04-PLAN.md — HomepageService (Redis-first blocks) + CustomerAddressService (per-customer CRUD) (TDD)
 
 **Wave 4** *(blocked on Wave 3)*
 - [ ] 04-05-PLAN.md — Customer auth + account + homepage routes; CORS-with-credentials + cookie plugin + Awilix wiring
@@ -250,7 +250,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Foundation | 5/10 | In Progress|  |
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
-| 4. Customer Storefront (Web) | 3/9 | In Progress|  |
+| 4. Customer Storefront (Web) | 4/9 | In Progress|  |
 | 5. Commerce Core | 0/TBD | Not started | - |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
 | 7. React Native App | 0/TBD | Not started | - |
