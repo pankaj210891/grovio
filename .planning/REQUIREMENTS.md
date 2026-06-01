@@ -55,11 +55,11 @@ Requirements for the initial commercial release (the Envato-ready starter kit). 
 
 ### Authentication & Accounts
 
-- [ ] **AUTH-01**: Customer can sign up with email and password
+- [x] **AUTH-01**: Customer can sign up with email and password
 - [ ] **AUTH-02**: Customer can log in and session persists across refresh/app restart
-- [ ] **AUTH-03**: Customer can reset password via emailed link
+- [x] **AUTH-03**: Customer can reset password via emailed link
 - [ ] **AUTH-04**: Vendor and admin users authenticate with role-appropriate access
-- [ ] **AUTH-05**: Customer can manage profile and saved addresses
+- [x] **AUTH-05**: Customer can manage profile and saved addresses
 - [ ] **AUTH-06**: Address entry uses Google Places autocomplete
 
 ### Basket & Checkout
@@ -228,11 +228,11 @@ Which phases cover which requirements. Populated during roadmap creation.
 | STORE-04 | Phase 4 | Pending |
 | STORE-05 | Phase 4 | Complete |
 | STORE-06 | Phase 4 | Pending |
-| AUTH-01 | Phase 4 | Pending |
+| AUTH-01 | Phase 4 | Complete |
 | AUTH-02 | Phase 4 | Pending |
-| AUTH-03 | Phase 4 | Pending |
+| AUTH-03 | Phase 4 | Complete |
 | AUTH-04 | Phase 4 | Pending |
-| AUTH-05 | Phase 4 | Pending |
+| AUTH-05 | Phase 4 | Complete |
 | AUTH-06 | Phase 4 | Pending |
 | CHK-01 | Phase 5 | Pending |
 | CHK-02 | Phase 5 | Pending |
