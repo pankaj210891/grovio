@@ -68,7 +68,8 @@ function createEslintConfig(options = {}, overrides = []) {
           'error',
           { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
         ],
-        '@typescript-eslint/consistent-type-exports': 'error',
+        // consistent-type-exports also requires type info — off without projectService.
+        '@typescript-eslint/consistent-type-exports': 'off',
         // Type-aware async rules — also require projectService; skipped here.
         '@typescript-eslint/no-floating-promises': 'off',
         '@typescript-eslint/await-thenable': 'off',
