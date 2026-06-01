@@ -468,12 +468,14 @@ export class ProductService {
       .where(and(eq(products.id, id), eq(products.vendorId, vendorId)))
       .returning();
 
-    // Enqueue delete from OpenSearch (Pitfall 7)
-    await productIndexQueue.add(
-      "index",
-      { productId: id, action: "delete" },
-      { attempts: 3, backoff: { type: "exponential", delay: 1000 } }
-    );
+    // Only enqueue delete if product was ever approved (i.e., indexed in OpenSearch)
+    if (product.status === "approved") {
+      await productIndexQueue.add(
+        "index",
+        { productId: id, action: "delete" },
+        { attempts: 3, backoff: { type: "exponential", delay: 1000 } }
+      );
+    }
 
     return updated!;
   }
