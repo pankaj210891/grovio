@@ -47,20 +47,25 @@ async function start() {
     );
   }
 
+  let shuttingDown = false;
+
   const shutdown = async (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
     fastify.log.info(`Received ${signal} — shutting down gracefully`);
-
-    // Close the worker first to drain in-flight index jobs before HTTP shutdown
-    if (worker) {
-      await worker.close();
-      fastify.log.info("ProductIndexWorker closed");
+    try {
+      if (worker) {
+        await worker.close();
+        fastify.log.info("ProductIndexWorker closed");
+      }
+      await fastify.close();
+      fastify.log.info("Server closed");
+      process.exit(0);
+    } catch (err) {
+      fastify.log.error(err, "Error during shutdown — forcing exit");
+      process.exit(1);
     }
-
-    await fastify.close();
-    fastify.log.info("Server closed");
-    process.exit(0);
   };
-
   process.on("SIGINT", () => { void shutdown("SIGINT"); });
   process.on("SIGTERM", () => { void shutdown("SIGTERM"); });
 }
