@@ -31,4 +31,12 @@ declare module "fastify" {
      */
     opensearch: OpenSearchClient | null;
   }
+
+  interface FastifyRequest {
+    /**
+     * Vendor UUID extracted from the verified JWT by requireVendorAuth preHandler.
+     * Present only on /vendor/* routes after the preHandler runs (T-03-W1, V4).
+     */
+    vendorId?: string;
+  }
 }
