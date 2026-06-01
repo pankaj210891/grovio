@@ -9,7 +9,7 @@
  */
 
 const BASE_URL: string =
-  (import.meta.env['VITE_API_URL'] as string | undefined) ?? 'http://localhost:3001/api';
+  (import.meta.env['VITE_API_URL'] as string | undefined) ?? 'http://localhost:3001';
 
 /**
  * Error class thrown by apiClient on non-2xx responses.
