@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, lt, or } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Queue } from "bullmq";
 import type { FeatureFlagService } from "../feature-flags/FeatureFlagService.js";
@@ -560,16 +560,16 @@ export class ProductService {
           ? and(
               eq(products.status, "pending_review"),
               or(
-                lt(products.createdAt, cursorObj.createdAt),
+                gt(products.createdAt, cursorObj.createdAt),
                 and(
                   eq(products.createdAt, cursorObj.createdAt),
-                  lt(products.id, cursorObj.id)
+                  gt(products.id, cursorObj.id)
                 )
               )
             )
           : eq(products.status, "pending_review")
       )
-      .orderBy(desc(products.createdAt), desc(products.id))
+      .orderBy(asc(products.createdAt), asc(products.id))
       .limit(pageSize);
 
     const lastRow = rows[rows.length - 1];
