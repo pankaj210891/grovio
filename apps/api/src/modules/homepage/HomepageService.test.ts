@@ -42,7 +42,7 @@ const ENV = { HOMEPAGE_BLOCKS_TTL_SECONDS: 300 } as never;
 // ---------------------------------------------------------------------------
 
 const bannerBlock: SelectHomepageBlock = {
-  id: "block-uuid-1",
+  id: "a1b2c3d4-e5f6-4a1b-8c2d-111111111111",
   type: "banner",
   payload: {
     type: "banner",
@@ -56,7 +56,7 @@ const bannerBlock: SelectHomepageBlock = {
 };
 
 const textBlock: SelectHomepageBlock = {
-  id: "block-uuid-2",
+  id: "b2c3d4e5-f6a1-4b2c-8d3e-222222222222",
   type: "text_block",
   payload: {
     type: "text_block",
@@ -70,7 +70,7 @@ const textBlock: SelectHomepageBlock = {
 };
 
 const inactiveBlock: SelectHomepageBlock = {
-  id: "block-uuid-3",
+  id: "c3d4e5f6-a1b2-4c3d-8e4f-333333333333",
   type: "product_grid",
   payload: {
     type: "product_grid",
@@ -85,12 +85,15 @@ const inactiveBlock: SelectHomepageBlock = {
 };
 
 const lowOrderBlock: SelectHomepageBlock = {
-  id: "block-uuid-4",
+  id: "d4e5f6a1-b2c3-4d4e-8f5a-444444444444",
   type: "featured_categories",
   payload: {
     type: "featured_categories",
     title: "Top Categories",
-    categoryIds: ["cat-uuid-1", "cat-uuid-2"],
+    categoryIds: [
+      "e5f6a1b2-c3d4-4e5f-8a6b-555555555555",
+      "f6a1b2c3-d4e5-4f6a-8b7c-666666666666",
+    ],
     layout: "grid",
   },
   sortOrder: 0,
@@ -212,7 +215,7 @@ describe("HomepageService", () => {
     it("throws ZodError when a block payload does not match its declared type schema", async () => {
       const malformedBlock: SelectHomepageBlock = {
         ...bannerBlock,
-        id: "block-uuid-bad",
+        id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
         payload: { type: "banner" }, // missing required imageUrl and title
       };
 
