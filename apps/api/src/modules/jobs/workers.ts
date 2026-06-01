@@ -1,5 +1,6 @@
 import { Worker } from "bullmq";
 import type { Job } from "bullmq";
+import type { FastifyBaseLogger } from "fastify";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Client } from "@opensearch-project/opensearch";
 import type { Env } from "../../config/env.js";
@@ -15,6 +16,7 @@ interface ProductIndexWorkerDeps {
   db: NodePgDatabase<any>;
   opensearch: Client;
   env: Pick<Env, "NODE_ENV">;
+  logger: FastifyBaseLogger;
 }
 
 // ---------------------------------------------------------------------------
@@ -52,8 +54,9 @@ export function startProductIndexWorker(
   );
 
   worker.on("failed", (job, err) => {
-    console.error(
-      `[ProductIndexWorker] Job ${job?.id ?? "unknown"} failed: ${err.message}`
+    deps.logger.error(
+      { jobId: job?.id, error: err.message },
+      "[ProductIndexWorker] Job failed"
     );
   });
 

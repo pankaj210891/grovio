@@ -39,6 +39,7 @@ async function start() {
       db: fastify.db,
       opensearch: fastify.opensearch,
       env: { NODE_ENV: env.NODE_ENV },
+      logger: fastify.log,
     });
     fastify.log.info("ProductIndexWorker started");
   } else {
