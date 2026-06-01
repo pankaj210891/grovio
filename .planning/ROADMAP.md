@@ -8,7 +8,7 @@ Grovio is a horizontal-layer infrastructure product. The roadmap builds complete
 
 - [ ] **Phase 1: Foundation** - Monorepo scaffold, shared contracts, all five app shells booting, proven Metro RN resolution, CI, feature-flag layer, branding config
 - [x] **Phase 2: Category Engine** - Admin-managed category tree, per-category attribute/filter schemas, product templates, vendor-category restrictions (completed 2026-05-30)
-- [ ] **Phase 3: Catalog & Search** - Vendor product CRUD with dynamic attribute forms, admin moderation, OpenSearch index, full-text + faceted search API
+- [x] **Phase 3: Catalog & Search** - Vendor product CRUD with dynamic attribute forms, admin moderation, OpenSearch index, full-text + faceted search API (completed 2026-06-01)
 - [ ] **Phase 4: Customer Storefront (Web)** - Complete customer web experience: homepage, category pages, PLP, PDP, search, auth flows, responsive + animated UI
 - [ ] **Phase 5: Commerce Core** - Basket, inventory reservation, checkout, PaymentProvider abstraction, wallet ledger, order placement + multi-vendor splitting, commission engine, coupon engine
 - [ ] **Phase 6: Vendor & Admin Tools** - Full vendor panel, full admin panel, commission/payout audit trail, marketplace operational tooling
@@ -122,7 +122,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4)*:
 
-- [ ] 03-07-PLAN.md — vendor JWT middleware + vendor/admin/search routes + /categories/:id/filters; DI container + app.ts + main.ts worker startup
+- [x] 03-07-PLAN.md — vendor JWT middleware + vendor/admin/search routes + /categories/:id/filters; DI container + app.ts + main.ts worker startup
 
 ### Phase 4: Customer Storefront (Web)
 
@@ -227,7 +227,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/10 | In Progress|  |
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
-| 3. Catalog & Search | 6/7 | In Progress|  |
+| 3. Catalog & Search | 7/7 | Complete   | 2026-06-01 |
 | 4. Customer Storefront (Web) | 0/TBD | Not started | - |
 | 5. Commerce Core | 0/TBD | Not started | - |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
