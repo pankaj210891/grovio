@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { env } from "../../config/env.js";
 import type { FastifyInstance } from "fastify";
 import {
   type CustomerAuthService,
@@ -89,7 +90,7 @@ export async function customerAuthRoutes(fastify: FastifyInstance): Promise<void
 
     try {
       const result = await customerAuthService.login(body.email, body.password);
-      const isProduction = process.env["NODE_ENV"] === "production";
+      const isProduction = env.NODE_ENV === "production";
 
       return reply
         .setCookie("access_token", result.accessToken, {
@@ -136,7 +137,7 @@ export async function customerAuthRoutes(fastify: FastifyInstance): Promise<void
 
     try {
       const result = await customerAuthService.refreshTokens(refreshToken);
-      const isProduction = process.env["NODE_ENV"] === "production";
+      const isProduction = env.NODE_ENV === "production";
 
       return reply
         .setCookie("access_token", result.accessToken, {
