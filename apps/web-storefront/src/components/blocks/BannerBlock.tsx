@@ -46,11 +46,20 @@ export function BannerBlock({ block }: BannerBlockProps) {
           )}
           {block.ctaText && block.ctaUrl && (
             <div className="mt-6">
-              <Link to={block.ctaUrl}>
-                <Button variant="primary" className="shadow-md">
-                  {block.ctaText}
-                </Button>
-              </Link>
+              {/* External URLs use <a> with noopener — prevents open-redirect via <Link> (WR-04) */}
+              {block.ctaUrl.startsWith('http://') || block.ctaUrl.startsWith('https://') ? (
+                <a href={block.ctaUrl} rel="noopener noreferrer" target="_blank">
+                  <Button variant="primary" className="shadow-md">
+                    {block.ctaText}
+                  </Button>
+                </a>
+              ) : (
+                <Link to={block.ctaUrl}>
+                  <Button variant="primary" className="shadow-md">
+                    {block.ctaText}
+                  </Button>
+                </Link>
+              )}
             </div>
           )}
         </div>
