@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { bigint, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 /**
  * customers table
@@ -49,6 +49,22 @@ export const customers = pgTable("customers", {
    * Their existing orders remain in the DB for data integrity.
    */
   archivedAt: timestamp("archived_at", { withTimezone: true }),
+
+  /**
+   * Cached wallet balance in minor currency units (paise/cents) (WAL-01, D-21 analogy).
+   * BIGINT — no floating-point rounding drift (Pitfall 1, CLAUDE.md money rule).
+   *
+   * This is a CACHE of the authoritative balance (SUM of wallet_entries for this customer).
+   * Always updated transactionally alongside every wallet_entries insert in WalletService.
+   * Never edited directly — always via WalletService which inserts a wallet_entries row first,
+   * then updates this field in the same transaction (WAL-03, Pattern 7 in RESEARCH.md).
+   *
+   * Default 0: new customers start with no wallet credit.
+   * Used for fast balance reads on the payment step without aggregating wallet_entries.
+   */
+  walletBalanceMinor: bigint("wallet_balance_minor", { mode: "number" })
+    .notNull()
+    .default(0),
 
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

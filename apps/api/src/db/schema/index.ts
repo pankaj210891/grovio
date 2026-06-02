@@ -12,6 +12,15 @@
  *   vendors → products → product-variants, product-images
  * Customers must be exported before tables that reference it:
  *   customers → password-reset-tokens, customer-addresses
+ * Phase 5 FK order:
+ *   customers → basket-sessions → basket-items
+ *   products + product-variants → inventory-items → inventory-reservations
+ *   customers + customer-addresses → orders → vendor-orders → order-items
+ *   customers → wallet-entries
+ *   vendor-orders → vendor-commission-entries
+ *   orders + vendor-orders + customers → return-requests
+ *   vendors → vendor-return-policies
+ *   vendors + categories → commission-rules
  *
  * Current schema modules:
  *   - Plan 01-06: feature_flags table
@@ -20,6 +29,8 @@
  *   - Plan 03-03: vendors, products (+ productStatusEnum + GIN index),
  *                 product_variants, product_images
  *   - Plan 04-02: customers, password_reset_tokens, customer_addresses, homepage_blocks
+ *   - Plan 05-03: Phase 5 commerce tables (basket, inventory, orders, wallet, payments,
+ *                 commissions, coupons, returns)
  */
 
 // Category domain — exported in FK-dependency order (categories first)
@@ -44,3 +55,36 @@ export * from "./homepage-blocks.js";
 
 // Other domains
 export * from "./feature-flags.js";
+
+// Plan 05-03: Phase 5 commerce tables — exported in FK-dependency order
+// Basket domain: basket-sessions before basket-items (FK dependency)
+export * from "./basket-sessions.js";
+export * from "./basket-items.js";
+
+// Inventory domain: inventory-items before inventory-reservations (FK dependency)
+export * from "./inventory-items.js";
+export * from "./inventory-reservations.js";
+
+// Order domain: orders before vendor-orders before order-items (FK chain)
+export * from "./orders.js";
+export * from "./vendor-orders.js";
+export * from "./order-items.js";
+
+// Wallet domain: wallet-entries after customers (FK dependency)
+export * from "./wallet-entries.js";
+
+// Payment domain: payment-events (no FK dependencies beyond the pgEnum)
+export * from "./payment-events.js";
+
+// Commission domain: commission-rules after vendors + categories; entries after vendor-orders
+export * from "./commission-rules.js";
+export * from "./vendor-commission-entries.js";
+
+// Coupon domain: coupons (no FK dependencies — scopeId is a loose reference)
+export * from "./coupons.js";
+
+// Returns domain: return-requests after orders + vendor-orders + customers
+export * from "./return-requests.js";
+
+// Vendor return policies: vendor-return-policies after vendors
+export * from "./vendor-return-policies.js";
