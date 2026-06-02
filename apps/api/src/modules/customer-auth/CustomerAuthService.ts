@@ -201,6 +201,11 @@ export class CustomerAuthService {
       throw new InvalidCredentialsError();
     }
 
+    // Reject archived accounts — same error as bad credentials (no enumeration)
+    if (customer.archivedAt !== null) {
+      throw new InvalidCredentialsError();
+    }
+
     // Verify the argon2 hash (Argon2id)
     const isValid = await argon2.verify(customer.passwordHash, password);
     if (!isValid) {
