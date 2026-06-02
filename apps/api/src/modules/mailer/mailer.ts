@@ -25,8 +25,21 @@ export type Mailer = nodemailer.Transporter;
  * Covers: SMTP env vars from Plan 04-02, nodemailer dependency from Plan 04-01.
  */
 export function createMailerTransport(env: Env): Mailer {
-  const isSmtpConfigured =
-    Boolean(env.SMTP_HOST) && Boolean(env.SMTP_USER) && Boolean(env.SMTP_PASS);
+  const smtpVars = [env.SMTP_HOST, env.SMTP_USER, env.SMTP_PASS];
+  const configuredCount = smtpVars.filter(Boolean).length;
+
+  // Warn loudly at startup if SMTP is partially configured (CR-07).
+  // A partial config (e.g. SMTP_HOST set but SMTP_USER missing) silently
+  // sends no email — this warning surfaces the misconfiguration early.
+  if (configuredCount > 0 && configuredCount < 3) {
+    console.warn(
+      '[mailer] Partial SMTP configuration detected. ' +
+      'SMTP_HOST, SMTP_USER, and SMTP_PASS must ALL be set for email to work. ' +
+      'Email will not be sent until all three are configured.',
+    );
+  }
+
+  const isSmtpConfigured = configuredCount === 3;
 
   if (isSmtpConfigured) {
     // Real SMTP transport — Gmail uses port 587 with STARTTLS (secure: false)
