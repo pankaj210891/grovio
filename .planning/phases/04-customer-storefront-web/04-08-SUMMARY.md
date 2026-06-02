@@ -179,8 +179,8 @@ These stubs do NOT prevent this plan's goal — the browse experience is fully f
 - Commit `089d598` FOUND (Task 3)
 - `pnpm --filter @grovio/web-storefront typecheck` exits 0: CONFIRMED
 - `pnpm --filter @grovio/web-storefront build` exits 0: CONFIRMED
-- Human verification: PENDING (Task 4 checkpoint)
+- Human verification: APPROVED — search returns 503 (OpenSearch not configured in dev); UI wiring, PDP spec table, filter/sort URL state confirmed correct
 
 ---
 *Phase: 04-customer-storefront-web*
-*Completed (Tasks 1-3): 2026-06-02*
+*Completed: 2026-06-02*
