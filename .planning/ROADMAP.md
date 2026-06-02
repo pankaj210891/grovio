@@ -176,7 +176,39 @@ Plans:
   5. A customer can view wallet balance and ledger history, apply wallet credit at checkout (fully or partially), and receive refunds into their wallet — the wallet is append-only with no direct balance edits
   6. A single placed order splits into per-vendor sub-orders backend-side; a commission is computed per sub-order using the global → category → vendor priority chain with integer minor-unit allocation and no rounding drift
 
-**Plans**: TBD
+**Plans**: 12 plans in 9 waves
+
+Plans:
+
+**Wave 1**
+- [ ] 05-01-PLAN.md — packages/contracts: basket, checkout, orders, wallet, payments, commissions domains + root barrel
+- [ ] 05-02-PLAN.md — Install stripe + razorpay (api) and @stripe/stripe-js + @stripe/react-stripe-js (storefront) behind legitimacy checkpoint
+
+**Wave 2**
+- [ ] 05-03-PLAN.md — 13 Drizzle schema tables + customers.wallet_balance_minor + enums + barrel + Phase 5 env vars
+
+**Wave 3**
+- [ ] 05-04-PLAN.md — [BLOCKING] db:generate + db:migrate; seed COUPONS_ENABLED flag + global commission rate; probe Drizzle row-lock/upsert
+
+**Wave 4**
+- [ ] 05-05-PLAN.md — BasketService (CRUD + guest merge) + InventoryService (atomic reservation) + ReleaseReservation/BasketExpiry jobs
+- [ ] 05-06-PLAN.md — WalletService (append-only ledger + hybrid calc) + CommissionService (priority chain + allocate split)
+
+**Wave 5**
+- [ ] 05-07-PLAN.md — PaymentProvider interface + StripeAdapter + RazorpayAdapter + PaymentService (provider selection + webhook idempotency)
+- [ ] 05-08-PLAN.md — CouponService (feature-flagged validation) + ReturnService (eligibility + wallet refund + commission reversal)
+
+**Wave 6**
+- [ ] 05-09-PLAN.md — OrderService (vendor splitting + idempotent finalization) + CheckoutService (server-authoritative pricing + reservation)
+
+**Wave 7**
+- [ ] 05-10-PLAN.md — Basket/checkout/webhook/account/vendor routes (raw-body webhooks) + Awilix container + app.ts + main.ts worker startup
+
+**Wave 8**
+- [ ] 05-11-PLAN.md — Storefront useBasket hook + CartPage (vendor-grouped) + PDP Add-to-Cart wiring + header count (human-verify)
+
+**Wave 9**
+- [ ] 05-12-PLAN.md — Checkout wizard (4 steps + guard) + Stripe/Razorpay/wallet payment + order confirmation + account orders/wallet pages (human-verify)
 
 ### Phase 6: Vendor & Admin Tools
 
@@ -251,7 +283,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
-| 5. Commerce Core | 0/TBD | Not started | - |
+| 5. Commerce Core | 0/12 | Not started | - |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
