@@ -56,6 +56,11 @@ export default function CategoryPage() {
   const category = allCategories.find((c) => c.slug === slug);
   const subcategories = category ? allCategories.filter((c) => c.parentId === category.id) : [];
 
+  // Guard against rendering ProductGrid before categoryId is synced to URL (CR-06).
+  // Without this check, ProductGrid fires a search with no categoryId on the first
+  // render, fetching uncategorized results that are immediately discarded.
+  const isGridReady = category != null && filters.categoryId === category.id;
+
   // Sync categoryId to URL when category is resolved
   useEffect(() => {
     if (category && filters.categoryId !== category.id) {
@@ -161,7 +166,7 @@ export default function CategoryPage() {
             {/* Main layout: sidebar + product grid */}
             <div className="flex gap-8">
               <FilterSidebar categoryId={category.id} />
-              <ProductGrid emptyStateType="category" categoryName={category.name} />
+              {isGridReady && <ProductGrid emptyStateType="category" categoryName={category.name} />}
             </div>
           </>
         )}
