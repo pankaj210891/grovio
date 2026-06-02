@@ -79,8 +79,9 @@ export const customerAddresses = pgTable("customer_addresses", {
 
   /**
    * Whether this is the customer's default delivery address.
-   * CustomerAddressService ensures at most one address per customer has this flag set.
-   * Defaults to false — first address is promoted to default at service layer.
+   * NOTE (Phase 4): Multiple addresses may have isDefault=true.
+   * Single-default enforcement is deferred to Phase 5 / checkout flow.
+   * Defaults to false.
    */
   isDefault: boolean("is_default").notNull().default(false),
 
