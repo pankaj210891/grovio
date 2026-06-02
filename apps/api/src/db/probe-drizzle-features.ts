@@ -32,7 +32,8 @@ const pool = new Pool({
     : false,
 });
 
-const db = drizzle({ client: pool, schema });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = drizzle({ client: pool }) as any;
 
 async function probe() {
   console.log("[PROBE] Connecting to database...");
@@ -73,7 +74,8 @@ async function probe() {
     const insertedId = probeRow.id;
 
     // Test .for('update') inside a transaction
-    await db.transaction(async (tx) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await db.transaction(async (tx: any) => {
       const rows = await tx
         .select()
         .from(schema.inventoryItems)

@@ -44,7 +44,8 @@ const pool = new Pool({
   ...(usesSsl ? { ssl: true } : {}),
 });
 
-const db = drizzle({ client: pool, schema });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = drizzle({ client: pool }) as any;
 
 async function seed() {
   console.log("[seed:commerce] Connecting to database...");
