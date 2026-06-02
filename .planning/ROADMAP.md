@@ -181,8 +181,8 @@ Plans:
 Plans:
 
 **Wave 1**
-- [ ] 05-01-PLAN.md — packages/contracts: basket, checkout, orders, wallet, payments, commissions domains + root barrel
-- [ ] 05-02-PLAN.md — Install stripe + razorpay (api) and @stripe/stripe-js + @stripe/react-stripe-js (storefront) behind legitimacy checkpoint
+- [x] 05-01-PLAN.md — packages/contracts: basket, checkout, orders, wallet, payments, commissions domains + root barrel
+- [x] 05-02-PLAN.md — Install stripe + razorpay (api) and @stripe/stripe-js + @stripe/react-stripe-js (storefront) behind legitimacy checkpoint
 
 **Wave 2**
 - [ ] 05-03-PLAN.md — 13 Drizzle schema tables + customers.wallet_balance_minor + enums + barrel + Phase 5 env vars
@@ -283,7 +283,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
-| 5. Commerce Core | 0/12 | Not started | - |
+| 5. Commerce Core | 2/12 | In Progress|  |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
