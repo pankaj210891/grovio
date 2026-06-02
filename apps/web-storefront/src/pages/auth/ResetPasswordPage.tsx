@@ -34,6 +34,7 @@ export default function ResetPasswordPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!hasToken) return; // guard: never POST with an empty token (WR-05)
     setPasswordError('');
     setGeneralError('');
     setIsExpired(false);
