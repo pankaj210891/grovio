@@ -209,7 +209,7 @@ export function ProductGrid({
                   name={hit.name}
                   priceMajor={formatPrice(hit.basePriceMinor)}
                   vendorName=""
-                  imageUrl={hit.imageUrl ?? undefined}
+                  {...(hit.imageUrl != null ? { imageUrl: hit.imageUrl } : {})}
                 />
               ))}
             </div>

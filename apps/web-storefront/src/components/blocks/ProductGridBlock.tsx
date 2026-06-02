@@ -79,7 +79,6 @@ export function ProductGridBlock({ block }: ProductGridBlockProps) {
               name={product.name}
               priceMajor={formatPrice(product.basePriceMinor)}
               vendorName=""
-              imageUrl={undefined}
             />
           </div>
         ))}

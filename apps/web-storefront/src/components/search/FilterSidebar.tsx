@@ -122,23 +122,20 @@ export function FilterSidebar({ categoryId }: FilterSidebarProps) {
                     key={fv.value}
                     label={`${fv.label} (${fv.count})`}
                     active={isActive}
-                    onRemove={
-                      isActive
-                        ? () => {
+                    {...(isActive
+                      ? {
+                          onRemove: () => {
                             const remaining =
                               filters.activeFilters[facet.key]?.filter((v) => v !== fv.value) ?? [];
                             setAttributeFilter(facet.key, remaining);
-                          }
-                        : undefined
-                    }
-                    onClick={
-                      !isActive
-                        ? () => {
+                          },
+                        }
+                      : {
+                          onClick: () => {
                             const current = filters.activeFilters[facet.key] ?? [];
                             setAttributeFilter(facet.key, [...current, fv.value]);
-                          }
-                        : undefined
-                    }
+                          },
+                        })}
                   />
                 );
               })}
