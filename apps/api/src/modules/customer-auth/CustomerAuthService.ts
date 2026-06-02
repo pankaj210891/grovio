@@ -125,6 +125,9 @@ export class CustomerAuthService {
   /** Refresh token TTL: 7 days. Route scopes cookie to /auth/refresh only. */
   private readonly REFRESH_TTL_SECONDS = 604800;
 
+  /** Password reset token TTL: 1 hour (D-10). Separate from access token TTL. */
+  private readonly RESET_TOKEN_TTL_SECONDS = 3600;
+
   constructor(private deps: CustomerAuthServiceDeps) {}
 
   // ── Public API ────────────────────────────────────────────────────────────
@@ -289,7 +292,7 @@ export class CustomerAuthService {
     const tokenHash = createHash("sha256").update(rawToken).digest("hex");
 
     // Store only the hash with a 1-hour expiry (T-04-07, D-10)
-    const expiresAt = new Date(Date.now() + this.ACCESS_TTL_SECONDS * 1000);
+    const expiresAt = new Date(Date.now() + this.RESET_TOKEN_TTL_SECONDS * 1000);
     await db.insert(passwordResetTokens).values({
       customerId: customer.id,
       tokenHash,
