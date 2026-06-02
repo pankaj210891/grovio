@@ -97,9 +97,12 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: () => apiClient.post<{ success: boolean }>('/auth/logout'),
     onSuccess: () => {
-      // Clear session + all user-specific cached data
-      void qc.invalidateQueries({ queryKey: ['session'] });
+      // Remove session query and all user-specific account data.
+      // removeQueries is sufficient — no need to invalidateQueries first
+      // (invalidateQueries triggers a background re-fetch of the already-cleared
+      // session, causing a 401 race condition on slow connections — WR-08).
       qc.removeQueries({ queryKey: ['session'] });
+      qc.removeQueries({ queryKey: ['account'] }); // clears profile + addresses (WR-03)
     },
   });
 
