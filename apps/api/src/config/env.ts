@@ -242,6 +242,65 @@ export const envSchema = z.object({
    * net, not the primary propagation mechanism (consistent with CATEGORY_TREE_TTL_SECONDS).
    */
   HOMEPAGE_BLOCKS_TTL_SECONDS: z.coerce.number().default(300),
+
+  // ---------------------------------------------------------------------------
+  // Phase 5 — Commerce Core: Payment Provider credentials (all optional)
+  // API boots without these; payment routes return 503 when provider not configured.
+  // PAY-02: buyers enable one or both providers via configuration.
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Stripe secret key for server-side Stripe API calls (PaymentIntents, refunds).
+   * Obtain: dashboard.stripe.com → Developers → API Keys.
+   * Use test mode keys (sk_test_...) for development and staging.
+   * Optional: API boots without it; Stripe routes return 503 when absent.
+   */
+  STRIPE_SECRET_KEY: z.string().optional(),
+
+  /**
+   * Stripe publishable key — sent to the storefront for Stripe.js / Elements init.
+   * Obtain: dashboard.stripe.com → Developers → API Keys (Publishable key).
+   * Optional (see STRIPE_SECRET_KEY note above).
+   */
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+
+  /**
+   * Stripe webhook signing secret for constructEvent() signature verification (PAY-03, D-10).
+   * Obtain: dashboard.stripe.com → Developers → Webhooks → endpoint → Signing secret.
+   * For local dev: `stripe listen --forward-to localhost:3001/webhooks/stripe`
+   * Optional (see STRIPE_SECRET_KEY note above).
+   */
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
+  /**
+   * Razorpay key ID for API authentication and checkout modal initialization.
+   * Obtain: dashboard.razorpay.com → Settings → API Keys → Generate Key.
+   * Use test mode keys (rzp_test_...) for development.
+   * Optional: API boots without it; Razorpay routes return 503 when absent.
+   */
+  RAZORPAY_KEY_ID: z.string().optional(),
+
+  /**
+   * Razorpay key secret for order creation and webhook HMAC verification (PAY-03, D-10).
+   * Never expose to the frontend. Pairs with RAZORPAY_KEY_ID.
+   * Optional (see RAZORPAY_KEY_ID note above).
+   */
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+
+  /**
+   * Razorpay webhook secret for HMAC-SHA256 signature verification (PAY-03, D-10).
+   * Obtain: dashboard.razorpay.com → Settings → Webhooks → endpoint → Secret.
+   * Optional (see RAZORPAY_KEY_ID note above).
+   */
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+
+  /**
+   * Inventory reservation TTL in minutes (D-07).
+   * BullMQ ReleaseReservationJob fires after this delay to return reserved stock
+   * to quantity_available if payment has not been received.
+   * Default: 15 minutes. Consistent with CONTEXT.md D-07.
+   */
+  RESERVATION_TTL_MINUTES: z.coerce.number().default(15),
 });
 
 /** TypeScript type inferred from envSchema */
