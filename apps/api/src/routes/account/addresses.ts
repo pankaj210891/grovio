@@ -24,6 +24,17 @@ import {
  * DELETE /account/addresses/:id     — delete a specific address (ownership-scoped)
  */
 
+/**
+ * Runtime guard for customerId — throws if requireCustomerAuth did not run.
+ * Prevents silent undefined access if the auth hook is accidentally omitted (WR-01).
+ */
+function getCustomerId(request: import('fastify').FastifyRequest): string {
+  if (!request.customerId) {
+    throw new Error('requireCustomerAuth must run before this handler');
+  }
+  return request.customerId;
+}
+
 const CreateAddressInputSchema = z.object({
   street: z.string().min(1),
   city: z.string().min(1),
@@ -63,7 +74,7 @@ export async function accountAddressRoutes(fastify: FastifyInstance): Promise<vo
   // Returns all addresses belonging to the authenticated customer (AUTH-05).
   fastify.get("/account/addresses", async (request, reply) => {
     const addressService = getAddressService();
-    const addresses = await addressService.listAddresses(request.customerId!);
+    const addresses = await addressService.listAddresses(getCustomerId(request));
     return reply.send({ success: true, data: { addresses } });
   });
 
@@ -75,7 +86,7 @@ export async function accountAddressRoutes(fastify: FastifyInstance): Promise<vo
     const body = CreateAddressInputSchema.parse(request.body);
     const addressService = getAddressService();
 
-    const address = await addressService.createAddress(request.customerId!, {
+    const address = await addressService.createAddress(getCustomerId(request), {
       street: body.street,
       city: body.city,
       state: body.state,
@@ -102,7 +113,7 @@ export async function accountAddressRoutes(fastify: FastifyInstance): Promise<vo
 
       const updated = await addressService.updateAddress(
         request.params.id,
-        request.customerId!,
+        getCustomerId(request),
         body
       );
 
@@ -127,7 +138,7 @@ export async function accountAddressRoutes(fastify: FastifyInstance): Promise<vo
 
       const deleted = await addressService.deleteAddress(
         request.params.id,
-        request.customerId!
+        getCustomerId(request)
       );
 
       if (!deleted) {

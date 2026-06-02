@@ -20,6 +20,17 @@ import { customers } from "../../db/schema/index.js";
  * PATCH /account/profile — updates name and/or phone
  */
 
+/**
+ * Runtime guard for customerId — throws if requireCustomerAuth did not run.
+ * Prevents silent undefined access if the auth hook is accidentally omitted (WR-01).
+ */
+function getCustomerId(request: import('fastify').FastifyRequest): string {
+  if (!request.customerId) {
+    throw new Error('requireCustomerAuth must run before this handler');
+  }
+  return request.customerId;
+}
+
 const UpdateProfileInputSchema = z.object({
   name: z.string().min(1).optional(),
   phone: z.string().optional(),
@@ -43,7 +54,7 @@ export async function accountProfileRoutes(fastify: FastifyInstance): Promise<vo
         updatedAt: customers.updatedAt,
       })
       .from(customers)
-      .where(eq(customers.id, request.customerId!))
+      .where(eq(customers.id, getCustomerId(request)))
       .limit(1);
 
     const customer = rows[0];
@@ -73,7 +84,7 @@ export async function accountProfileRoutes(fastify: FastifyInstance): Promise<vo
     const rows = await fastify.db
       .update(customers)
       .set(updateValues)
-      .where(eq(customers.id, request.customerId!))
+      .where(eq(customers.id, getCustomerId(request)))
       .returning({
         id: customers.id,
         email: customers.email,
