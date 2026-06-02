@@ -165,7 +165,8 @@ export function FilterSidebar({ categoryId }: FilterSidebarProps) {
   return (
     <>
       {/* Desktop sidebar — fixed left column, hidden on mobile */}
-      <aside className="hidden lg:block w-64 flex-shrink-0">
+      {/* aria-hidden when drawer is open: prevents duplicate screen-reader content (WR-06) */}
+      <aside className="hidden lg:block w-64 flex-shrink-0" aria-hidden={filterDrawerOpen}>
         {filterContent}
       </aside>
 
