@@ -58,9 +58,18 @@ export class HomepageService {
   async getBlocks(): Promise<MerchandisingBlock[]> {
     const { db, redis, env } = this.deps;
 
-    // Redis-first: return cached result immediately on a hit.
+    // Redis-first: validate and return cached result on a hit.
     const cached = await redis.get(this.cacheKey);
-    if (cached !== null) return JSON.parse(cached) as MerchandisingBlock[];
+    if (cached !== null) {
+      try {
+        const raw = JSON.parse(cached) as unknown[];
+        // Re-validate even on cache hits — guards against poisoned/stale Redis data (T-04-11)
+        return raw.map((item) => MerchandisingBlockSchema.parse(item));
+      } catch {
+        // Corrupted or stale cache — fall through to DB re-read and repopulate
+        await redis.del(this.cacheKey);
+      }
+    }
 
     // DB fallback: only active blocks, ordered by sort_order ascending.
     const rows = await db
