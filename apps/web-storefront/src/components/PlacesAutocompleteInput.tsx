@@ -64,6 +64,13 @@ export function PlacesAutocompleteInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
+  // Stable refs for callbacks — always calls the latest version regardless of when
+  // the Autocomplete was initialised. Solves the stale-closure problem (CR-05).
+  const onAddressSelectRef = useRef(onAddressSelect);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onAddressSelectRef.current = onAddressSelect; }, [onAddressSelect]);
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+
   useEffect(() => {
     if (!apiKey) {
       console.warn(
@@ -100,8 +107,8 @@ export function PlacesAutocompleteInput({
 
           const structured = parseAddressComponents(place);
           // Update the visible text with the formatted street portion
-          onChange(structured.street);
-          onAddressSelect(structured);
+          onChangeRef.current(structured.street);
+          onAddressSelectRef.current(structured);
         });
       })
       .catch((err: unknown) => {
