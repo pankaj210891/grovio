@@ -62,16 +62,19 @@ interface BasketServiceDeps {
 // Return types
 // ---------------------------------------------------------------------------
 
-/** A single basket item with product context */
+/** A single basket item with product context — matches BasketItem contract shape */
 export interface BasketItemView {
   id: string;
   productId: string;
-  productName: string;
-  variantId: string | null;
+  productVariantId: string | null;
   quantity: number;
   unitPriceMinor: number;
-  lineTotalMinor: number;
-  createdAt: Date;
+  lineSubtotalMinor: number;
+  productName: string;
+  productSlug: string;
+  vendorId: string;
+  vendorName: string;
+  imageUrl: string | null;
 }
 
 /** Vendor-grouped basket section (D-24) */
@@ -82,9 +85,11 @@ export interface VendorBasketGroup {
   vendorSubtotalMinor: number;
 }
 
-/** Full basket response */
+/** Full basket response — matches Basket contract shape */
 export interface BasketView {
   sessionId: string;
+  isGuest: boolean;
+  items: BasketItemView[];
   groupedByVendor: VendorBasketGroup[];
   subtotalMinor: number;
   itemCount: number;
@@ -282,7 +287,7 @@ export class BasketService {
    * Returns items grouped by vendor (D-24), with per-vendor subtotals
    * and an overall basket subtotal. All amounts are in minor currency units.
    */
-  async getBasket(sessionId: string): Promise<BasketView> {
+  async getBasket(sessionId: string, isGuest = true): Promise<BasketView> {
     const { db } = this.deps;
 
     const rows = await db
@@ -290,10 +295,10 @@ export class BasketService {
         item_id: basketItems.id,
         item_quantity: basketItems.quantity,
         item_unit_price_minor: basketItems.unitPriceMinor,
-        item_created_at: basketItems.createdAt,
+        item_variant_id: basketItems.productVariantId,
         product_id: products.id,
         product_name: products.name,
-        variant_id: basketItems.productVariantId,
+        product_slug: products.slug,
         vendor_id: vendors.id,
         vendor_name: vendors.name,
       })
@@ -328,18 +333,25 @@ export class BasketService {
       group.items.push({
         id: row.item_id,
         productId: row.product_id ?? "",
-        productName: row.product_name ?? "",
-        variantId: row.variant_id ?? null,
+        productVariantId: row.item_variant_id ?? null,
         quantity: row.item_quantity ?? 0,
         unitPriceMinor: row.item_unit_price_minor ?? 0,
-        lineTotalMinor: lineTotal,
-        createdAt: row.item_created_at,
+        lineSubtotalMinor: lineTotal,
+        productName: row.product_name ?? "",
+        productSlug: row.product_slug ?? "",
+        vendorId: vendorId,
+        vendorName,
+        imageUrl: null,
       });
       group.vendorSubtotalMinor += lineTotal;
     }
 
+    const allItems = Array.from(vendorMap.values()).flatMap((g) => g.items);
+
     return {
       sessionId,
+      isGuest,
+      items: allItems,
       groupedByVendor: Array.from(vendorMap.values()),
       subtotalMinor,
       itemCount,

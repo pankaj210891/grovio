@@ -69,7 +69,8 @@ export async function basketRoutes(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const basket = await basketService.getBasket(session.id);
+      const isGuest = !session.customerId;
+      const basket = await basketService.getBasket(session.id, isGuest);
       return reply.send({ success: true, data: basket });
     } catch (err) {
       if (err instanceof BasketNotFoundError) {

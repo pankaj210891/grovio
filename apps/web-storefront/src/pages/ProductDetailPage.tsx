@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'motion/react';
@@ -6,6 +6,8 @@ import { ChevronLeft } from 'lucide-react';
 import { PageTransition } from '../components/layout/PageTransition.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { apiClient } from '../lib/api-client.js';
+import { useAddToBasket } from '../hooks/useBasket.js';
+import { useUiStore } from '../store/ui-store.js';
 import type { Product, ProductImage, ProductVariant } from '@grovio/contracts';
 
 /**
@@ -33,6 +35,8 @@ interface CategoryAttributeInfo {
  * Product Detail Page (/products/:slug).
  *
  * STORE-04 — PDP with dynamic category-specific attribute display.
+ * Phase 5 (D-13/D-15): Add to Cart wired to useAddToBasket; variant
+ * selectors enabled and wired to selectedVariant state.
  *
  * Loading: gallery + content skeletons
  * Loaded:
@@ -41,15 +45,17 @@ interface CategoryAttributeInfo {
  *   - Price (major format)
  *   - Vendor name (text-grovio-secondary)
  *   - Specifications table (D-14): skip null/empty + is_variant=true attributes
- *   - Disabled variant selectors (D-15): pill buttons, opacity-60, first option selected
- *   - Disabled Add to Cart button (D-13): data-phase="5", shake animation on click
+ *   - Variant selectors (D-15): interactive pill buttons, variant required before add-to-cart
+ *   - Add to Cart button (D-13): calls useAddToBasket, shows success toast
  * Not found: "Product not found" + "Back to search" link
  */
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const [selectedImage, setSelectedImage] = useState(0);
-  const [shaking, setShaking] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  // Selected option value per variant attribute key (e.g. { color: 'Red', size: 'M' })
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const addToBasket = useAddToBasket();
+  const addToast = useUiStore((s) => s.addToast);
 
   const { data, isLoading, isError } = useQuery<ProductDetailResponse>({
     queryKey: ['product', slug],
@@ -109,13 +115,60 @@ export default function ProductDetailPage() {
     return { key, label: attr?.label ?? key, options };
   });
 
-  // Add to Cart shake handler (D-13)
-  const handleAddToCartClick = () => {
-    if (!shaking) {
-      setShaking(true);
-      setTimeout(() => setShaking(false), 450);
-    }
-  };
+  // Resolve the matching variant based on currently selected options (D-15)
+  // Returns the variant whose optionValues exactly matches all selected options
+  function resolveSelectedVariant(): ProductVariant | null {
+    if (variantGroups.length === 0) return null;
+    // All variant attribute keys must be selected before we can resolve
+    const allSelected = variantGroups.every((g) => selectedOptions[g.key] !== undefined);
+    if (!allSelected) return null;
+
+    return (
+      variants.find((v) =>
+        variantGroups.every((g) => {
+          const val = v.optionValues[g.key];
+          const strVal = typeof val === 'string' ? val : String(val ?? '');
+          return strVal === selectedOptions[g.key];
+        }),
+      ) ?? null
+    );
+  }
+
+  const selectedVariant = resolveSelectedVariant();
+  const hasVariants = variantGroups.length > 0;
+  // Add to Cart is enabled when: no variants (variant-free product), or all variants selected
+  const canAddToCart =
+    !hasVariants ||
+    variantGroups.every((g) => selectedOptions[g.key] !== undefined);
+
+  // Add to Cart handler (D-13) — wired to useAddToBasket mutation
+  function handleAddToCartClick() {
+    if (!product || !canAddToCart) return;
+
+    addToBasket.mutate(
+      {
+        productId: product.id,
+        productVariantId: selectedVariant?.id ?? null,
+        quantity: 1,
+      },
+      {
+        onSuccess: () => {
+          addToast({
+            id: crypto.randomUUID(),
+            message: 'Added to cart',
+            variant: 'success',
+          });
+        },
+        onError: () => {
+          addToast({
+            id: crypto.randomUUID(),
+            message: 'Could not add to cart. Please try again.',
+            variant: 'error',
+          });
+        },
+      },
+    );
+  }
 
   if (isLoading) {
     return (
@@ -266,44 +319,70 @@ export default function ProductDetailPage() {
               </p>
             )}
 
-            {/* ── Disabled variant selectors (D-15) ── */}
+            {/* ── Variant selectors (D-15) — interactive pills ── */}
             {variantGroups.map((group) => (
               <div key={group.key} className="mb-6">
                 <p className="text-sm font-semibold text-grovio-text mb-2">
                   Select {group.label}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {group.options.map((option, optIndex) => (
-                    <span
-                      key={option}
-                      aria-label={`${group.label}: ${option}${optIndex === 0 ? ' (selected)' : ''}`}
-                      className={`inline-flex items-center rounded-full border px-4 py-2 text-sm opacity-60 cursor-not-allowed pointer-events-none ${
-                        optIndex === 0
-                          ? 'border-grovio-primary text-grovio-primary'
-                          : 'border-grovio-border text-grovio-text'
-                      }`}
-                    >
-                      {option}
+                  {selectedOptions[group.key] && (
+                    <span className="ml-2 font-normal text-grovio-text-muted">
+                      {selectedOptions[group.key]}
                     </span>
-                  ))}
+                  )}
+                </p>
+                <div className="flex flex-wrap gap-2" role="group" aria-label={`Select ${group.label}`}>
+                  {group.options.map((option) => {
+                    const isSelected = selectedOptions[group.key] === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        aria-pressed={isSelected}
+                        aria-label={`${group.label}: ${option}`}
+                        onClick={() =>
+                          setSelectedOptions((prev) => ({ ...prev, [group.key]: option }))
+                        }
+                        className={`inline-flex items-center rounded-full border px-4 py-2 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2 ${
+                          isSelected
+                            ? 'border-grovio-primary text-grovio-primary bg-grovio-primary/5'
+                            : 'border-grovio-border text-grovio-text hover:border-grovio-primary/50'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ))}
 
-            {/* ── Disabled Add to Cart button (D-13) ── */}
+            {/* Variant selection hint when variants exist but none selected */}
+            {hasVariants && !canAddToCart && (
+              <p className="text-xs text-grovio-text-muted mb-3" role="status">
+                Please select{' '}
+                {variantGroups
+                  .filter((g) => selectedOptions[g.key] === undefined)
+                  .map((g) => g.label)
+                  .join(' and ')}{' '}
+                to continue.
+              </p>
+            )}
+
+            {/* ── Add to Cart button (D-13) ── */}
             <div className="mb-8">
               <motion.button
-                ref={buttonRef}
                 type="button"
-                disabled
-                data-phase="5"
+                disabled={!canAddToCart || addToBasket.isPending}
                 onClick={handleAddToCartClick}
-                animate={shaking ? { x: [0, -6, 6, -4, 4, -2, 2, 0] } : { x: 0 }}
-                transition={shaking ? { duration: 0.4 } : { duration: 0 }}
-                aria-label="Add to Cart (available in a future update)"
-                className="w-full md:w-auto bg-grovio-primary text-white font-semibold text-base px-8 py-3 rounded-md opacity-60 cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2"
+                {...(canAddToCart ? { whileTap: { scale: 0.97 } } : {})}
+                aria-label="Add to Cart"
+                className={`w-full md:w-auto bg-grovio-primary text-white font-semibold text-base px-8 py-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2 transition-opacity duration-150 ${
+                  !canAddToCart || addToBasket.isPending
+                    ? 'opacity-60 cursor-not-allowed'
+                    : 'hover:bg-grovio-primary-hover'
+                }`}
               >
-                Add to Cart
+                {addToBasket.isPending ? 'Adding…' : 'Add to Cart'}
               </motion.button>
             </div>
 

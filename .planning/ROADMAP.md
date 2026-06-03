@@ -205,7 +205,7 @@ Plans:
 - [x] 05-10-PLAN.md — Basket/checkout/webhook/account/vendor routes (raw-body webhooks) + Awilix container + app.ts + main.ts worker startup
 
 **Wave 8**
-- [ ] 05-11-PLAN.md — Storefront useBasket hook + CartPage (vendor-grouped) + PDP Add-to-Cart wiring + header count (human-verify)
+- [x] 05-11-PLAN.md — Storefront useBasket hook + CartPage (vendor-grouped) + PDP Add-to-Cart wiring + header count (human-verify)
 
 **Wave 9**
 - [ ] 05-12-PLAN.md — Checkout wizard (4 steps + guard) + Stripe/Razorpay/wallet payment + order confirmation + account orders/wallet pages (human-verify)
@@ -283,7 +283,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
-| 5. Commerce Core | 10/12 | In Progress|  |
+| 5. Commerce Core | 11/12 | In Progress|  |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |

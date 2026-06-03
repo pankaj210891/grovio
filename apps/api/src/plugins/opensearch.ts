@@ -1,6 +1,7 @@
 import fp from "fastify-plugin";
 import { Client } from "@opensearch-project/opensearch";
 import { env } from "../config/env.js";
+import { ensureIndex } from "../modules/search/opensearch-mapping.js";
 
 /**
  * Fastify plugin that optionally initialises an OpenSearch client and
@@ -35,13 +36,20 @@ const opensearchPlugin = fp(
       return;
     }
 
-    const client = new Client({ node: env.OPENSEARCH_URL });
+    const client = new Client({
+      node: env.OPENSEARCH_URL,
+      // In dev on Windows, Node's system CA store often lacks the Bonsai/Neon
+      // intermediate cert. Disable rejection only in development.
+      ...(env.NODE_ENV === "development" && { ssl: { rejectUnauthorized: false } }),
+    });
 
     fastify.decorate("opensearch", client);
 
     fastify.addHook("onClose", async () => {
       await client.close();
     });
+
+    await ensureIndex(client, env);
 
     fastify.log.info("OpenSearch client connected");
   },

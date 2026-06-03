@@ -25,6 +25,7 @@ export interface ProductIndexJobData {
 
 export interface ProductSearchDocument {
   name: string;
+  slug: string;
   description: string | null;
   categoryId: string;
   categoryName: string;
@@ -56,6 +57,7 @@ export interface ProductSearchDocument {
 export function buildSearchDocument(
   product: {
     name: string;
+    slug: string;
     description: string | null;
     categoryId: string;
     categoryName: string;
@@ -77,6 +79,7 @@ export function buildSearchDocument(
 
   return {
     name: product.name,
+    slug: product.slug,
     description: product.description,
     categoryId: product.categoryId,
     categoryName: product.categoryName,
@@ -158,6 +161,7 @@ export async function processProductIndexJob(
     .select({
       p_id: products.id,
       p_name: products.name,
+      p_slug: products.slug,
       p_description: products.description,
       p_category_id: products.categoryId,
       p_vendor_id: products.vendorId,
@@ -197,6 +201,7 @@ export async function processProductIndexJob(
   const doc = buildSearchDocument(
     {
       name: firstRow.p_name,
+      slug: firstRow.p_slug,
       description: firstRow.p_description,
       categoryId: firstRow.p_category_id,
       categoryName: firstRow.cat_name ?? "",

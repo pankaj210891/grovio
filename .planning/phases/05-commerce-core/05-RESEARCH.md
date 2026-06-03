@@ -907,22 +907,25 @@ function serializeOrderSummary(order: SelectOrder) {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Refund-to-original-payment-method (CONTEXT.md Deferred)**
    - What we know: D-16 says customer can choose wallet credit OR original payment method. CONTEXT.md deferred notes "Phase 5 may implement wallet refund only in the first iteration."
    - What's unclear: Does Phase 5 scope include the provider refund API call (`stripe.refunds.create()` / `razorpay.payments.refund()`) or only wallet credit refunds?
    - Recommendation: Planner should implement wallet-credit-only refunds in Phase 5. The provider API call path requires storing `payment_intent_id` per order (which is a good idea regardless) and can be added in a single Wave within Phase 5 or deferred to Phase 6. Storing the payment intent ID on the order record should be done in Phase 5 regardless.
+   - **RESOLVED (User decision 2026-06-02):** Phase 5 implements wallet-credit refunds only. When refundPreference='original', ReturnService returns HTTP 501 with message 'Refund to original payment method available in a future update; wallet credit issued instead.' Provider payment ID stored on orders for Phase 6 provider refund wiring.
 
 2. **Wallet balance storage on `customers` table**
    - What we know: ARCHITECTURE.md says a cached `current_balance_minor` is acceptable. CONTEXT.md says `wallet_balance_minor` follows the naming convention.
    - What's unclear: Should `wallet_balance_minor` be added to the existing `customers` table (requires a migration) or stored in a separate `wallets` table per ARCHITECTURE.md?
    - Recommendation: Add `wallet_balance_minor BIGINT NOT NULL DEFAULT 0` directly to `customers` table (simpler FK path). A separate `wallets` table adds a join for every wallet read with no benefit in Phase 5 since wallets are 1:1 with customers.
+   - **RESOLVED:** wallet_balance_minor added to customers table (Plan 05-03). Computed as the sum of wallet_entries for accuracy but stored as a cached column for performance.
 
 3. **`drizzle-orm` version in use is `1.0.0-rc.3`**
    - What we know: The installed version is `1.0.0-rc.3` per `apps/api/package.json` — not the `0.45.x` stable that CLAUDE.md specifies.
    - What's unclear: The `1.0.0-rc.3` version may have API changes from `0.45.x`. The `.for('update')` pattern and `onConflictDoNothing` behavior should be verified.
    - Recommendation: Planner should include a Wave 0 task to verify `.for('update')` and `onConflictDoNothing({ target: [...] })` work correctly in rc.3 before the reservation service is built. If they differ, use raw SQL via `db.execute(sql\`...\`)` as a fallback.
+   - **RESOLVED:** Plan 05-04 Task 1 probes `.for('update')` and `onConflictDoNothing` on the installed version (1.0.0-rc.3) before reservation service implementation proceeds.
 
 ---
 
