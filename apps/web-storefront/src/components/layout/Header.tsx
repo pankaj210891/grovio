@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.js';
+import { useBasket } from '../../hooks/useBasket.js';
 
 /**
  * Site header — semantic <header> landmark.
@@ -19,6 +20,7 @@ import { useAuth } from '../../hooks/useAuth.js';
  */
 export function Header() {
   const { isAuthenticated } = useAuth();
+  const { itemCount } = useBasket();
   const navigate = useNavigate();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,15 +93,22 @@ export function Header() {
               <User className="h-5 w-5" aria-hidden="true" />
             </Link>
 
-            {/* Cart placeholder — Phase 5 commerce */}
-            <button
-              type="button"
-              aria-label="View cart"
-              disabled
-              className="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-md text-grovio-text-muted opacity-60 cursor-not-allowed focus-visible:outline-none"
+            {/* Cart link with live item count badge (Phase 5 — D-04) */}
+            <Link
+              to="/cart"
+              aria-label={itemCount > 0 ? `View cart (${itemCount} items)` : 'View cart'}
+              className="relative flex items-center justify-center min-h-[48px] min-w-[48px] rounded-md text-grovio-text-muted hover:text-grovio-text hover:bg-grovio-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2"
             >
               <ShoppingCart className="h-5 w-5" aria-hidden="true" />
-            </button>
+              {itemCount > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1.5 right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-grovio-primary px-1 text-[10px] font-bold text-white leading-none tabular-nums"
+                >
+                  {itemCount > 99 ? '99+' : itemCount}
+                </span>
+              )}
+            </Link>
           </nav>
         </div>
 
