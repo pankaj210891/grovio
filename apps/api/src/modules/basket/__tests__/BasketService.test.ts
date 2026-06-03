@@ -322,9 +322,9 @@ describe("BasketService", () => {
       ];
 
       // Mock db.select chained with leftJoin + where
+      // .from().leftJoin().leftJoin().where() → resolves to rows array
       const whereFinalMock = vi.fn().mockResolvedValue(rows);
-      const whereMock = vi.fn().mockReturnValue(whereFinalMock);
-      const leftJoinMock2 = vi.fn().mockReturnValue({ where: whereMock });
+      const leftJoinMock2 = vi.fn().mockReturnValue({ where: whereFinalMock });
       const leftJoinMock1 = vi.fn().mockReturnValue({ leftJoin: leftJoinMock2 });
       const fromMock = vi.fn().mockReturnValue({ leftJoin: leftJoinMock1 });
       db.select.mockReturnValue({ from: fromMock });
@@ -368,6 +368,7 @@ describe("BasketService", () => {
           quantity: 3,
           unitPriceMinor: 1000,
           basketSessionId: "guest-session-id",
+          inventoryQuantityAvailable: 4, // cap = 4, sum = 3+2 = 5 -> capped at 4
         },
       ];
       const customerItems = [
@@ -380,8 +381,6 @@ describe("BasketService", () => {
           basketSessionId: "customer-session-id",
         },
       ];
-      // Available stock = 4 (so cap = 4, sum = 3+2 = 5 -> capped at 4)
-      const inventoryItem = { id: "inv-1", quantityAvailable: 4 };
 
       // db.select calls: 1. guest session, 2. customer session
       const limitMock1 = vi.fn().mockResolvedValue([guestSession]);
@@ -396,26 +395,20 @@ describe("BasketService", () => {
         .mockReturnValueOnce({ from: fromMock1 })
         .mockReturnValueOnce({ from: fromMock2 });
 
-      // tx.select calls inside transaction: guest items, customer items, inventory
-      const txLimitMock1 = vi.fn().mockResolvedValue(guestItems);
-      const txWhereMock1 = vi.fn().mockReturnValue({ limit: () => txLimitMock1() });
-      const txFromMock1 = vi.fn().mockReturnValue({ where: txWhereMock1 });
+      // tx.select call 1: guest items with inventory (leftJoin chain)
+      // .from().leftJoin().where() → resolves to guestItems
+      const txGuestWhereMock = vi.fn().mockResolvedValue(guestItems);
+      const txGuestLeftJoinMock = vi.fn().mockReturnValue({ where: txGuestWhereMock });
+      const txGuestFromMock = vi.fn().mockReturnValue({ leftJoin: txGuestLeftJoinMock });
 
-      const txLimitMock2 = vi.fn().mockResolvedValue(customerItems);
-      const txWhereMock2 = vi.fn().mockReturnValue({ limit: () => txLimitMock2() });
-      const txFromMock2 = vi.fn().mockReturnValue({ where: txWhereMock2 });
-
-      // inventory items joined from basket items
-      const txInventoryResult = [{ ...guestItems[0], inventoryQuantityAvailable: 4 }];
-      const txInventoryFn = vi.fn().mockResolvedValue(txInventoryResult);
-      const txInventoryWhere = vi.fn().mockReturnValue(txInventoryFn);
-      const txInventoryLeftJoin = vi.fn().mockReturnValue({ where: txInventoryWhere });
-      const txInventoryFrom = vi.fn().mockReturnValue({ leftJoin: txInventoryLeftJoin });
+      // tx.select call 2: customer items (.from().where().limit())
+      const txCustLimitMock = vi.fn().mockResolvedValue(customerItems);
+      const txCustWhereMock = vi.fn().mockReturnValue({ limit: txCustLimitMock });
+      const txCustFromMock = vi.fn().mockReturnValue({ where: txCustWhereMock });
 
       tx.select
-        .mockReturnValueOnce({ from: txFromMock1 })
-        .mockReturnValueOnce({ from: txFromMock2 })
-        .mockReturnValueOnce({ from: txInventoryFrom });
+        .mockReturnValueOnce({ from: txGuestFromMock })
+        .mockReturnValueOnce({ from: txCustFromMock });
 
       const txReturningMock = vi.fn().mockResolvedValue([{ ...customerItems[0], quantity: 4 }]);
       const txSetMock = vi.fn().mockReturnValue({ where: () => ({ returning: txReturningMock }) });
@@ -431,6 +424,8 @@ describe("BasketService", () => {
 
       // Update was called (to set capped quantity on customer item)
       expect(tx.update).toHaveBeenCalled();
+      // Delete was called (to remove guest session)
+      expect(tx.delete).toHaveBeenCalled();
     });
 
     it("moves non-matching guest items to customer basket", async () => {
@@ -446,10 +441,17 @@ describe("BasketService", () => {
           quantity: 1,
           unitPriceMinor: 2000,
           basketSessionId: "guest-session-id",
+          inventoryQuantityAvailable: 10,
         },
       ];
-      const customerItems: typeof guestItems = []; // Empty customer basket
-      const inventoryResult = [{ ...guestItems[0], inventoryQuantityAvailable: 10 }];
+      const customerItems: {
+        id: string;
+        productId: string;
+        productVariantId: string | null;
+        quantity: number;
+        unitPriceMinor: number;
+        basketSessionId: string;
+      }[] = []; // Empty customer basket
 
       const limitMock1 = vi.fn().mockResolvedValue([guestSession]);
       const whereMock1 = vi.fn().mockReturnValue({ limit: limitMock1 });
@@ -463,23 +465,19 @@ describe("BasketService", () => {
         .mockReturnValueOnce({ from: fromMock1 })
         .mockReturnValueOnce({ from: fromMock2 });
 
-      const txLimitMock1 = vi.fn().mockResolvedValue(guestItems);
-      const txWhereMock1 = vi.fn().mockReturnValue({ limit: () => txLimitMock1() });
-      const txFromMock1 = vi.fn().mockReturnValue({ where: txWhereMock1 });
+      // tx.select call 1: guest items with inventory (leftJoin)
+      const txGuestWhereMock = vi.fn().mockResolvedValue(guestItems);
+      const txGuestLeftJoinMock = vi.fn().mockReturnValue({ where: txGuestWhereMock });
+      const txGuestFromMock = vi.fn().mockReturnValue({ leftJoin: txGuestLeftJoinMock });
 
-      const txLimitMock2 = vi.fn().mockResolvedValue(customerItems);
-      const txWhereMock2 = vi.fn().mockReturnValue({ limit: () => txLimitMock2() });
-      const txFromMock2 = vi.fn().mockReturnValue({ where: txWhereMock2 });
-
-      const txInventoryFn = vi.fn().mockResolvedValue(inventoryResult);
-      const txInventoryWhere = vi.fn().mockReturnValue(txInventoryFn);
-      const txInventoryLeftJoin = vi.fn().mockReturnValue({ where: txInventoryWhere });
-      const txInventoryFrom = vi.fn().mockReturnValue({ leftJoin: txInventoryLeftJoin });
+      // tx.select call 2: customer items (empty)
+      const txCustLimitMock = vi.fn().mockResolvedValue(customerItems);
+      const txCustWhereMock = vi.fn().mockReturnValue({ limit: txCustLimitMock });
+      const txCustFromMock = vi.fn().mockReturnValue({ where: txCustWhereMock });
 
       tx.select
-        .mockReturnValueOnce({ from: txFromMock1 })
-        .mockReturnValueOnce({ from: txFromMock2 })
-        .mockReturnValueOnce({ from: txInventoryFrom });
+        .mockReturnValueOnce({ from: txGuestFromMock })
+        .mockReturnValueOnce({ from: txCustFromMock });
 
       const txReturningMock = vi.fn().mockResolvedValue([]);
       const txValuesMock = vi.fn().mockReturnValue({ returning: txReturningMock });
