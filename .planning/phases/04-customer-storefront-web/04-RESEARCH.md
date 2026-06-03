@@ -819,22 +819,25 @@ export const customers = pgTable('customers', {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **`@fastify/cookie` already registered?**
    - What we know: `apps/api/src/app.ts` shows only `drizzle`, `redis`, `opensearch`, and `awilix` plugins registered. No cookie plugin is visible.
    - What's unclear: Whether `@fastify/cookie` is already in `apps/api/package.json` as a transitive dependency or needs to be added explicitly.
    - Recommendation: Planner should add a task to verify/install `@fastify/cookie` before the customer auth route tasks.
+   - **RESOLVED:** Plan 04-01 Task 3 installs `@fastify/cookie@latest` in `apps/api` (and notes verifying it is not already a registered plugin in `app.ts` before relying on it); plan 04-05 Task 3 registers the cookie plugin and uses `reply.setCookie()` in the customer auth route handlers. The dependency is added unconditionally since it is not in the current `package.json`.
 
 2. **`STOREFRONT_ORIGIN` in API env config**
    - What we know: `apps/api/src/config/env.ts` does not currently have `STOREFRONT_ORIGIN`.
    - What's unclear: Whether to add a hard-coded dev default or require the env var.
    - Recommendation: Add `STOREFRONT_ORIGIN: z.string().url().default('http://localhost:5173')` to `envSchema` — matches the existing `PORT` defaulting pattern.
+   - **RESOLVED:** Plan 04-02 Task 2 adds `STOREFRONT_ORIGIN` to the API `envSchema` with the `http://localhost:5173` dev default and wires it into the `@fastify/cors` registration (`origin: env.STOREFRONT_ORIGIN`, `credentials: true`) per D-09.
 
 3. **`@types/nodemailer` bundled in nodemailer v8?**
    - What we know: CLAUDE.md states `nodemailer 8.0.x` as the standard; the package has `"MIT No Attribution" license, 15M+ weekly downloads`.
    - What's unclear: Whether `@types/nodemailer` is needed as a separate install or types are bundled in v8.
    - Recommendation: Planner should add a conditional task — install `@types/nodemailer` unless types are bundled.
+   - **RESOLVED:** Plan 04-01 Task 3 installs `@types/nodemailer` as a dev dependency in `apps/api` alongside `nodemailer@^8.0.0`. Treated as required (not conditional) so the install is deterministic; if v8 ships bundled types the separate dev dependency is harmless.
 
 ---
 

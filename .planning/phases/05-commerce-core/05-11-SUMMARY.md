@@ -77,7 +77,7 @@ completed: 2026-06-03
 
 1. **Task 1: useBasket hook + basket components + CartPage + /cart route** — `5d63c5a` (feat)
 2. **Task 2: Wire PDP Add to Cart + variant selectors + Header basket count** — `122b0e6` (feat)
-3. **Task 3: Human verify checkpoint** — pending (browser verification required)
+3. **Task 3: Human verify checkpoint** — approved ✓ (2026-06-04)
 
 ## Files Created/Modified
 - `apps/web-storefront/src/hooks/useBasket.ts` — basket query + all mutations (207 lines)
@@ -106,7 +106,7 @@ None — no external service configuration required.
 - 05-12 can now build on `useBasket`, `CartPage`, and the activated PDP
 - `useWallet` (05-12) will fill the wallet credit toggle placeholder in `OrderSummary`
 - `CheckoutGuard` and the 4-step checkout wizard (05-12) depend on the `/cart` → `/checkout/address` CTA added here
-- Human verification of the basket flow (Task 3 checkpoint) is pending — see checkpoint presented by orchestrator
+- Human verification approved 2026-06-04 — full basket flow confirmed working end-to-end
 
 ## Self-Check: PASSED
 - `data-phase="5"` count in ProductDetailPage.tsx = 0 ✓
