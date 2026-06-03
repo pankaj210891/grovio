@@ -341,20 +341,20 @@ describe("ReturnService", () => {
       });
       const insertMock = vi.fn().mockReturnValue({ values: insertValues });
 
-      // Mock DB for: policy check → no policy; insert return request
+      // Mock DB for: vendor order query first (loadVendorOrder), then policy check (checkEligibility)
       const db = {
         select: vi.fn()
-          .mockReturnValueOnce({ // policy query
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockReturnValue({
-                limit: vi.fn().mockResolvedValue([]),
-              }),
-            }),
-          })
-          .mockReturnValueOnce({ // vendor order query
+          .mockReturnValueOnce({ // vendor order query (loadVendorOrder)
             from: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
                 limit: vi.fn().mockResolvedValue([deliveredVendorOrder]),
+              }),
+            }),
+          })
+          .mockReturnValueOnce({ // policy query (checkEligibility → no policy)
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue([]),
               }),
             }),
           }),
