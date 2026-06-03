@@ -73,10 +73,10 @@ Requirements for the initial commercial release (the Envato-ready starter kit). 
 
 ### Payments
 
-- [ ] **PAY-01**: Payment processing goes through a `PaymentProvider` abstraction; no provider SDK is called from business logic
-- [ ] **PAY-02**: Buyer can enable Stripe, Razorpay, or both via configuration
+- [x] **PAY-01**: Payment processing goes through a `PaymentProvider` abstraction; no provider SDK is called from business logic
+- [x] **PAY-02**: Buyer can enable Stripe, Razorpay, or both via configuration
 - [ ] **PAY-03**: Payment webhooks are verified and processed idempotently (no double-processing on retry)
-- [ ] **PAY-04**: Customer can pay using a configured provider and receives confirmation on success/failure
+- [x] **PAY-04**: Customer can pay using a configured provider and receives confirmation on success/failure
 
 ### Wallet
 
@@ -240,10 +240,10 @@ Which phases cover which requirements. Populated during roadmap creation.
 | CHK-04 | Phase 5 | Pending |
 | CHK-05 | Phase 5 | Pending |
 | CHK-06 | Phase 5 | Pending |
-| PAY-01 | Phase 5 | Pending |
-| PAY-02 | Phase 5 | Pending |
+| PAY-01 | Phase 5 | Complete |
+| PAY-02 | Phase 5 | Complete |
 | PAY-03 | Phase 5 | Pending |
-| PAY-04 | Phase 5 | Pending |
+| PAY-04 | Phase 5 | Complete |
 | WAL-01 | Phase 5 | Pending |
 | WAL-02 | Phase 5 | Pending |
 | WAL-03 | Phase 5 | Pending |

@@ -54,3 +54,40 @@ export const bullMqConnection = {
 export const productIndexQueue = new Queue("product-index-queue", {
   connection: bullMqConnection,
 });
+
+// ---------------------------------------------------------------------------
+// Reservation expiry queue
+// ---------------------------------------------------------------------------
+
+/**
+ * BullMQ Queue for inventory reservation expiry jobs.
+ *
+ * Jobs are enqueued by InventoryService.reserveItems() immediately after each
+ * reservation transaction commits (D-07, T-05-RES).
+ *
+ * Each job has a deterministic jobId `release-reservation:{reservationId}` to
+ * prevent duplicate expiry jobs on worker restart (RESEARCH.md anti-pattern).
+ *
+ * Job payload: { reservationId: string }
+ * Delay: 15 minutes (RESERVATION_TTL_MS = 900000 ms)
+ */
+export const reservationQueue = new Queue("reservation-expiry-queue", {
+  connection: bullMqConnection,
+});
+
+// ---------------------------------------------------------------------------
+// Basket cleanup queue
+// ---------------------------------------------------------------------------
+
+/**
+ * BullMQ Queue for periodic basket session cleanup jobs (D-03).
+ *
+ * A recurring job is scheduled by startBasketCleanupWorker to run daily
+ * (or at a configured interval) and delete basket_sessions rows where
+ * expiresAt < NOW() (cascade-removes basket_items).
+ *
+ * Job payload: {} (no data needed — batch delete by timestamp)
+ */
+export const basketCleanupQueue = new Queue("basket-cleanup-queue", {
+  connection: bullMqConnection,
+});

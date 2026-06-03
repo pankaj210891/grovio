@@ -8,6 +8,7 @@
  *   import { HealthCheckResponse } from "@grovio/contracts";
  *   import { JwtPayload } from "@grovio/contracts";
  *   import { MerchandisingBlock, AttrType, CategoryTreeNode } from "@grovio/contracts";
+ *   import { BasketSchema, OrderStatusSchema } from "@grovio/contracts";
  *   import { allocate } from "@grovio/contracts/money";
  */
 
@@ -19,3 +20,9 @@ export * from "./marketplace-config.js";
 export * from "./category/index.js";
 export * from "./catalog/index.js";
 export * from "./search/index.js";
+export * from "./basket/index.js";
+export * from "./checkout/index.js";
+export * from "./orders/index.js";
+export * from "./wallet/index.js";
+export * from "./payments/index.js";
+export * from "./commissions/index.js";
