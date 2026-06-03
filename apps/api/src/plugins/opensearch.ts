@@ -35,7 +35,12 @@ const opensearchPlugin = fp(
       return;
     }
 
-    const client = new Client({ node: env.OPENSEARCH_URL });
+    const client = new Client({
+      node: env.OPENSEARCH_URL,
+      // In dev on Windows, Node's system CA store often lacks the Bonsai/Neon
+      // intermediate cert. Disable rejection only in development.
+      ...(env.NODE_ENV === "development" && { ssl: { rejectUnauthorized: false } }),
+    });
 
     fastify.decorate("opensearch", client);
 
