@@ -1,6 +1,7 @@
 import fp from "fastify-plugin";
 import { Client } from "@opensearch-project/opensearch";
 import { env } from "../config/env.js";
+import { ensureIndex } from "../modules/search/opensearch-mapping.js";
 
 /**
  * Fastify plugin that optionally initialises an OpenSearch client and
@@ -47,6 +48,8 @@ const opensearchPlugin = fp(
     fastify.addHook("onClose", async () => {
       await client.close();
     });
+
+    await ensureIndex(client, env);
 
     fastify.log.info("OpenSearch client connected");
   },
