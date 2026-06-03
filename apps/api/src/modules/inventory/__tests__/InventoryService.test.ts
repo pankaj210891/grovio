@@ -312,7 +312,7 @@ describe("processReleaseReservationJob", () => {
 
     const db = {
       select: vi.fn(),
-      transaction: vi.fn().mockImplementation(async (fn: (tx: typeof tx) => unknown) => {
+      transaction: vi.fn().mockImplementation(async (fn: (txArg: unknown) => unknown) => {
         return fn(tx);
       }),
     };

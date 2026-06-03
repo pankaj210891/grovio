@@ -65,7 +65,7 @@ function makeMockDb() {
   db.delete.mockReturnValue({
     where: () => Promise.resolve(),
   });
-  db.transaction.mockImplementation(async (fn: (tx: typeof tx) => unknown) => {
+  db.transaction.mockImplementation(async (fn: (txArg: unknown) => unknown) => {
     return fn(tx);
   });
 
