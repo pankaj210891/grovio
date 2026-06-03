@@ -199,7 +199,7 @@ Plans:
 - [x] 05-08-PLAN.md — CouponService (feature-flagged validation) + ReturnService (eligibility + wallet refund + commission reversal)
 
 **Wave 6**
-- [ ] 05-09-PLAN.md — OrderService (vendor splitting + idempotent finalization) + CheckoutService (server-authoritative pricing + reservation)
+- [x] 05-09-PLAN.md — OrderService (vendor splitting + idempotent finalization) + CheckoutService (server-authoritative pricing + reservation)
 
 **Wave 7**
 - [ ] 05-10-PLAN.md — Basket/checkout/webhook/account/vendor routes (raw-body webhooks) + Awilix container + app.ts + main.ts worker startup
@@ -283,7 +283,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
-| 5. Commerce Core | 8/12 | In Progress|  |
+| 5. Commerce Core | 9/12 | In Progress|  |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
