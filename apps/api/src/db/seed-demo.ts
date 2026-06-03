@@ -242,11 +242,12 @@ async function seed() {
       console.log(`[seed:demo]   → ${p.variants.length} variants + inventory rows`);
     }
 
-    // Queue for OpenSearch bulk index (approved products only)
+    // Queue for OpenSearch bulk index (always re-index to pick up slug fix)
     indexedDocs.push(
       { index: { _index: indexName, _id: productId } },
       {
         name: p.name,
+        slug: productSlug,
         description: p.description,
         categoryId,
         categoryName: p.categorySlug === "electronics" ? "Electronics" : "Apparel",
