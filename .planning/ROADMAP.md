@@ -185,17 +185,17 @@ Plans:
 - [x] 05-02-PLAN.md — Install stripe + razorpay (api) and @stripe/stripe-js + @stripe/react-stripe-js (storefront) behind legitimacy checkpoint
 
 **Wave 2**
-- [ ] 05-03-PLAN.md — 13 Drizzle schema tables + customers.wallet_balance_minor + enums + barrel + Phase 5 env vars
+- [x] 05-03-PLAN.md — 13 Drizzle schema tables + customers.wallet_balance_minor + enums + barrel + Phase 5 env vars
 
 **Wave 3**
-- [ ] 05-04-PLAN.md — [BLOCKING] db:generate + db:migrate; seed COUPONS_ENABLED flag + global commission rate; probe Drizzle row-lock/upsert
+- [x] 05-04-PLAN.md — [BLOCKING] db:generate + db:migrate; seed COUPONS_ENABLED flag + global commission rate; probe Drizzle row-lock/upsert
 
 **Wave 4**
-- [ ] 05-05-PLAN.md — BasketService (CRUD + guest merge) + InventoryService (atomic reservation) + ReleaseReservation/BasketExpiry jobs
-- [ ] 05-06-PLAN.md — WalletService (append-only ledger + hybrid calc) + CommissionService (priority chain + allocate split)
+- [x] 05-05-PLAN.md — BasketService (CRUD + guest merge) + InventoryService (atomic reservation) + ReleaseReservation/BasketExpiry jobs
+- [x] 05-06-PLAN.md — WalletService (append-only ledger + hybrid calc) + CommissionService (priority chain + allocate split)
 
 **Wave 5**
-- [ ] 05-07-PLAN.md — PaymentProvider interface + StripeAdapter + RazorpayAdapter + PaymentService (provider selection + webhook idempotency)
+- [x] 05-07-PLAN.md — PaymentProvider interface + StripeAdapter + RazorpayAdapter + PaymentService (provider selection + webhook idempotency)
 - [ ] 05-08-PLAN.md — CouponService (feature-flagged validation) + ReturnService (eligibility + wallet refund + commission reversal)
 
 **Wave 6**
@@ -283,7 +283,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
-| 5. Commerce Core | 2/12 | In Progress|  |
+| 5. Commerce Core | 7/12 | In Progress|  |
 | 6. Vendor & Admin Tools | 0/TBD | Not started | - |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
