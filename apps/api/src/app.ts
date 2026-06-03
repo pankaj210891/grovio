@@ -9,17 +9,24 @@ import drizzlePlugin from "./plugins/drizzle.js";
 import opensearchPlugin from "./plugins/opensearch.js";
 import redisPlugin from "./plugins/redis.js";
 import { accountAddressRoutes } from "./routes/account/addresses.js";
+import { accountOrderRoutes } from "./routes/account/orders.js";
 import { accountProfileRoutes } from "./routes/account/profile.js";
+import { accountWalletRoutes } from "./routes/account/wallet.js";
 import { adminCategoryRoutes } from "./routes/admin/categories.js";
 import { adminProductRoutes } from "./routes/admin/products.js";
+import { basketRoutes } from "./routes/basket.js";
 import { categoryRoutes } from "./routes/categories.js";
+import { checkoutRoutes } from "./routes/checkout.js";
 import { customerAuthRoutes } from "./routes/customer/auth.js";
 import { featureFlagRoutes } from "./routes/feature-flags.js";
 import healthRoutes from "./routes/health.js";
 import { homepageRoutes } from "./routes/homepage.js";
 import { searchRoutes } from "./routes/search.js";
+import { stripeWebhookRoutes } from "./routes/webhooks/stripe.js";
+import { razorpayWebhookRoutes } from "./routes/webhooks/razorpay.js";
 import { vendorAuthRoutes } from "./routes/vendor/auth.js";
 import { vendorProductRoutes } from "./routes/vendor/products.js";
+import { vendorOrderRoutes } from "./routes/vendor/orders.js";
 
 /**
  * Build and configure the Fastify application.
@@ -80,6 +87,20 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   await fastify.register(accountProfileRoutes); // GET/PATCH /account/profile (customer cookie guard)
   await fastify.register(accountAddressRoutes); // /account/addresses/* (customer cookie guard)
   await fastify.register(homepageRoutes); // GET /homepage (public — Redis-cached, STORE-01)
+
+  // --- Routes (Phase 5 — plan 05-10) ---
+  // Webhook routes first (raw-body parser scoped to plugin — Pitfall 1, T-05-05)
+  await fastify.register(stripeWebhookRoutes);    // POST /webhooks/stripe (raw body, public)
+  await fastify.register(razorpayWebhookRoutes);  // POST /webhooks/razorpay (raw body, public)
+  // Basket (guest cookie + auth merge, CHK-01/CHK-02)
+  await fastify.register(basketRoutes);           // GET/POST/PATCH/DELETE /basket/*, POST /basket/merge
+  // Checkout (all requireCustomerAuth, CHK-03/CHK-05/CHK-06)
+  await fastify.register(checkoutRoutes);         // GET /checkout/summary, POST /checkout/*
+  // Account orders and wallet (requireCustomerAuth, ORD-03/WAL-01/WAL-02)
+  await fastify.register(accountOrderRoutes);     // GET /account/orders, POST /account/orders/:id/return-request
+  await fastify.register(accountWalletRoutes);    // GET /account/wallet, GET /account/wallet/entries
+  // Vendor orders (vendor JWT guard, ORD-05)
+  await fastify.register(vendorOrderRoutes);      // GET /vendor/orders, PATCH /vendor/orders/:id/status
 
   // --- 404 handler ---
   fastify.setNotFoundHandler((_req, reply) => {
