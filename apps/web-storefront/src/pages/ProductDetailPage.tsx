@@ -374,7 +374,7 @@ export default function ProductDetailPage() {
                 type="button"
                 disabled={!canAddToCart || addToBasket.isPending}
                 onClick={handleAddToCartClick}
-                whileTap={canAddToCart ? { scale: 0.97 } : undefined}
+                {...(canAddToCart ? { whileTap: { scale: 0.97 } } : {})}
                 aria-label="Add to Cart"
                 className={`w-full md:w-auto bg-grovio-primary text-white font-semibold text-base px-8 py-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2 transition-opacity duration-150 ${
                   !canAddToCart || addToBasket.isPending
