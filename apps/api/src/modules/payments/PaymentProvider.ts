@@ -3,10 +3,11 @@
  *
  * All checkout and order code depends ONLY on this interface.
  * The Stripe and Razorpay SDKs are imported exclusively in their respective adapter files:
- *   - StripeAdapter.ts (only file allowed to `import Stripe from "stripe"`)
- *   - RazorpayAdapter.ts (only file allowed to `import Razorpay from "razorpay"`)
+ *   - StripeAdapter.ts (only file allowed to import the stripe SDK)
+ *   - RazorpayAdapter.ts (only file allowed to import the razorpay SDK)
  *
  * This file has NO SDK imports — it is a pure interface + type definition.
+ * SDK imports are confined to the two adapter files only (PAY-01 / Pitfall 9).
  *
  * Pattern source: RESEARCH.md Pattern 1, ARCHITECTURE.md PaymentProvider Abstraction.
  */

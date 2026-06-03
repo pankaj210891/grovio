@@ -25,4 +25,4 @@ export type { StripeAdapterOptions } from "./StripeAdapter.js";
 export { RazorpayAdapter } from "./RazorpayAdapter.js";
 export type { RazorpayAdapterOptions } from "./RazorpayAdapter.js";
 
-// Note: PaymentService will be added in Task 2 (PaymentService.ts)
+export { PaymentService } from "./PaymentService.js";
