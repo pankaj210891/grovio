@@ -22,6 +22,7 @@ import { featureFlagRoutes } from "./routes/feature-flags.js";
 import healthRoutes from "./routes/health.js";
 import { homepageRoutes } from "./routes/homepage.js";
 import { searchRoutes } from "./routes/search.js";
+import productsRoutes from "./routes/products.js";
 import { stripeWebhookRoutes } from "./routes/webhooks/stripe.js";
 import { razorpayWebhookRoutes } from "./routes/webhooks/razorpay.js";
 import { vendorAuthRoutes } from "./routes/vendor/auth.js";
@@ -81,6 +82,7 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   await fastify.register(vendorProductRoutes); // /vendor/products/* (JWT-guarded)
   await fastify.register(adminProductRoutes); // /admin/products/* (admin token guard)
   await fastify.register(searchRoutes); // GET /search, GET /search/suggest (public)
+  await fastify.register(productsRoutes); // GET /products/:slug (public PDP)
 
   // --- Routes (Phase 4 — plan 04-05) ---
   await fastify.register(customerAuthRoutes); // POST /auth/* (public — no JWT guard, D-11)

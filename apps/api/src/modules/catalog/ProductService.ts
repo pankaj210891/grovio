@@ -5,8 +5,10 @@ import type { FeatureFlagService } from "../feature-flags/FeatureFlagService.js"
 import {
   products,
   productVariants,
+  productImages,
   attributeDefinitions,
   categories,
+  vendors,
   vendorCategoryRestrictions,
   type InsertProduct,
   type InsertProductVariant,
@@ -769,6 +771,97 @@ export class ProductService {
    * Resolve a unique slug for a new product, appending -2, -3, … on collisions.
    * Follows the CategoryService.resolveSlug collision pattern (RESEARCH.md).
    */
+  /**
+   * Public storefront product detail — fetch by slug with variants, images,
+   * vendor name, and category attribute definitions.
+   * Returns null when no approved product matches the slug.
+   */
+  async getProductBySlug(slug: string) {
+    const { db } = this.deps;
+
+    const [row] = await db
+      .select({
+        p_id: products.id,
+        p_vendor_id: products.vendorId,
+        p_category_id: products.categoryId,
+        p_name: products.name,
+        p_slug: products.slug,
+        p_description: products.description,
+        p_status: products.status,
+        p_base_price_minor: products.basePriceMinor,
+        p_attributes: products.attributes,
+        p_created_at: products.createdAt,
+        p_updated_at: products.updatedAt,
+        vendor_name: vendors.name,
+      })
+      .from(products)
+      .leftJoin(vendors, eq(products.vendorId, vendors.id))
+      .where(and(eq(products.slug, slug), eq(products.status, "approved")))
+      .limit(1);
+
+    if (!row) return null;
+
+    const [variantRows, imageRows, attrRows] = await Promise.all([
+      db
+        .select()
+        .from(productVariants)
+        .where(eq(productVariants.productId, row.p_id))
+        .orderBy(asc(productVariants.sortOrder)),
+      db
+        .select()
+        .from(productImages)
+        .where(eq(productImages.productId, row.p_id))
+        .orderBy(asc(productImages.sortOrder)),
+      db
+        .select({
+          key: attributeDefinitions.key,
+          label: attributeDefinitions.label,
+          displayType: attributeDefinitions.attrType,
+          isVariant: attributeDefinitions.isVariant,
+          isFilterable: attributeDefinitions.isFilterable,
+        })
+        .from(attributeDefinitions)
+        .where(eq(attributeDefinitions.categoryId, row.p_category_id))
+        .orderBy(asc(attributeDefinitions.sortOrder)),
+    ]);
+
+    return {
+      product: {
+        id: row.p_id,
+        vendorId: row.p_vendor_id,
+        categoryId: row.p_category_id,
+        name: row.p_name,
+        slug: row.p_slug,
+        description: row.p_description ?? undefined,
+        status: row.p_status,
+        basePriceMinor: row.p_base_price_minor,
+        attributes: row.p_attributes,
+        createdAt: row.p_created_at.toISOString(),
+        updatedAt: row.p_updated_at.toISOString(),
+        vendorName: row.vendor_name ?? undefined,
+        variants: variantRows.map((v) => ({
+          id: v.id,
+          productId: v.productId,
+          sku: v.sku,
+          priceMinor: v.priceMinor,
+          optionValues: v.optionValues as Record<string, unknown>,
+          sortOrder: v.sortOrder,
+          createdAt: v.createdAt.toISOString(),
+          updatedAt: v.updatedAt.toISOString(),
+        })),
+        images: imageRows.map((img) => ({
+          id: img.id,
+          productId: img.productId,
+          url: img.url,
+          sortOrder: img.sortOrder,
+          altText: img.altText,
+          createdAt: img.createdAt.toISOString(),
+        })),
+        categoryAttributes: attrRows,
+      },
+    };
+  }
+
   private async resolveSlug(source: string, excludeId?: string): Promise<string> {
     const { db } = this.deps;
     const base = this.slugify(source);
