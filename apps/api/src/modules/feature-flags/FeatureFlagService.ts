@@ -3,12 +3,14 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Redis } from "ioredis";
 import type { Env } from "../../config/env.js";
 import { featureFlags, type SelectFeatureFlag } from "../../db/schema/index.js";
+import type { AuditService } from "../audit/AuditService.js";
 
 interface FeatureFlagServiceDeps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db: NodePgDatabase<any>;
   redis: Redis;
   env: Env;
+  auditService: AuditService;
 }
 
 /**
@@ -23,7 +25,11 @@ interface FeatureFlagServiceDeps {
  * isEnabled=false flags are treated as non-existent — getFlag() returns null,
  * getAllFlags() excludes them.
  *
- * Write path (CRUD) is intentionally absent; Phase 6 admin bolt-on will add it.
+ * Phase 6 additions (ADM-06, D-12):
+ * - toggleFlag(key, enabled): updates DB, then invalidates Redis cache (Pitfall 3 ordering)
+ * - listFlags(): returns ALL rows (including disabled) for admin toggle list
+ *
+ * Every toggleFlag call logs 'feature_flag.toggled' to auditService (T-06-24).
  */
 export class FeatureFlagService {
   constructor(private deps: FeatureFlagServiceDeps) {}
@@ -95,5 +101,70 @@ export class FeatureFlagService {
     if (keys.length > 0) {
       await this.deps.redis.del(...keys);
     }
+  }
+
+  // ── Phase 6: Admin write path (ADM-06, D-12) ─────────────────────────────
+
+  /**
+   * Toggle a feature flag on or off (ADM-06, D-12).
+   *
+   * Updates feature_flags.isEnabled = enabled and updatedAt = now in the DB,
+   * then calls invalidateFlag(key) AFTER the DB write (Pitfall 3 ordering —
+   * invalidate after write, not before, to prevent a cache miss returning stale data
+   * from a mid-write window).
+   *
+   * Logs 'feature_flag.toggled' to auditService (T-06-24).
+   *
+   * @param key - Feature flag key (e.g., 'new_checkout')
+   * @param enabled - New enabled state
+   */
+  async toggleFlag(key: string, enabled: boolean): Promise<void> {
+    const { db, auditService } = this.deps;
+
+    // Load before-state for audit
+    const rows = await db
+      .select()
+      .from(featureFlags)
+      .where(eq(featureFlags.key, key))
+      .limit(1);
+
+    const before = rows[0];
+    if (!before) throw new Error(`Feature flag not found: ${key}`);
+
+    // DB update
+    await db
+      .update(featureFlags)
+      .set({ isEnabled: enabled, updatedAt: new Date() })
+      .where(eq(featureFlags.key, key));
+
+    // Invalidate Redis AFTER the DB update (Pitfall 3 ordering)
+    await this.invalidateFlag(key);
+
+    // Audit log
+    await auditService.log({
+      actorType: "admin",
+      actorId: "admin",
+      actorEmail: "admin",
+      action: "feature_flag.toggled",
+      entityType: "feature_flag",
+      entityId: key,
+      before: { isEnabled: before.isEnabled },
+      after: { isEnabled: enabled },
+    });
+  }
+
+  /**
+   * List all feature flags (including disabled) for the admin toggle page (ADM-06, D-12).
+   *
+   * Unlike getAllFlags() (which excludes disabled flags), listFlags() returns every row
+   * so the admin can see and toggle all flags in the management UI.
+   *
+   * @returns All feature flag rows ordered by key
+   */
+  async listFlags(): Promise<SelectFeatureFlag[]> {
+    const { db } = this.deps;
+
+    const rows = await db.select().from(featureFlags);
+    return rows;
   }
 }
