@@ -9,6 +9,7 @@ import { CouponDisabledError, CouponInvalidError } from "../modules/coupons/inde
 import { ProviderNotConfiguredError } from "../modules/payments/index.js";
 import type { BasketService } from "../modules/basket/index.js";
 import { BasketNotFoundError } from "../modules/basket/index.js";
+import { InsufficientStockError } from "../modules/inventory/index.js";
 
 /**
  * Checkout routes — all requireCustomerAuth (CHK-03, CHK-05, CHK-06, D-09).
@@ -189,6 +190,12 @@ export async function checkoutRoutes(fastify: FastifyInstance): Promise<void> {
       }
       if (err instanceof EmptyBasketError) {
         return reply.status(422).send({
+          success: false,
+          error: { code: err.code, message: err.message },
+        });
+      }
+      if (err instanceof InsufficientStockError) {
+        return reply.status(409).send({
           success: false,
           error: { code: err.code, message: err.message },
         });

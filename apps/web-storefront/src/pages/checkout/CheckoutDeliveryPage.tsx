@@ -76,9 +76,11 @@ export default function CheckoutDeliveryPage() {
       void navigate('/checkout/payment');
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 409) {
+        const serverMsg =
+          (err.body as { error?: { message?: string } } | null)?.error?.message;
         addToast({
           id: crypto.randomUUID(),
-          message: 'Some items in your basket are out of stock. Please update your cart.',
+          message: serverMsg ?? 'Some items in your basket are out of stock. Please update your cart.',
           variant: 'error',
         });
       } else {
