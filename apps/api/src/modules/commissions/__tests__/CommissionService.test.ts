@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // CommissionService tests — MKT-01, MKT-02, D-14, T-05-07
@@ -299,6 +299,206 @@ describe("CommissionService", () => {
 
       expect(typeof result.commissionMinor).toBe("bigint");
       expect(typeof result.netVendorMinor).toBe("bigint");
+    });
+  });
+
+  // ── Admin CRUD: getRules / createRule / updateRule / deleteRule ───────────
+  // Added in Phase 6 Plan 07 (ADM-03, D-18, T-06-21, T-06-22)
+
+  describe("getRules()", () => {
+    it("returns { global, categoryOverrides, vendorOverrides } shape", async () => {
+      const db = {
+        select: vi.fn()
+          // First call: all rules
+          .mockReturnValueOnce({
+            from: vi.fn().mockReturnValue({
+              then: (resolve: (v: unknown[]) => void) => resolve([
+                globalRule,
+                categoryRule,
+                vendorRule,
+              ]),
+              catch: vi.fn(),
+              finally: vi.fn(),
+            }),
+          }),
+        insert: makeInsertMock(),
+      };
+      const redis = makeRedisMock(null);
+      const auditService = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new CommissionService({ db: db as never, redis: redis as never, env: makeEnv() as never, auditService: auditService as never });
+
+      const result = await svc.getRules();
+
+      expect(result).toHaveProperty("global");
+      expect(result).toHaveProperty("categoryOverrides");
+      expect(result).toHaveProperty("vendorOverrides");
+      expect(result.global?.id).toBe("rule-global");
+      expect(result.categoryOverrides).toHaveLength(1);
+      expect(result.vendorOverrides).toHaveLength(1);
+    });
+  });
+
+  describe("createRule()", () => {
+    it("inserts a new category-scope rule, calls invalidateRateCache, and audits 'commission_rule.created'", async () => {
+      const insertValues = vi.fn().mockResolvedValue([{ id: "new-rule-id" }]);
+      const db = {
+        select: vi.fn()
+          .mockReturnValueOnce({
+            from: vi.fn().mockReturnValue({
+              then: (resolve: (v: unknown[]) => void) => resolve([globalRule, categoryRule]),
+              catch: vi.fn(),
+              finally: vi.fn(),
+            }),
+          }),
+        insert: vi.fn().mockReturnValue({ values: insertValues }),
+      };
+      const redis = { ...makeRedisMock(null), keys: vi.fn().mockResolvedValue([]), del: vi.fn().mockResolvedValue(1) };
+      const auditService = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new CommissionService({ db: db as never, redis: redis as never, env: makeEnv() as never, auditService: auditService as never });
+
+      await svc.createRule(
+        { scope: "category", categoryId: "cat-uuid-2", vendorId: null, ratePercent: 15 },
+        "admin@example.com"
+      );
+
+      expect(db.insert).toHaveBeenCalled();
+      expect(insertValues).toHaveBeenCalledWith(
+        expect.objectContaining({ scope: "category", categoryId: "cat-uuid-2" })
+      );
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "commission_rule.created" })
+      );
+    });
+
+    it("calls invalidateRateCache (clears commission:rate:* keys) on createRule", async () => {
+      const db = {
+        select: vi.fn().mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            then: (resolve: (v: unknown[]) => void) => resolve([globalRule]),
+            catch: vi.fn(),
+            finally: vi.fn(),
+          }),
+        }),
+        insert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue([{ id: "r2" }]) }),
+      };
+      const cacheKeys = ["commission:rate:vendor-1:cat-1", "commission:rate:vendor-2:cat-1"];
+      const redis = { ...makeRedisMock(null), keys: vi.fn().mockResolvedValue(cacheKeys), del: vi.fn().mockResolvedValue(2) };
+      const auditService = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new CommissionService({ db: db as never, redis: redis as never, env: makeEnv() as never, auditService: auditService as never });
+
+      await svc.createRule(
+        { scope: "vendor", categoryId: null, vendorId: "vendor-uuid-new", ratePercent: 5 },
+        "admin@example.com"
+      );
+
+      expect(redis.keys).toHaveBeenCalledWith("commission:rate:*");
+      expect(redis.del).toHaveBeenCalled();
+    });
+  });
+
+  describe("updateRule()", () => {
+    it("updates rate, calls invalidateRateCache, and audits 'commission_rule.updated'", async () => {
+      const db = {
+        select: vi.fn().mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([globalRule]),
+            }),
+          }),
+        }),
+        update: vi.fn().mockReturnValue({
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      };
+      const redis = { ...makeRedisMock(null), keys: vi.fn().mockResolvedValue([]), del: vi.fn().mockResolvedValue(0) };
+      const auditService = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new CommissionService({ db: db as never, redis: redis as never, env: makeEnv() as never, auditService: auditService as never });
+
+      await svc.updateRule("rule-global", { ratePercent: 12 }, "admin@example.com");
+
+      expect(db.update).toHaveBeenCalled();
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "commission_rule.updated" })
+      );
+    });
+  });
+
+  describe("deleteRule()", () => {
+    it("throws a coded error when the target rule scope is 'global' (T-06-21, D-18)", async () => {
+      const db = {
+        select: vi.fn().mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([globalRule]),
+            }),
+          }),
+        }),
+        delete: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+      };
+      const redis = { ...makeRedisMock(null), keys: vi.fn().mockResolvedValue([]), del: vi.fn().mockResolvedValue(0) };
+      const auditService = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new CommissionService({ db: db as never, redis: redis as never, env: makeEnv() as never, auditService: auditService as never });
+
+      await expect(
+        svc.deleteRule("rule-global", "admin@example.com")
+      ).rejects.toThrow();
+
+      // db.delete must NOT have been called (guard fires before delete)
+      expect(db.delete).not.toHaveBeenCalled();
+    });
+
+    it("deletes a category-scope rule, calls invalidateRateCache, audits 'commission_rule.deleted'", async () => {
+      const db = {
+        select: vi.fn().mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([categoryRule]),
+            }),
+          }),
+        }),
+        delete: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+      };
+      const redis = { ...makeRedisMock(null), keys: vi.fn().mockResolvedValue([]), del: vi.fn().mockResolvedValue(0) };
+      const auditService = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new CommissionService({ db: db as never, redis: redis as never, env: makeEnv() as never, auditService: auditService as never });
+
+      await svc.deleteRule("rule-category", "admin@example.com");
+
+      expect(db.delete).toHaveBeenCalled();
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "commission_rule.deleted" })
+      );
+    });
+  });
+
+  describe("invalidateRateCache()", () => {
+    it("calls redis.keys with 'commission:rate:*' and deletes all matching keys (T-06-22)", async () => {
+      const db = { select: makeSelectMock([]), insert: makeInsertMock() };
+      const cacheKeys = [
+        "commission:rate:vendor-1:cat-1",
+        "commission:rate:vendor-2:cat-1",
+      ];
+      const redis = { ...makeRedisMock(null), keys: vi.fn().mockResolvedValue(cacheKeys), del: vi.fn().mockResolvedValue(2) };
+      const auditService = { log: vi.fn() };
+      const svc = new CommissionService({ db: db as never, redis: redis as never, env: makeEnv() as never, auditService: auditService as never });
+
+      await svc.invalidateRateCache();
+
+      expect(redis.keys).toHaveBeenCalledWith("commission:rate:*");
+      expect(redis.del).toHaveBeenCalledWith(...cacheKeys);
+    });
+
+    it("does not call del when no commission:rate:* keys exist", async () => {
+      const db = { select: makeSelectMock([]), insert: makeInsertMock() };
+      const redis = { ...makeRedisMock(null), keys: vi.fn().mockResolvedValue([]), del: vi.fn() };
+      const auditService = { log: vi.fn() };
+      const svc = new CommissionService({ db: db as never, redis: redis as never, env: makeEnv() as never, auditService: auditService as never });
+
+      await svc.invalidateRateCache();
+
+      expect(redis.del).not.toHaveBeenCalled();
     });
   });
 });
