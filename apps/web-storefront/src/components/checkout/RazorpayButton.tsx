@@ -140,7 +140,7 @@ export function RazorpayButton({
       description: `Order ${orderId}`,
       handler: onSuccess,
       modal: {
-        ondismiss: onDismiss,
+        ...(onDismiss !== undefined && { ondismiss: onDismiss }),
       },
     });
     rzp.open();

@@ -142,11 +142,17 @@ export interface PlaceOrderParams {
 export interface PlaceOrderResult {
   orderId: string;
   displayId: string;
-  /** Provider-specific client secret for frontend payment completion */
-  clientSecret: string | null;
-  /** Provider-side order reference (Razorpay order_id for checkout modal) */
-  providerOrderRef: string | null;
-  providerOrderId: string;
+  /** The provider that processed this payment */
+  provider: "stripe" | "razorpay";
+  /** Grand total charged via provider in minor units (grandTotal − wallet credit) */
+  amountMinor: number;
+  /** Provider-specific order details for client-side payment confirmation */
+  providerOrder: {
+    providerOrderId: string;
+    clientSecret: string | null;
+    providerKey: string | null;
+    providerOrderRef: string | null;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -493,9 +499,14 @@ export class CheckoutService {
     return {
       orderId,
       displayId,
-      clientSecret: providerOrder.clientSecret ?? null,
-      providerOrderRef: providerOrder.providerOrderRef ?? null,
-      providerOrderId: providerOrder.providerOrderId,
+      provider: params.paymentProvider,
+      amountMinor: Number(summary.grandTotalMinor),
+      providerOrder: {
+        providerOrderId: providerOrder.providerOrderId,
+        clientSecret: providerOrder.clientSecret ?? null,
+        providerKey: providerOrder.providerKey ?? null,
+        providerOrderRef: providerOrder.providerOrderRef ?? null,
+      },
     };
   }
 }

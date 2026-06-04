@@ -201,31 +201,29 @@ export default function CheckoutPaymentPage() {
               </div>
             )}
 
-            {/* Stripe Elements form */}
+            {/* Stripe — CTA before order placed */}
             {effectiveProvider === 'stripe' && !paymentResult && (
-              <div>
-                {!placeOrder.isPending && !placeOrder.data && (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    className="w-full"
-                    loading={placeOrder.isPending}
-                    onClick={() => { void handlePlaceOrder('stripe'); }}
-                  >
-                    Continue with Stripe
-                  </Button>
-                )}
-                {paymentResult?.provider === 'stripe' && paymentResult.providerOrder.clientSecret && (
-                  <StripePaymentForm
-                    clientSecret={paymentResult.providerOrder.clientSecret}
-                    orderId={paymentResult.orderId}
-                    amountMinor={paymentResult.amountMinor}
-                  />
-                )}
-              </div>
+              <Button
+                type="button"
+                variant="primary"
+                className="w-full"
+                loading={placeOrder.isPending}
+                onClick={() => { void handlePlaceOrder('stripe'); }}
+              >
+                Continue with Stripe
+              </Button>
             )}
 
-            {/* Razorpay button */}
+            {/* Stripe Elements form — shown after placeOrder returns clientSecret */}
+            {paymentResult !== null && paymentResult.provider === 'stripe' && paymentResult.providerOrder.clientSecret && (
+              <StripePaymentForm
+                clientSecret={paymentResult.providerOrder.clientSecret}
+                orderId={paymentResult.orderId}
+                amountMinor={paymentResult.amountMinor}
+              />
+            )}
+
+            {/* Razorpay — CTA before order placed */}
             {effectiveProvider === 'razorpay' && !paymentResult && (
               <Button
                 type="button"
@@ -238,8 +236,8 @@ export default function CheckoutPaymentPage() {
               </Button>
             )}
 
-            {/* Razorpay modal trigger (after order placed) */}
-            {paymentResult?.provider === 'razorpay' &&
+            {/* Razorpay modal trigger — shown after placeOrder returns order_id */}
+            {paymentResult !== null && paymentResult.provider === 'razorpay' &&
               paymentResult.providerOrder.providerKey &&
               paymentResult.providerOrder.providerOrderRef && (
                 <RazorpayButton
@@ -250,18 +248,6 @@ export default function CheckoutPaymentPage() {
                   onSuccess={() => { void navigate(`/order-confirmation/${paymentResult.orderId}`); }}
                 />
               )}
-
-            {/* Review step after Stripe redirected back */}
-            {paymentResult?.provider === 'stripe' && (
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full"
-                onClick={() => { void navigate('/checkout/review'); }}
-              >
-                Review Order
-              </Button>
-            )}
           </div>
         )}
       </div>
