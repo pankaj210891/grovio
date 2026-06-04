@@ -99,7 +99,7 @@ export class VendorManagementService {
       entityId: vendorId,
       before: { onboardingStatus: before.onboardingStatus },
       after: { onboardingStatus: "approved" },
-      ipAddress: ip,
+      ...(ip !== undefined ? { ipAddress: ip } : {}),
     });
   }
 
@@ -131,7 +131,7 @@ export class VendorManagementService {
       entityId: vendorId,
       before: { onboardingStatus: before.onboardingStatus },
       after: { onboardingStatus: "suspended" },
-      ipAddress: ip,
+      ...(ip !== undefined ? { ipAddress: ip } : {}),
     });
   }
 
@@ -162,7 +162,7 @@ export class VendorManagementService {
       entityId: vendorId,
       before: { onboardingStatus: before.onboardingStatus },
       after: { onboardingStatus: "approved" },
-      ipAddress: ip,
+      ...(ip !== undefined ? { ipAddress: ip } : {}),
     });
   }
 
