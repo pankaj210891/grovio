@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and, or, isNull, isNotNull } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Env } from "../../config/env.js";
 import {
@@ -6,6 +6,7 @@ import {
   basketItems,
   products,
   productVariants,
+  inventoryItems,
 } from "../../db/schema/index.js";
 import type { InventoryService } from "../inventory/InventoryService.js";
 import type { WalletService } from "../wallet/WalletService.js";
@@ -131,7 +132,7 @@ export interface InitiateCheckoutResult {
 
 export interface PlaceOrderParams {
   customerId: string;
-  addressId: string;
+  addressId: string | null;
   basketSessionId: string;
   paymentProvider: "stripe" | "razorpay";
   couponCode?: string;
@@ -141,11 +142,17 @@ export interface PlaceOrderParams {
 export interface PlaceOrderResult {
   orderId: string;
   displayId: string;
-  /** Provider-specific client secret for frontend payment completion */
-  clientSecret: string | null;
-  /** Provider-side order reference (Razorpay order_id for checkout modal) */
-  providerOrderRef: string | null;
-  providerOrderId: string;
+  /** The provider that processed this payment */
+  provider: "stripe" | "razorpay";
+  /** Grand total charged via provider in minor units (grandTotal − wallet credit) */
+  amountMinor: number;
+  /** Provider-specific order details for client-side payment confirmation */
+  providerOrder: {
+    providerOrderId: string;
+    clientSecret: string | null;
+    providerKey: string | null;
+    providerOrderRef: string | null;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -366,29 +373,45 @@ export class CheckoutService {
       throw new BasketSessionNotFoundError();
     }
 
-    // Load basket items with inventoryItemId for reservation
+    // Load basket items joined with inventory_items to get the real inventoryItemId.
+    // Dual-nullable FK pattern (D-20): variant products join on productVariantId;
+    // variant-free products join on productId WHERE inventoryItems.productVariantId IS NULL.
     const rawItems = await db
       .select({
         productId: basketItems.productId,
         productVariantId: basketItems.productVariantId,
         quantity: basketItems.quantity,
+        inventoryItemId: inventoryItems.id,
       })
       .from(basketItems)
+      .leftJoin(
+        inventoryItems,
+        or(
+          // Variant products: join on variant ID (both non-null)
+          and(
+            isNotNull(basketItems.productVariantId),
+            eq(inventoryItems.productVariantId, basketItems.productVariantId)
+          ),
+          // Variant-free products: join on product ID, inventory row has no variant
+          and(
+            isNull(basketItems.productVariantId),
+            eq(inventoryItems.productId, basketItems.productId),
+            isNull(inventoryItems.productVariantId)
+          )
+        )
+      )
       .where(eq(basketItems.basketSessionId, params.basketSessionId));
 
     if (rawItems.length === 0) {
       throw new EmptyBasketError();
     }
 
-    // Get inventory item IDs for each basket item
-    // We need to join with inventory_items via product/variant
-    // For simplicity, cast the rawItems to include inventoryItemId from joined query
-    const itemsForReservation = rawItems.map((item) => ({
-      inventoryItemId:
-        (item as unknown as { inventoryItemId?: string }).inventoryItemId ??
-        item.productId, // fallback for tests without joined inventoryItemId
-      quantity: item.quantity,
-    }));
+    const itemsForReservation = rawItems
+      .filter((item) => item.inventoryItemId !== null)
+      .map((item) => ({
+        inventoryItemId: item.inventoryItemId!,
+        quantity: item.quantity,
+      }));
 
     // CHK-05: Reserve inventory at proceed-to-payment
     const reservationIds = await inventoryService.reserveItems({
@@ -424,8 +447,10 @@ export class CheckoutService {
     const summary = await this.computeSummary({
       basketSessionId: params.basketSessionId,
       customerId: params.customerId,
-      couponCode: params.couponCode,
-      walletRequestedMinor: params.walletRequestedMinor,
+      ...(params.couponCode !== undefined && { couponCode: params.couponCode }),
+      ...(params.walletRequestedMinor !== undefined && {
+        walletRequestedMinor: params.walletRequestedMinor,
+      }),
     });
 
     // 2. Create payment order via provider abstraction (T-05-PAY, Pitfall 9)
@@ -474,9 +499,14 @@ export class CheckoutService {
     return {
       orderId,
       displayId,
-      clientSecret: providerOrder.clientSecret ?? null,
-      providerOrderRef: providerOrder.providerOrderRef ?? null,
-      providerOrderId: providerOrder.providerOrderId,
+      provider: params.paymentProvider,
+      amountMinor: Number(summary.grandTotalMinor),
+      providerOrder: {
+        providerOrderId: providerOrder.providerOrderId,
+        clientSecret: providerOrder.clientSecret ?? null,
+        providerKey: providerOrder.providerKey ?? null,
+        providerOrderRef: providerOrder.providerOrderRef ?? null,
+      },
     };
   }
 }

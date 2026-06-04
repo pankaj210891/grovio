@@ -377,6 +377,48 @@ export class BasketService {
    * No items are discarded silently — all guest items end up in the customer basket,
    * quantities capped at available stock where applicable.
    */
+  /**
+   * Look up the basket session UUID for an authenticated customer.
+   * Used by checkout routes to resolve basketSessionId from the JWT customerId
+   * without requiring the client to send it (httpOnly cookie is unreadable by JS).
+   * Throws BasketNotFoundError if no session exists for this customer.
+   */
+  async getSessionIdByCustomerId(customerId: string): Promise<string> {
+    const { db } = this.deps;
+    const rows = await db
+      .select({ id: basketSessions.id })
+      .from(basketSessions)
+      .where(eq(basketSessions.customerId, customerId))
+      .limit(1);
+    if (!rows[0]) {
+      throw new BasketNotFoundError(
+        `No basket session found for customer ${customerId}`
+      );
+    }
+    return rows[0].id;
+  }
+
+  /**
+   * Look up the basket session UUID by the guest cookie token.
+   * Used as a fallback in checkout routes when the session was created as a
+   * guest and merge-on-login has not run yet.
+   * Throws BasketNotFoundError if no session exists for this token.
+   */
+  async getSessionIdByGuestToken(guestToken: string): Promise<string> {
+    const { db } = this.deps;
+    const rows = await db
+      .select({ id: basketSessions.id })
+      .from(basketSessions)
+      .where(eq(basketSessions.guestToken, guestToken))
+      .limit(1);
+    if (!rows[0]) {
+      throw new BasketNotFoundError(
+        `No basket session found for guest token`
+      );
+    }
+    return rows[0].id;
+  }
+
   async mergeGuestBasket(
     guestToken: string,
     customerId: string
