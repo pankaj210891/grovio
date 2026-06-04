@@ -236,7 +236,7 @@ Plans:
 - [x] 06-02-PLAN.md — 7 new Drizzle tables + vendors/coupons extensions + schema barrel
 
 **Wave 3** *(blocked on Wave 2)*
-- [ ] 06-03-PLAN.md — [BLOCKING] db:generate + db:migrate + idempotent vendor-owner data migration into vendor_users
+- [x] 06-03-PLAN.md — [BLOCKING] db:generate + db:migrate + idempotent vendor-owner data migration into vendor_users
 
 **Wave 4** *(blocked on Wave 3)*
 - [ ] 06-04-PLAN.md — VendorAuthService migration to vendor_users + role middleware + AdminAuthService + requireAdminAuth (TDD)
@@ -311,7 +311,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
 | 5. Commerce Core | 11/12 | In Progress|  |
-| 6. Vendor & Admin Tools | 2/10 | In Progress|  |
+| 6. Vendor & Admin Tools | 3/10 | In Progress|  |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
 | 9. Productization & Release | 0/TBD | Not started | - |
