@@ -8,22 +8,24 @@ import { FeatureFlagService } from "./FeatureFlagService.js";
 
 /**
  * Build a chainable Drizzle query mock that resolves to `rows` when awaited.
- * Supports: db.select().from().where().limit(n)
+ * Supports: db.select().from().where().limit(n) and db.select().from() (direct await)
  */
 function makeDbMock(rows: SelectFeatureFlag[]) {
-  // Make `where` awaitable (resolves to rows) so getAllFlags() works without .limit()
-  const awaitableChain = {
-    from: vi.fn().mockReturnValue({
-      where: vi.fn().mockReturnValue({
-        limit: vi.fn().mockResolvedValue(rows),
-        // Make `where` itself awaitable for getAllFlags (no .limit call)
-        then: (resolve: (v: SelectFeatureFlag[]) => void) => resolve(rows),
-        catch: vi.fn(),
-        finally: vi.fn(),
-      }),
+  const fromChain = {
+    where: vi.fn().mockReturnValue({
+      limit: vi.fn().mockResolvedValue(rows),
+      // Make `where` itself awaitable for getAllFlags (no .limit call)
+      then: (resolve: (v: SelectFeatureFlag[]) => void) => resolve(rows),
+      catch: vi.fn(),
+      finally: vi.fn(),
     }),
+    // Make `from` itself awaitable — for listFlags() which does db.select().from() directly
+    then: (resolve: (v: SelectFeatureFlag[]) => void) => resolve(rows),
+    catch: vi.fn(),
+    finally: vi.fn(),
   };
 
+  const awaitableChain = { from: vi.fn().mockReturnValue(fromChain) };
   const db = { select: vi.fn().mockReturnValue(awaitableChain) };
   return db;
 }
@@ -213,6 +215,81 @@ describe("FeatureFlagService", () => {
       const result = await svc.getFlag("new_checkout");
       expect(result).toBe("true");
       expect(db.select).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // ── Phase 6: toggleFlag + listFlags (ADM-06, D-12) ──────────────────────
+
+  describe("toggleFlag()", () => {
+    it("updates isEnabled in the DB and calls invalidateFlag(key) after the DB update", async () => {
+      const db = makeDbMock([enabledFlag]);
+      // Make update chain work
+      const updateSetWhere = vi.fn().mockResolvedValue([]);
+      const updateSet = vi.fn().mockReturnValue({ where: updateSetWhere });
+      (db as { update: unknown }).update = vi.fn().mockReturnValue({ set: updateSet });
+
+      const redis = makeRedisMock();
+
+      const auditService = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new FeatureFlagService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditService as never,
+      });
+
+      await svc.toggleFlag("new_checkout", false);
+
+      // DB update should be called
+      expect((db as { update: ReturnType<typeof vi.fn> }).update).toHaveBeenCalled();
+      expect(updateSet).toHaveBeenCalledWith(
+        expect.objectContaining({ isEnabled: false })
+      );
+      // Cache invalidated AFTER the DB update (Pitfall 3 ordering)
+      expect(redis.del).toHaveBeenCalledWith("ff:new_checkout");
+    });
+
+    it("logs 'feature_flag.toggled' to auditService", async () => {
+      const db = makeDbMock([enabledFlag]);
+      const updateSetWhere = vi.fn().mockResolvedValue([]);
+      const updateSet = vi.fn().mockReturnValue({ where: updateSetWhere });
+      (db as { update: unknown }).update = vi.fn().mockReturnValue({ set: updateSet });
+      const redis = makeRedisMock();
+      const auditService = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new FeatureFlagService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditService as never,
+      });
+
+      await svc.toggleFlag("new_checkout", true);
+
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "feature_flag.toggled" })
+      );
+    });
+  });
+
+  describe("listFlags()", () => {
+    it("returns all feature flag rows (including disabled) for the admin toggle list", async () => {
+      const db = makeDbMock([enabledFlag, disabledFlag]);
+      const redis = makeRedisMock();
+      const auditService = { log: vi.fn() };
+      const svc = new FeatureFlagService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditService as never,
+      });
+
+      const flags = await svc.listFlags();
+
+      expect(flags).toHaveLength(2);
+      // Must include both enabled and disabled flags
+      const keys = flags.map((f) => f.key);
+      expect(keys).toContain("new_checkout");
+      expect(keys).toContain("old_feature");
     });
   });
 });

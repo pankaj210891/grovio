@@ -268,4 +268,323 @@ describe("HomepageService", () => {
       expect(db.select).toHaveBeenCalledTimes(2);
     });
   });
+
+  // ── Phase 6: CMS write methods (ADM-04, D-11, Pitfall 3) ─────────────────
+
+  /**
+   * Build a DB mock that supports insert, update, delete, and select chains.
+   * Used by CMS write tests below.
+   */
+  function makeCmsDbMock(existingBlock?: SelectHomepageBlock | null) {
+    const block = existingBlock ?? bannerBlock;
+
+    // select() for before-state (existing block row)
+    let selectCallIdx = 0;
+    const selectMock = vi.fn().mockImplementation(() => {
+      const idx = selectCallIdx++;
+      if (idx === 0) {
+        // First select: for createBlock — get max sortOrder (db.select().from().orderBy().limit())
+        // OR for updateBlock/deleteBlock — get existing block (db.select().from().where().limit())
+        return {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue(block ? [block] : []),
+            }),
+            orderBy: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue(block ? [block] : []),
+            }),
+          }),
+        };
+      }
+      // Second select: for createBlock loading existing block (after max sortOrder query)
+      // OR for reorder second block
+      return {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue(block ? [block] : []),
+            orderBy: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue(block ? [block] : []),
+            }),
+          }),
+          orderBy: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      };
+    });
+
+    const insertValuesMock = vi.fn().mockResolvedValue([{ id: "new-block-id" }]);
+    const insertMock = vi.fn().mockReturnValue({ values: insertValuesMock });
+
+    const updateSetWhereMock = vi.fn().mockResolvedValue([]);
+    const updateSetMock = vi.fn().mockReturnValue({ where: updateSetWhereMock });
+    const updateMock = vi.fn().mockReturnValue({ set: updateSetMock });
+
+    const deleteWhereMock = vi.fn().mockResolvedValue([]);
+    const deleteMock = vi.fn().mockReturnValue({ where: deleteWhereMock });
+
+    return {
+      select: selectMock,
+      insert: insertMock,
+      update: updateMock,
+      delete: deleteMock,
+      _insertValuesMock: insertValuesMock,
+      _updateSetMock: updateSetMock,
+      _deleteWhereMock: deleteWhereMock,
+    };
+  }
+
+  const auditServiceMock = { log: vi.fn().mockResolvedValue(undefined) };
+
+  describe("createBlock()", () => {
+    it("inserts a new block and calls invalidateBlocks() AFTER the write (Pitfall 3)", async () => {
+      const callOrder: string[] = [];
+      const db = makeCmsDbMock();
+      // Track which happens first: insert or cache invalidation
+      const origInsertValuesMock = db._insertValuesMock;
+      db._insertValuesMock = vi.fn().mockImplementation(async (...args) => {
+        callOrder.push("insert");
+        return origInsertValuesMock(...args);
+      });
+
+      const redis = makeRedisMock();
+      const origDel = redis.del;
+      redis.del = vi.fn().mockImplementation(async (...args) => {
+        callOrder.push("invalidate");
+        return origDel(...args);
+      });
+
+      const svc = new HomepageService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditServiceMock as never,
+      });
+
+      await svc.createBlock({
+        block: {
+          type: "banner" as const,
+          imageUrl: "https://example.com/new.jpg",
+          title: "New Banner",
+        },
+        active: true,
+      });
+
+      // Insert must happen BEFORE invalidation (Pitfall 3)
+      const insertIdx = callOrder.indexOf("insert");
+      const invalidateIdx = callOrder.indexOf("invalidate");
+      expect(insertIdx).toBeLessThan(invalidateIdx);
+    });
+
+    it("calls invalidateBlocks() after create (cache cleared post-write)", async () => {
+      const db = makeCmsDbMock();
+      const redis = makeRedisMock();
+      const svc = new HomepageService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditServiceMock as never,
+      });
+
+      await svc.createBlock({
+        block: {
+          type: "banner" as const,
+          imageUrl: "https://example.com/new.jpg",
+          title: "New Banner",
+        },
+        active: true,
+      });
+
+      // Cache invalidated after create
+      expect(redis.del).toHaveBeenCalledWith("homepage:blocks");
+    });
+
+    it("logs 'homepage_block.created' to auditService", async () => {
+      const db = makeCmsDbMock();
+      const redis = makeRedisMock();
+      const auditSvc = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new HomepageService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditSvc as never,
+      });
+
+      await svc.createBlock({
+        block: { type: "banner" as const, imageUrl: "https://x.com/img.jpg", title: "T" },
+        active: true,
+      });
+
+      expect(auditSvc.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "homepage_block.created" })
+      );
+    });
+  });
+
+  describe("updateBlock()", () => {
+    it("updates a block and calls invalidateBlocks() AFTER the write", async () => {
+      const db = makeCmsDbMock();
+      const redis = makeRedisMock();
+      const svc = new HomepageService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditServiceMock as never,
+      });
+
+      await svc.updateBlock(bannerBlock.id, {
+        block: {
+          type: "banner" as const,
+          imageUrl: "https://example.com/updated.jpg",
+          title: "Updated",
+        },
+        active: true,
+      });
+
+      expect(db.update).toHaveBeenCalled();
+      expect(redis.del).toHaveBeenCalledWith("homepage:blocks");
+    });
+
+    it("logs 'homepage_block.updated' to auditService", async () => {
+      const db = makeCmsDbMock();
+      const redis = makeRedisMock();
+      const auditSvc = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new HomepageService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditSvc as never,
+      });
+
+      await svc.updateBlock(bannerBlock.id, {
+        block: { type: "banner" as const, imageUrl: "https://x.com/img.jpg", title: "U" },
+      });
+
+      expect(auditSvc.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "homepage_block.updated" })
+      );
+    });
+  });
+
+  describe("deleteBlock()", () => {
+    it("deletes a block and calls invalidateBlocks() AFTER the write", async () => {
+      const db = makeCmsDbMock();
+      const redis = makeRedisMock();
+      const svc = new HomepageService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditServiceMock as never,
+      });
+
+      await svc.deleteBlock(bannerBlock.id);
+
+      expect(db.delete).toHaveBeenCalled();
+      expect(redis.del).toHaveBeenCalledWith("homepage:blocks");
+    });
+
+    it("logs 'homepage_block.deleted' to auditService", async () => {
+      const db = makeCmsDbMock();
+      const redis = makeRedisMock();
+      const auditSvc = { log: vi.fn().mockResolvedValue(undefined) };
+      const svc = new HomepageService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditSvc as never,
+      });
+
+      await svc.deleteBlock(bannerBlock.id);
+
+      expect(auditSvc.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "homepage_block.deleted" })
+      );
+    });
+  });
+
+  describe("reorderBlock()", () => {
+    it("swaps sort order for direction 'up' and calls invalidateBlocks() after", async () => {
+      // Block with sortOrder=2, adjacent block with sortOrder=1
+      const currentBlock: SelectHomepageBlock = { ...bannerBlock, sortOrder: 2 };
+      const adjacentBlock: SelectHomepageBlock = { ...textBlock, sortOrder: 1 };
+
+      let selectCallIdx = 0;
+      const db = {
+        select: vi.fn().mockImplementation(() => {
+          const idx = selectCallIdx++;
+          if (idx === 0) {
+            // load current block
+            return {
+              from: vi.fn().mockReturnValue({
+                where: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue([currentBlock]),
+                }),
+              }),
+            };
+          }
+          // load adjacent block (next lower sortOrder for 'up')
+          return {
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                orderBy: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue([adjacentBlock]),
+                }),
+              }),
+            }),
+          };
+        }),
+        update: vi.fn().mockReturnValue({
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+        insert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue([]) }),
+        delete: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }),
+      };
+      const redis = makeRedisMock();
+      const svc = new HomepageService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditServiceMock as never,
+      });
+
+      await svc.reorderBlock(currentBlock.id, "up");
+
+      // update called twice (swap both blocks' sortOrder)
+      expect(db.update).toHaveBeenCalledTimes(2);
+      // cache invalidated after
+      expect(redis.del).toHaveBeenCalledWith("homepage:blocks");
+    });
+  });
+
+  describe("listBlocksForAdmin()", () => {
+    it("returns all blocks (including inactive) ordered by sort_order for admin CMS page", async () => {
+      const db = {
+        select: vi.fn().mockReturnValue({
+          from: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue([
+              bannerBlock,
+              textBlock,
+              inactiveBlock,
+            ]),
+          }),
+        }),
+      };
+      const redis = makeRedisMock();
+      const svc = new HomepageService({
+        db: db as never,
+        redis: redis as never,
+        env: ENV,
+        auditService: auditServiceMock as never,
+      });
+
+      const result = await svc.listBlocksForAdmin();
+
+      expect(result).toHaveLength(3);
+      // Includes inactive block
+      const types = result.map((b) => b.id);
+      expect(types).toContain(inactiveBlock.id);
+    });
+  });
 });
