@@ -9,6 +9,8 @@
  *   import { JwtPayload } from "@grovio/contracts";
  *   import { MerchandisingBlock, AttrType, CategoryTreeNode } from "@grovio/contracts";
  *   import { BasketSchema, OrderStatusSchema } from "@grovio/contracts";
+ *   import { VendorRole, VendorEarningsSummary } from "@grovio/contracts";
+ *   import { AdminAnalyticsSummary, RecordSettlementInput } from "@grovio/contracts";
  *   import { allocate } from "@grovio/contracts/money";
  */
 
@@ -26,3 +28,5 @@ export * from "./orders/index.js";
 export * from "./wallet/index.js";
 export * from "./payments/index.js";
 export * from "./commissions/index.js";
+export * from "./vendor/index.js";
+export * from "./admin/index.js";
