@@ -12,8 +12,19 @@ import { accountAddressRoutes } from "./routes/account/addresses.js";
 import { accountOrderRoutes } from "./routes/account/orders.js";
 import { accountProfileRoutes } from "./routes/account/profile.js";
 import { accountWalletRoutes } from "./routes/account/wallet.js";
+// Phase 1-2 admin routes
 import { adminCategoryRoutes } from "./routes/admin/categories.js";
 import { adminProductRoutes } from "./routes/admin/products.js";
+// Phase 6 admin routes
+import { adminAuthRoutes } from "./routes/admin/auth.js";
+import { adminVendorRoutes } from "./routes/admin/vendors.js";
+import { adminCommissionRuleRoutes } from "./routes/admin/commission-rules.js";
+import { adminPayoutRoutes } from "./routes/admin/payouts.js";
+import { adminHomepageBlockRoutes } from "./routes/admin/homepage-blocks.js";
+import { adminFeatureFlagRoutes } from "./routes/admin/feature-flags.js";
+import { adminSettingsRoutes } from "./routes/admin/settings.js";
+import { adminAuditLogRoutes } from "./routes/admin/audit-log.js";
+import { adminAnalyticsRoutes } from "./routes/admin/analytics.js";
 import { basketRoutes } from "./routes/basket.js";
 import { categoryRoutes } from "./routes/categories.js";
 import { checkoutRoutes } from "./routes/checkout.js";
@@ -28,6 +39,14 @@ import { razorpayWebhookRoutes } from "./routes/webhooks/razorpay.js";
 import { vendorAuthRoutes } from "./routes/vendor/auth.js";
 import { vendorProductRoutes } from "./routes/vendor/products.js";
 import { vendorOrderRoutes } from "./routes/vendor/orders.js";
+// Phase 6 vendor routes
+import { vendorDashboardRoutes } from "./routes/vendor/dashboard.js";
+import { vendorProfileRoutes } from "./routes/vendor/profile.js";
+import { vendorInventoryRoutes } from "./routes/vendor/inventory.js";
+import { vendorReturnRoutes } from "./routes/vendor/returns.js";
+import { vendorEarningsRoutes } from "./routes/vendor/earnings.js";
+import { vendorTeamRoutes, vendorTeamPublicRoutes } from "./routes/vendor/team.js";
+import { vendorCouponRoutes } from "./routes/vendor/coupons.js";
 
 /**
  * Build and configure the Fastify application.
@@ -103,6 +122,29 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   await fastify.register(accountWalletRoutes);    // GET /account/wallet, GET /account/wallet/entries
   // Vendor orders (vendor JWT guard, ORD-05)
   await fastify.register(vendorOrderRoutes);      // GET /vendor/orders, PATCH /vendor/orders/:id/status
+
+  // --- Routes (Phase 6 — plan 06-08) ---
+  // Admin auth (public login + protected me/logout)
+  await fastify.register(adminAuthRoutes);         // POST /admin/auth/login, GET /admin/auth/me, POST /admin/auth/logout
+  // Admin management routes (all requireAdminAuth — T-06-25 mitigation, Pitfall 2)
+  await fastify.register(adminVendorRoutes);        // GET/POST /admin/vendors/*
+  await fastify.register(adminCommissionRuleRoutes); // GET/POST/PATCH/DELETE /admin/commission-rules/*
+  await fastify.register(adminPayoutRoutes);         // GET /admin/payouts/:vendorId, POST /admin/payouts/:vendorId/settlements
+  await fastify.register(adminHomepageBlockRoutes);  // GET/POST/PATCH/DELETE/POST /admin/homepage-blocks/*
+  await fastify.register(adminFeatureFlagRoutes);    // GET/PATCH /admin/feature-flags/*
+  await fastify.register(adminSettingsRoutes);       // GET/PATCH /admin/settings/*
+  await fastify.register(adminAuditLogRoutes);       // GET /admin/audit-log
+  await fastify.register(adminAnalyticsRoutes);      // GET /admin/analytics/*
+  // Vendor panel routes (all requireVendorAuth — D-05 role guards)
+  await fastify.register(vendorDashboardRoutes);     // GET /vendor/dashboard
+  await fastify.register(vendorProfileRoutes);       // GET/PATCH /vendor/profile, /vendor/profile/payout-info, /vendor/profile/return-policy
+  await fastify.register(vendorInventoryRoutes);     // GET /vendor/inventory, PATCH /vendor/inventory/:id, PATCH /vendor/products/:id/pricing
+  await fastify.register(vendorReturnRoutes);        // GET /vendor/returns, POST /vendor/returns/:id/approve|reject
+  await fastify.register(vendorEarningsRoutes);      // GET /vendor/earnings
+  // Team: public accept-invite must be registered BEFORE the protected plugin (no preHandler)
+  await fastify.register(vendorTeamPublicRoutes);    // POST /vendor/team/accept-invite (public — T-06-29)
+  await fastify.register(vendorTeamRoutes);          // GET /vendor/team, POST /vendor/team/invite, DELETE /vendor/team/:userId (owner-only)
+  await fastify.register(vendorCouponRoutes);        // GET/POST /vendor/coupons (COUPONS_ENABLED gate — T-06-27)
 
   // --- 404 handler ---
   fastify.setNotFoundHandler((_req, reply) => {
