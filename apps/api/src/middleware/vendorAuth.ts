@@ -8,8 +8,11 @@ import { env } from "../config/env.js";
  * Phase 6 migration (D-03, D-06): accepts tokens with role ∈ { "owner", "manager", "staff" }.
  * The pre-Phase-6 role="vendor" literal is no longer accepted — stale tokens are rejected.
  *
- * Reads the Authorization Bearer token from the request header, verifies
- * the HS256 signature with JWT_SECRET, and checks that the token carries
+ * Token extraction order (Phase 6 — mirrors admin auth cookie pattern D-21):
+ *   1. Authorization: Bearer <token> header (API clients / integration tests)
+ *   2. vendor_token httpOnly cookie (vendor web panel — set by POST /vendor/auth/login)
+ *
+ * Verifies the HS256 signature with JWT_SECRET and checks that the token carries
  * one of the three vendor roles. On success:
  * - Sets `request.vendorId` to the JWT `vendorId` claim (FK to vendors.id — D-03/D-06 NOTE)
  * - Sets `request.vendorRole` to the JWT `role` claim ("owner" | "manager" | "staff")
@@ -19,7 +22,7 @@ import { env } from "../config/env.js";
  * that compare `request.vendorId` against product/order FK columns (which reference vendors.id).
  * The `sub` claim now carries vendor_users.id but downstream handlers should use `vendorId`.
  *
- * On any failure (missing header, invalid/expired token, wrong role):
+ * On any failure (missing token, invalid/expired token, wrong role):
  * returns 401 with a coded error envelope — never leaks raw JWT errors.
  *
  * Pattern source: PATTERNS.md "Vendor JWT preHandler (applies to all /vendor/* routes)".
@@ -31,20 +34,28 @@ export async function requireVendorAuth(
   request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> {
-  const authHeader = request.headers.authorization;
+  // Extract token: Authorization header first, then vendor_token cookie (Phase 6 D-21 pattern)
+  let token: string | undefined;
 
-  // Reject requests without a Bearer token
-  if (!authHeader?.startsWith("Bearer ")) {
+  const authHeader = request.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    token = authHeader.slice(7);
+  } else {
+    // Fall back to httpOnly cookie set by POST /vendor/auth/login
+    token = (request.cookies as Record<string, string | undefined>)?.["vendor_token"];
+  }
+
+  // Reject requests without any token
+  if (!token) {
     return reply.status(401).send({
       success: false,
       error: {
         code: "UNAUTHORIZED",
-        message: "Bearer token required",
+        message: "Authentication required",
       },
     });
   }
 
-  const token = authHeader.slice(7);
   const secret = new TextEncoder().encode(env.JWT_SECRET);
 
   try {
