@@ -239,8 +239,8 @@ Plans:
 - [x] 06-03-PLAN.md — [BLOCKING] db:generate + db:migrate + idempotent vendor-owner data migration into vendor_users
 
 **Wave 4** *(blocked on Wave 3)*
-- [ ] 06-04-PLAN.md — VendorAuthService migration to vendor_users + role middleware + AdminAuthService + requireAdminAuth (TDD)
-- [ ] 06-05-PLAN.md — SettingsService (Redis-first) + AuditService (append-only) (TDD)
+- [x] 06-04-PLAN.md — VendorAuthService migration to vendor_users + role middleware + AdminAuthService + requireAdminAuth (TDD)
+- [x] 06-05-PLAN.md — SettingsService (Redis-first) + AuditService (append-only) (TDD)
 
 **Wave 5** *(blocked on Wave 4)*
 - [ ] 06-06-PLAN.md — Vendor services: profile/payout-info, staff invite/accept, analytics (earnings+dashboard), ReturnService.rejectReturn, inventory/pricing + reindex (TDD)
@@ -311,7 +311,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
 | 5. Commerce Core | 11/12 | In Progress|  |
-| 6. Vendor & Admin Tools | 3/10 | In Progress|  |
+| 6. Vendor & Admin Tools | 5/10 | In Progress|  |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
 | 9. Productization & Release | 0/TBD | Not started | - |
