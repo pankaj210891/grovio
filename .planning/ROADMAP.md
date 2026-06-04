@@ -223,8 +223,34 @@ Plans:
   4. Admin can approve/suspend vendors, configure commission rules (global, category, vendor override), view payout records per vendor with a full audit trail, and record manual settlements
   5. Admin can manage CMS/homepage blocks, branding/theme settings, global integration config, feature flag toggles, category/catalog moderation, and view an audit log of sensitive actions — all from the admin panel
 
-**Plans**: TBD
+**Plans**: 10 plans in 7 waves
 **UI hint**: yes
+
+Plans:
+
+**Wave 1**
+- [ ] 06-01-PLAN.md — packages/contracts Phase 6 vendor + admin domains (profile, staff/roles, earnings, payouts, settings, audit, analytics, cms)
+
+**Wave 2** *(blocked on Wave 1)*
+- [ ] 06-02-PLAN.md — 7 new Drizzle tables + vendors/coupons extensions + schema barrel
+
+**Wave 3** *(blocked on Wave 2)*
+- [ ] 06-03-PLAN.md — [BLOCKING] db:generate + db:migrate + idempotent vendor-owner data migration into vendor_users
+
+**Wave 4** *(blocked on Wave 3)*
+- [ ] 06-04-PLAN.md — VendorAuthService migration to vendor_users + role middleware + AdminAuthService + requireAdminAuth (TDD)
+- [ ] 06-05-PLAN.md — SettingsService (Redis-first) + AuditService (append-only) (TDD)
+
+**Wave 5** *(blocked on Wave 4)*
+- [ ] 06-06-PLAN.md — Vendor services: profile/payout-info, staff invite/accept, analytics (earnings+dashboard), ReturnService.rejectReturn, inventory/pricing + reindex (TDD)
+- [ ] 06-07-PLAN.md — Admin services: vendor management, commission-rule CRUD (cache-invalidated, global protected), append-only payouts, feature-flag toggle, CMS writes (TDD)
+
+**Wave 6** *(blocked on Wave 5)*
+- [ ] 06-08-PLAN.md — All admin + vendor route plugins, requireAdminAuth replaces X-Internal-Admin-Token, role guards, Awilix + app.ts wiring
+
+**Wave 7** *(blocked on Wave 6)*
+- [ ] 06-09-PLAN.md — Vendor panel: router, cookie apiClient, sidebar layout, all vendor pages (human-verify)
+- [ ] 06-10-PLAN.md — Admin panel: cookie apiClient, createBrowserRouter migration (preserve category routes), all admin pages (human-verify)
 
 ### Phase 7: React Native App
 
