@@ -34,9 +34,33 @@ declare module "fastify" {
 
   interface FastifyRequest {
     /**
-     * Vendor UUID extracted from the verified JWT by requireVendorAuth preHandler.
-     * Present only on /vendor/* routes after the preHandler runs (T-03-W1, V4).
+     * Vendor store UUID (vendors.id FK) extracted from the verified JWT by requireVendorAuth
+     * preHandler. Present only on /vendor/* routes after the preHandler runs (T-03-W1, V4).
+     *
+     * Phase 6 migration note (D-03, D-06): this remains the FK to vendors.id (not vendor_users.id).
+     * The JWT `vendorId` claim carries vendors.id; `sub` carries vendor_users.id.
+     * All existing ownership checks using request.vendorId remain valid.
      */
     vendorId?: string;
+
+    /**
+     * Vendor team role extracted from the verified JWT by requireVendorAuth preHandler.
+     * Present only on /vendor/* routes after the preHandler runs (Phase 6, D-05).
+     * Values: "owner" | "manager" | "staff".
+     * Routes can check this for role-gated actions (e.g. owner-only operations).
+     */
+    vendorRole?: "owner" | "manager" | "staff";
+
+    /**
+     * Admin UUID (admin_users.id) extracted from the verified JWT by requireAdminAuth
+     * preHandler. Present only on /admin/* routes after the preHandler runs (D-21).
+     */
+    adminId?: string;
+
+    /**
+     * Admin email extracted from the verified JWT by requireAdminAuth preHandler.
+     * Present only on /admin/* routes after the preHandler runs (D-21).
+     */
+    adminEmail?: string;
   }
 }
