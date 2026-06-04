@@ -14,6 +14,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:probe": "node --use-system-ca --env-file=.env node_modules/tsx/dist/cli.mjs src/db/probe-drizzle-features.ts",
+    "db:migrate:vendor-users": "node --use-system-ca --env-file=.env node_modules/tsx/dist/cli.mjs src/db/migrate-vendor-users.ts",
     "db:seed:commerce": "node --use-system-ca --env-file=.env node_modules/tsx/dist/cli.mjs src/db/seed-commerce.ts",
     "db:seed:demo": "node --use-system-ca --env-file=.env node_modules/tsx/dist/cli.mjs src/db/seed-demo.ts"
   },
