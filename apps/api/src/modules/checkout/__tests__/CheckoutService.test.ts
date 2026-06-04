@@ -268,7 +268,8 @@ describe("CheckoutService", () => {
         { ...basketItemRows[0], inventoryItemId: "inv-uuid-1", catalogPriceMinor: 1000 },
       ];
       const itemsWhereMock = vi.fn().mockResolvedValue(itemsWithInv);
-      const itemsFromMock = vi.fn().mockReturnValue({ where: itemsWhereMock });
+      const itemsLeftJoinMock = vi.fn().mockReturnValue({ where: itemsWhereMock });
+      const itemsFromMock = vi.fn().mockReturnValue({ leftJoin: itemsLeftJoinMock });
 
       db.select
         .mockReturnValueOnce({ from: sessionFromMock })
