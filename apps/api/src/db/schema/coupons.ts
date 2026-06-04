@@ -114,6 +114,28 @@ export const coupons = pgTable("coupons", {
    */
   isActive: boolean("is_active").notNull().default(true),
 
+  // -------------------------------------------------------------------------
+  // Phase 6 extension (D-14, VEN-06)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Type of actor who created this coupon (D-14, VEN-06).
+   * 'admin': created by admin panel (any scope type allowed).
+   * 'vendor': created by vendor panel (scope='vendor' only — auto-scoped to their store).
+   * null for coupons created before Phase 6 (backward compatible).
+   * Vendor-created coupons cannot have category scope (admin-only — enforced at service layer).
+   */
+  createdByType: text("created_by_type"),
+
+  /**
+   * ID of the actor who created this coupon (D-14, VEN-06).
+   * For 'admin': admin_users.id UUID string.
+   * For 'vendor': vendor_users.id UUID string.
+   * null for coupons created before Phase 6 (backward compatible).
+   * Stored as text (not FK) to allow reference to both admin_users and vendor_users.
+   */
+  createdById: text("created_by_id"),
+
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
