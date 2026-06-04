@@ -60,7 +60,7 @@ Grovio is a horizontal-layer infrastructure product. The roadmap builds complete
 - [ ] 01-10-PLAN.md — Metro release build verification (FND-03 hard gate) + full-stack boot checkpoint
 
 Cross-cutting constraints: All apps import from @grovio/contracts (D-03); FEATURE_FLAG_TTL_SECONDS env var configures Redis TTL (D-05)
-**UI hint**: yes
+**UI hint**: yes — use `/frontend-design` skill for all UI generation tasks
 
 ### Phase 2: Category Engine
 
@@ -139,7 +139,7 @@ Plans:
   5. All storefront pages are responsive/mobile-first, pass keyboard navigation, use semantic markup, meet contrast requirements, and include Framer Motion micro-interactions
 
 **Plans**: 8 plans in 6 waves
-**UI hint**: yes
+**UI hint**: yes — use `/frontend-design` skill for all UI generation tasks
 
 Plans:
 
@@ -225,7 +225,7 @@ Plans:
   5. Admin can manage CMS/homepage blocks, branding/theme settings, global integration config, feature flag toggles, category/catalog moderation, and view an audit log of sensitive actions — all from the admin panel
 
 **Plans**: 10 plans in 7 waves
-**UI hint**: yes
+**UI hint**: yes — use `/frontend-design` skill for all UI generation tasks
 
 Plans:
 
@@ -243,8 +243,8 @@ Plans:
 - [x] 06-05-PLAN.md — SettingsService (Redis-first) + AuditService (append-only) (TDD)
 
 **Wave 5** *(blocked on Wave 4)*
-- [ ] 06-06-PLAN.md — Vendor services: profile/payout-info, staff invite/accept, analytics (earnings+dashboard), ReturnService.rejectReturn, inventory/pricing + reindex (TDD)
-- [ ] 06-07-PLAN.md — Admin services: vendor management, commission-rule CRUD (cache-invalidated, global protected), append-only payouts, feature-flag toggle, CMS writes (TDD)
+- [x] 06-06-PLAN.md — Vendor services: profile/payout-info, staff invite/accept, analytics (earnings+dashboard), ReturnService.rejectReturn, inventory/pricing + reindex (TDD)
+- [x] 06-07-PLAN.md — Admin services: vendor management, commission-rule CRUD (cache-invalidated, global protected), append-only payouts, feature-flag toggle, CMS writes (TDD)
 
 **Wave 6** *(blocked on Wave 5)*
 - [ ] 06-08-PLAN.md — All admin + vendor route plugins, requireAdminAuth replaces X-Internal-Admin-Token, role guards, Awilix + app.ts wiring
@@ -267,7 +267,7 @@ Plans:
   5. All screens consume shared `packages/contracts` types and include premium motion and micro-interactions using Reanimated
 
 **Plans**: TBD
-**UI hint**: yes
+**UI hint**: yes — use `/frontend-design` skill for all UI generation tasks
 
 ### Phase 8: Fulfillment & Communications
 
@@ -311,7 +311,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
 | 5. Commerce Core | 11/12 | In Progress|  |
-| 6. Vendor & Admin Tools | 5/10 | In Progress|  |
+| 6. Vendor & Admin Tools | 7/10 | In Progress|  |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
 | 9. Productization & Release | 0/TBD | Not started | - |
@@ -352,7 +352,7 @@ Plans:
   10. Design system strategy, accessibility strategy, and performance strategy are locked before any screen is built
 
 **Plans**: TBD
-**UI hint**: yes
+**UI hint**: yes — use `/frontend-design` skill for all UI generation tasks
 
 **Scope:**
 
