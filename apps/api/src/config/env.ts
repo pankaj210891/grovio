@@ -301,6 +301,23 @@ export const envSchema = z.object({
    * Default: 15 minutes. Consistent with CONTEXT.md D-07.
    */
   RESERVATION_TTL_MINUTES: z.coerce.number().default(15),
+
+  // ---------------------------------------------------------------------------
+  // Phase 6 — Vendor & Admin Panel origins
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Web vendor panel origin — used to build staff invite links (D-04).
+   * Accept-invite link sent in email: `${WEB_VENDOR_URL}/accept-invite?token=XXX`
+   * Defaults to http://localhost:5174 (Vite dev server for web-vendor).
+   */
+  WEB_VENDOR_URL: z.string().url().default("http://localhost:5174"),
+
+  /**
+   * Web admin panel origin — used for CORS and admin link construction.
+   * Defaults to http://localhost:5175 (Vite dev server for web-admin).
+   */
+  WEB_ADMIN_URL: z.string().url().default("http://localhost:5175"),
 });
 
 /** TypeScript type inferred from envSchema */
