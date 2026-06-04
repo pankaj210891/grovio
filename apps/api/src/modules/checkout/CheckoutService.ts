@@ -131,7 +131,7 @@ export interface InitiateCheckoutResult {
 
 export interface PlaceOrderParams {
   customerId: string;
-  addressId: string;
+  addressId: string | null;
   basketSessionId: string;
   paymentProvider: "stripe" | "razorpay";
   couponCode?: string;
@@ -424,8 +424,10 @@ export class CheckoutService {
     const summary = await this.computeSummary({
       basketSessionId: params.basketSessionId,
       customerId: params.customerId,
-      couponCode: params.couponCode,
-      walletRequestedMinor: params.walletRequestedMinor,
+      ...(params.couponCode !== undefined && { couponCode: params.couponCode }),
+      ...(params.walletRequestedMinor !== undefined && {
+        walletRequestedMinor: params.walletRequestedMinor,
+      }),
     });
 
     // 2. Create payment order via provider abstraction (T-05-PAY, Pitfall 9)

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { requireCustomerAuth } from "../middleware/customerAuth.js";
 import type { CheckoutService } from "../modules/checkout/index.js";
 import { BasketSessionNotFoundError, EmptyBasketError } from "../modules/checkout/index.js";
@@ -7,6 +7,8 @@ import type { PaymentService } from "../modules/payments/index.js";
 import type { CouponService } from "../modules/coupons/index.js";
 import { CouponDisabledError, CouponInvalidError } from "../modules/coupons/index.js";
 import { ProviderNotConfiguredError } from "../modules/payments/index.js";
+import type { BasketService } from "../modules/basket/index.js";
+import { BasketNotFoundError } from "../modules/basket/index.js";
 
 /**
  * Checkout routes — all requireCustomerAuth (CHK-03, CHK-05, CHK-06, D-09).
@@ -30,28 +32,32 @@ function getCustomerId(request: import("fastify").FastifyRequest): string {
 }
 
 // ── Input schemas ─────────────────────────────────────────────────────────────
+// basketSessionId is intentionally absent from all schemas: it is an httpOnly
+// cookie value that JS cannot read. The routes resolve it server-side via
+// resolveBasketSessionId() using the authenticated customerId (CHK-03).
 
 const ComputeSummaryInputSchema = z.object({
-  basketSessionId: z.string().uuid(),
   couponCode: z.string().optional(),
   walletRequestedMinor: z.number().int().min(0).optional(),
 });
 
+// addressId + deliveryOption come from the storefront delivery step
 const InitiateCheckoutInputSchema = z.object({
-  basketSessionId: z.string().uuid(),
+  addressId: z.string().uuid().optional(),
+  deliveryOption: z.string().optional(),
 });
 
 const ApplyCouponInputSchema = z.object({
-  basketSessionId: z.string().uuid(),
   couponCode: z.string().min(1).max(50),
   walletRequestedMinor: z.number().int().min(0).optional(),
 });
 
 const PlaceOrderInputSchema = z.object({
-  basketSessionId: z.string().uuid(),
   addressId: z.string().uuid().nullable().optional(),
   paymentProvider: z.enum(["stripe", "razorpay"]),
-  couponCode: z.string().optional(),
+  couponCode: z.string().nullable().optional(),
+  // Storefront sends walletAppliedMinor; treated as the requested amount
+  walletAppliedMinor: z.number().int().min(0).optional(),
   walletRequestedMinor: z.number().int().min(0).optional(),
 });
 
@@ -73,17 +79,41 @@ export async function checkoutRoutes(fastify: FastifyInstance): Promise<void> {
     return fastify.diContainer.resolve<CouponService>("couponService");
   }
 
+  function getBasketService(): BasketService {
+    return fastify.diContainer.resolve<BasketService>("basketService");
+  }
+
+  /**
+   * Resolve the basket session UUID for an authenticated customer.
+   * Checkout routes require auth so customerId is always available.
+   * The httpOnly grovio_basket_token cookie is NOT readable by the browser,
+   * so basketSessionId must never come from the request body (CHK-03).
+   */
+  async function resolveBasketSessionId(
+    request: FastifyRequest
+  ): Promise<string> {
+    const customerId = getCustomerId(request);
+    try {
+      return await getBasketService().getSessionIdByCustomerId(customerId);
+    } catch (err) {
+      if (err instanceof BasketNotFoundError) {
+        throw new BasketSessionNotFoundError(
+          `No basket session for customer ${customerId}`
+        );
+      }
+      throw err;
+    }
+  }
+
   // ── GET /checkout/summary ──────────────────────────────────────────────────
   // Server-authoritative summary: catalog prices, coupon + wallet applied (CHK-04, WAL-05).
   fastify.get("/checkout/summary", async (request, reply) => {
     const query = request.query as {
-      basketSessionId?: string;
       couponCode?: string;
       walletRequestedMinor?: string;
     };
 
     const params = ComputeSummaryInputSchema.parse({
-      basketSessionId: query.basketSessionId,
       couponCode: query.couponCode,
       walletRequestedMinor: query.walletRequestedMinor
         ? Number(query.walletRequestedMinor)
@@ -93,11 +123,14 @@ export async function checkoutRoutes(fastify: FastifyInstance): Promise<void> {
     const checkoutService = getCheckoutService();
 
     try {
+      const basketSessionId = await resolveBasketSessionId(request);
       const summary = await checkoutService.computeSummary({
-        basketSessionId: params.basketSessionId,
+        basketSessionId,
         customerId: getCustomerId(request),
-        couponCode: params.couponCode,
-        walletRequestedMinor: params.walletRequestedMinor,
+        ...(params.couponCode !== undefined && { couponCode: params.couponCode }),
+        ...(params.walletRequestedMinor !== undefined && {
+          walletRequestedMinor: params.walletRequestedMinor,
+        }),
       });
       return reply.send({ success: true, data: summary });
     } catch (err) {
@@ -121,13 +154,14 @@ export async function checkoutRoutes(fastify: FastifyInstance): Promise<void> {
   // Reserve inventory at proceed-to-payment (CHK-05, D-06).
   // Reservation happens HERE — not on basket add.
   fastify.post("/checkout/initiate", async (request, reply) => {
-    const body = InitiateCheckoutInputSchema.parse(request.body);
+    InitiateCheckoutInputSchema.parse(request.body); // validate shape; fields unused here
     const checkoutService = getCheckoutService();
 
     try {
+      const basketSessionId = await resolveBasketSessionId(request);
       const result = await checkoutService.initiateCheckout({
         customerId: getCustomerId(request),
-        basketSessionId: body.basketSessionId,
+        basketSessionId,
       });
       return reply.send({ success: true, data: result });
     } catch (err) {
@@ -155,12 +189,15 @@ export async function checkoutRoutes(fastify: FastifyInstance): Promise<void> {
     const checkoutService = getCheckoutService();
 
     try {
+      const basketSessionId = await resolveBasketSessionId(request);
       // computeSummary with coupon code validates server-side (CHK-06)
       const summary = await checkoutService.computeSummary({
-        basketSessionId: body.basketSessionId,
+        basketSessionId,
         customerId: getCustomerId(request),
         couponCode: body.couponCode,
-        walletRequestedMinor: body.walletRequestedMinor,
+        ...(body.walletRequestedMinor !== undefined && {
+          walletRequestedMinor: body.walletRequestedMinor,
+        }),
       });
       return reply.send({ success: true, data: summary });
     } catch (err) {
@@ -200,13 +237,19 @@ export async function checkoutRoutes(fastify: FastifyInstance): Promise<void> {
     const checkoutService = getCheckoutService();
 
     try {
+      const basketSessionId = await resolveBasketSessionId(request);
+      // walletAppliedMinor (storefront name) is the requested wallet amount
+      const walletRequestedMinor =
+        body.walletRequestedMinor ?? body.walletAppliedMinor;
+      const couponCode =
+        body.couponCode != null ? body.couponCode : undefined;
       const result = await checkoutService.placeOrder({
         customerId: getCustomerId(request),
         addressId: body.addressId ?? null,
-        basketSessionId: body.basketSessionId,
+        basketSessionId,
         paymentProvider: body.paymentProvider,
-        couponCode: body.couponCode,
-        walletRequestedMinor: body.walletRequestedMinor,
+        ...(couponCode !== undefined && { couponCode }),
+        ...(walletRequestedMinor !== undefined && { walletRequestedMinor }),
       });
       return reply.status(201).send({ success: true, data: result });
     } catch (err) {
@@ -225,7 +268,7 @@ export async function checkoutRoutes(fastify: FastifyInstance): Promise<void> {
       if (err instanceof ProviderNotConfiguredError) {
         return reply.status(400).send({
           success: false,
-          error: { code: err.code, message: err.message },
+          error: { code: "PROVIDER_NOT_CONFIGURED", message: err.message },
         });
       }
       throw err;
