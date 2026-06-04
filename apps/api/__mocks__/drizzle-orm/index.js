@@ -47,6 +47,7 @@ export const like = (a, b) => ({ type: 'like', a, b });
 export const ne = (a, b) => ({ type: 'ne', a, b });
 export const between = (a, b, c) => ({ type: 'between', a, b, c });
 export const exists = (subq) => ({ type: 'exists', subq });
+export const count = (col) => ({ type: 'count', col: col ?? '*' });
 
 // pg-core column types - chainable
 export const uuid = (name) => colDef(name);

@@ -10,8 +10,12 @@ import { AuditService } from "./AuditService.js";
 /**
  * Build a Drizzle mock that supports:
  * - db.insert(table).values({...})           → append-only log()
- * - db.select().from().where(...).orderBy(...).limit(...).offset(...)  → query()
- * - db.select({ count: ... }).from().where(...)  → total count in query()
+ * - db.select().from().where(...).orderBy(...).limit(...).offset(...)  → items query
+ * - db.select({count: ...}).from().where(...)  → total count query
+ *
+ * query() calls db.select twice via Promise.all:
+ *   1st call: count query  → [{ count: total }]
+ *   2nd call: data query   → rows
  */
 function makeDbMock(rows: SelectAuditLog[], total = rows.length) {
   // Capture inserted values for assertion
@@ -24,8 +28,15 @@ function makeDbMock(rows: SelectAuditLog[], total = rows.length) {
     }),
   };
 
-  // Select chain supports .from().where().orderBy().limit().offset()
-  const queryChain = {
+  // Count select chain: .from().where() → resolves to [{ count: N }]
+  const countChain = {
+    from: vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue([{ count: total }]),
+    }),
+  };
+
+  // Data select chain: .from().where().orderBy().limit().offset() → resolves to rows
+  const dataChain = {
     from: vi.fn().mockReturnValue({
       where: vi.fn().mockReturnValue({
         orderBy: vi.fn().mockReturnValue({
@@ -33,18 +44,18 @@ function makeDbMock(rows: SelectAuditLog[], total = rows.length) {
             offset: vi.fn().mockResolvedValue(rows),
           }),
         }),
-        // For count query: where().then — resolves to [{count: N}]
-        then: (resolve: (v: { count: number | string }[]) => void) =>
-          resolve([{ count: total }]),
-        catch: vi.fn(),
-        finally: vi.fn(),
       }),
     }),
   };
 
   const db = {
     insert: vi.fn().mockReturnValue(insertChain),
-    select: vi.fn().mockReturnValue(queryChain),
+    // First select call = count query, second = data query
+    select: vi.fn()
+      .mockReturnValueOnce(countChain)
+      .mockReturnValueOnce(dataChain)
+      // For insert-only tests, provide fallback to avoid exhausted mock errors
+      .mockReturnValue(dataChain),
     _insertedValues: insertedValues,
   };
   return db;
