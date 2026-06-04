@@ -68,7 +68,6 @@ export const apiClient = {
     const res = await fetch(`${BASE_URL}${path}`, {
       method: 'DELETE',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
     });
     return handleResponse<T>(res);
   },
