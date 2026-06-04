@@ -15,6 +15,7 @@ Grovio is a horizontal-layer infrastructure product. The roadmap builds complete
 - [ ] **Phase 7: React Native App** - Full-featured customer mobile app consuming stable backend APIs via shared contracts
 - [ ] **Phase 8: Fulfillment & Communications** - Order tracking timeline + map shell, serviceability check, simulation mode, full transactional email suite, push-ready notification events
 - [ ] **Phase 9: Productization & Release** - Seed importer, five demo presets, full buyer documentation suite, preview assets, Envato packaging
+- [ ] **Phase 11: UX/UI Platform Redesign** - Full redesign of all three portals (Customer Web, Admin, Vendor) from a 2026 product mindset — command-center admin, morning-glance vendor dashboard, conversion-optimized customer storefront, mobile-first with bottom navigation
 
 ## Phase Details
 
@@ -314,6 +315,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
 | 9. Productization & Release | 0/TBD | Not started | - |
+| 11. UX/UI Platform Redesign | 0/TBD | Not started | - |
 
 ### Phase 10: Replace Docker with Neon + Upstash
 
@@ -330,3 +332,32 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 10-03-PLAN.md — Delete docker-compose.yml; create README Infrastructure Setup section; update ROADMAP Phase 1 cloud-infra description
+
+### Phase 11: UX/UI Platform Redesign
+
+**Goal**: Completely rethink and redesign all three portals — Customer Web, Admin, and Vendor — from a 2026 product mindset. Replace generic CRUD screens and template-driven layouts with workflow-first, decision-speed-optimized experiences. Admin becomes a command center. Vendor dashboard surfaces everything a vendor checks every morning in one glance. Customer storefront is conversion-optimized, personalized, and mobile-first with native-app-like interactions.
+**Depends on**: Phase 9
+**Requirements**: UX-01, UX-02, UX-03, UX-04, UX-05, UX-06, UX-07, UX-08, UX-09, UX-10
+**Success Criteria** (what must be TRUE):
+
+  1. Admin portal feels like a command center: executive dashboard surfaces revenue, orders, vendor health, pending actions, and risk alerts on a single screen without navigating to sub-pages
+  2. Admin AI insights panel surfaces revenue trends, vendor performance anomalies, customer behavior patterns, and growth opportunities — actionable, not decorative
+  3. Vendor morning-glance dashboard shows today's sales, weekly/monthly revenue, released/pending payouts, order counts, returns, and inventory alerts without any navigation
+  4. Vendor finance center makes all calculations transparent: gross sales → platform fees → taxes → net revenue → upcoming payout, with ledger drill-down
+  5. Customer homepage is personalized: recently viewed, continue shopping, dynamic recommendations, trending products, category shortcuts — above the fold
+  6. Customer checkout is one-page: address, delivery, payment, and review without full-page navigations; coupon discovery is inline; guest checkout is supported
+  7. Customer order tracking uses a visual timeline view with status transitions clearly communicated
+  8. All three portals are mobile-first with thumb-friendly navigation; customer web and mobile app share bottom navigation on small screens
+  9. Complete IA, user journey maps, navigation structure, screen hierarchy, and wireframes are documented before implementation begins
+  10. Design system strategy, accessibility strategy, and performance strategy are locked before any screen is built
+
+**Plans**: TBD
+**UI hint**: yes
+
+**Scope:**
+
+- **Customer Portal (Web + Mobile)**: Personalized homepage, AI-powered search (suggestions, history, voice/image readiness), sticky-filter PLP with quick-add and comparison, conversion-optimized PDP (rich gallery, video, trust badges, delivery estimate), one-page checkout, visual order tracking with timeline, mobile bottom navigation
+- **Admin Portal**: Executive command-center dashboard, AI insights panel, bulk product/vendor management, smart order filters + lifecycle tracking, financial center (revenue/commissions/settlements/payouts/refunds), unified support center with escalation workflows, audit log + role permissions + security events
+- **Vendor Portal**: Morning-glance dashboard, single/bulk product creation with variant management and smart SKU generation, real-time order tracking + bulk actions, transparent finance center, analytics (top/low performers, inventory forecasts, conversion metrics), guided onboarding wizard with KYC assistance
+
+**Inspiration references**: Amazon, Flipkart, Myntra, Meesho, Shopify, Blinkit, Zepto Seller, Amazon Seller Central

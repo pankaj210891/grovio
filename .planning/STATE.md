@@ -88,6 +88,7 @@ Recent decisions affecting current work:
 
 - Phase 10 added: Replace Docker with Neon + Upstash
 - Phase 2.1 cancelled: PostgreSQL → MongoDB migration was explored and reversed (commit 1bf498b)
+- Phase 11 added: UX/UI Platform Redesign — complete rethink of Customer Web, Admin, and Vendor portals from a 2026 product mindset; command-center admin, morning-glance vendor dashboard, conversion-optimized customer storefront
 
 ### Pending Todos
 
