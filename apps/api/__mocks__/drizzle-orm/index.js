@@ -32,10 +32,13 @@ export const desc = (col) => ({ type: 'desc', col });
 export const asc = (col) => ({ type: 'asc', col });
 export const inArray = (col, arr) => ({ type: 'inArray', col, arr });
 export const notInArray = (col, arr) => ({ type: 'notInArray', col, arr });
-export const sql = Object.assign(
-  (template, ...args) => ({ type: 'sql', template, args }),
-  { placeholder: () => ({}) }
-);
+const sqlExpr = (template, ...args) => {
+  const expr = { type: 'sql', template, args };
+  expr.as = (_alias) => expr;
+  expr.mapWith = (_mapper) => expr;
+  return expr;
+};
+export const sql = Object.assign(sqlExpr, { placeholder: () => ({}) });
 export const isNull = (col) => ({ type: 'isNull', col });
 export const isNotNull = (col) => ({ type: 'isNotNull', col });
 export const lt = (a, b) => ({ type: 'lt', a, b });
