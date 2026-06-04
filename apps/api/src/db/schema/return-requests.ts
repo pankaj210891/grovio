@@ -105,6 +105,14 @@ export const returnRequests = pgTable("return_requests", {
    */
   status: returnStatusEnum("status").notNull().default("return_requested"),
 
+  /**
+   * Rejection reason text (Phase 6 D-16).
+   * Required when status transitions to 'rejected'.
+   * null for non-rejected return requests.
+   * Stored verbatim from vendor input — validated non-empty at service layer.
+   */
+  rejectionReason: text("rejection_reason"),
+
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

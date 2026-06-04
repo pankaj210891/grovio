@@ -16,6 +16,22 @@ import {
 // ---------------------------------------------------------------------------
 
 /**
+ * Thrown when a return is in a state that cannot be rejected.
+ * (e.g., already approved, already rejected, already refunded)
+ */
+export class ReturnNotRejectableError extends Error {
+  readonly code = "RETURN_NOT_REJECTABLE";
+
+  constructor(
+    public readonly status: string,
+    message?: string
+  ) {
+    super(message ?? `Return cannot be rejected: current status is '${status}'`);
+    this.name = "ReturnNotRejectableError";
+  }
+}
+
+/**
  * Thrown when a return request cannot be created because the order item
  * is ineligible for return (outside window, not returnable, not delivered).
  */
@@ -385,6 +401,60 @@ export class ReturnService {
         status: "reversed",
       });
     });
+  }
+
+  /**
+   * Reject a return request (D-16, VEN-04).
+   *
+   * Transitions status → 'rejected' and stores the rejection reason.
+   * Does NOT issue any refund or commission reversal (contrast with approveReturn).
+   *
+   * @param returnRequestId - UUID of the return request to reject.
+   * @param rejectionReason - Required non-empty reason for rejection.
+   *   Empty or whitespace-only reason throws immediately.
+   *
+   * @throws Error if rejectionReason is empty or whitespace.
+   * @throws ReturnRequestNotFoundError if the return request does not exist.
+   * @throws ReturnNotRejectableError if the return is not in 'return_requested' state.
+   */
+  async rejectReturn(returnRequestId: string, rejectionReason: string): Promise<void> {
+    const { db } = this.deps;
+
+    // Validate rejection reason is non-empty (D-16 — required field)
+    if (!rejectionReason || rejectionReason.trim().length === 0) {
+      throw new Error("rejectionReason is required and cannot be empty.");
+    }
+
+    // Load the return request
+    const returnRequestRows = await db
+      .select()
+      .from(returnRequests)
+      .where(eq(returnRequests.id, returnRequestId))
+      .limit(1);
+
+    const returnRequest = returnRequestRows[0];
+    if (!returnRequest) {
+      throw new ReturnRequestNotFoundError(returnRequestId);
+    }
+
+    // Only 'return_requested' status is rejectable
+    if (returnRequest.status !== "return_requested") {
+      throw new ReturnNotRejectableError(
+        returnRequest.status,
+        `Cannot reject a return in '${returnRequest.status}' state.`
+      );
+    }
+
+    // Update status to 'rejected' + store the reason
+    // NO wallet credit, NO commission reversal — rejection is a zero-money-movement operation
+    await db
+      .update(returnRequests)
+      .set({
+        status: "rejected",
+        rejectionReason: rejectionReason.trim(),
+        updatedAt: new Date(),
+      })
+      .where(eq(returnRequests.id, returnRequestId));
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
