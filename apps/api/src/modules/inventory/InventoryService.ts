@@ -5,6 +5,8 @@ import type { Env } from "../../config/env.js";
 import {
   inventoryItems,
   inventoryReservations,
+  products,
+  productVariants,
 } from "../../db/schema/index.js";
 
 // ---------------------------------------------------------------------------
@@ -33,6 +35,47 @@ export class InsufficientStockError extends Error {
 }
 
 // ---------------------------------------------------------------------------
+// Vendor inventory domain errors (Phase 6 — D-15, T-06-18, T-06-19)
+// ---------------------------------------------------------------------------
+
+/**
+ * Thrown when a vendor attempts to update inventory or pricing for a product
+ * they do not own (IDOR guard — T-06-18).
+ */
+export class InventoryOwnershipError extends Error {
+  readonly code = "INVENTORY_OWNERSHIP_ERROR";
+
+  constructor(message = "You do not have permission to update this inventory item.") {
+    super(message);
+    this.name = "InventoryOwnershipError";
+  }
+}
+
+/**
+ * Thrown when inventory item is not found by ID.
+ */
+export class InventoryItemNotFoundError extends Error {
+  readonly code = "INVENTORY_ITEM_NOT_FOUND";
+
+  constructor(inventoryItemId: string) {
+    super(`Inventory item not found: ${inventoryItemId}`);
+    this.name = "InventoryItemNotFoundError";
+  }
+}
+
+/**
+ * Thrown when product is not found by ID.
+ */
+export class ProductNotFoundForPricingError extends Error {
+  readonly code = "PRODUCT_NOT_FOUND_FOR_PRICING";
+
+  constructor(productId: string) {
+    super(`Product not found: ${productId}`);
+    this.name = "ProductNotFoundForPricingError";
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Deps interface
 // ---------------------------------------------------------------------------
 
@@ -41,6 +84,8 @@ interface InventoryServiceDeps {
   db: NodePgDatabase<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reservationQueue: Queue<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  productIndexQueue?: Queue<any>;
   env: Pick<Env, "NODE_ENV">;
 }
 
@@ -252,5 +297,131 @@ export class InventoryService {
         .set({ status: "expired" })
         .where(eq(inventoryReservations.id, reservationId));
     });
+  }
+
+  // ── Vendor inventory + pricing extensions (Phase 6, D-15, VEN-03) ─────────
+
+  /**
+   * Update quantity_available for a vendor's own inventory item (D-15, VEN-03).
+   *
+   * Security (T-06-18 — IDOR guard): Joins inventory_items → products → vendor to
+   * verify that product.vendorId === vendorId before allowing the update.
+   * quantity_reserved is NEVER writable through this method (T-06-19).
+   *
+   * @throws InventoryItemNotFoundError if the item does not exist.
+   * @throws InventoryOwnershipError if the item's product belongs to a different vendor.
+   */
+  async updateInventory(
+    vendorId: string,
+    inventoryItemId: string,
+    input: { quantityAvailable: number }
+  ): Promise<void> {
+    const { db } = this.deps;
+
+    // IDOR guard: join inventory → product → verify vendor ownership (T-06-18)
+    const ownerRows = await db
+      .select({
+        inventoryItemId: inventoryItems.id,
+        productId: products.id,
+        vendorId: products.vendorId,
+      })
+      .from(inventoryItems)
+      .innerJoin(products, eq(inventoryItems.productId, products.id))
+      .where(eq(inventoryItems.id, inventoryItemId))
+      .limit(1);
+
+    const ownerRow = ownerRows[0];
+    if (!ownerRow) {
+      throw new InventoryItemNotFoundError(inventoryItemId);
+    }
+
+    if (ownerRow.vendorId !== vendorId) {
+      throw new InventoryOwnershipError(
+        `Inventory item ${inventoryItemId} belongs to a different vendor.`
+      );
+    }
+
+    // Update quantityAvailable ONLY — quantity_reserved is read-only (T-06-19)
+    await db
+      .update(inventoryItems)
+      .set({
+        quantityAvailable: input.quantityAvailable,
+        updatedAt: new Date(),
+      })
+      .where(eq(inventoryItems.id, inventoryItemId));
+  }
+
+  /**
+   * Update base_price_minor for a vendor's own product (D-15, VEN-03).
+   *
+   * Security (T-06-18): Verifies product.vendorId === vendorId before update.
+   * After price write: enqueues a ProductIndexJob to sync OpenSearch (D-15 reindex trigger).
+   *
+   * @param variantId - If provided, updates productVariants.priceMinor instead of products.basePriceMinor.
+   * @throws ProductNotFoundForPricingError if the product does not exist.
+   * @throws InventoryOwnershipError if the product belongs to a different vendor.
+   */
+  async updatePricing(
+    vendorId: string,
+    productId: string,
+    input: { basePriceMinor: number },
+    variantId?: string
+  ): Promise<void> {
+    const { db, productIndexQueue } = this.deps;
+
+    // IDOR guard: load product and verify vendor ownership (T-06-18)
+    const productRows = await db
+      .select({
+        id: products.id,
+        vendorId: products.vendorId,
+      })
+      .from(products)
+      .where(eq(products.id, productId))
+      .limit(1);
+
+    const product = productRows[0];
+    if (!product) {
+      throw new ProductNotFoundForPricingError(productId);
+    }
+
+    if (product.vendorId !== vendorId) {
+      throw new InventoryOwnershipError(
+        `Product ${productId} belongs to a different vendor.`
+      );
+    }
+
+    // Update price — variant-level if variantId provided, otherwise product base price
+    if (variantId) {
+      await db
+        .update(productVariants)
+        .set({
+          priceMinor: input.basePriceMinor,
+          updatedAt: new Date(),
+        })
+        .where(eq(productVariants.id, variantId));
+    } else {
+      // Update base_price_minor on products table
+      await db
+        .update(products)
+        .set({
+          basePriceMinor: input.basePriceMinor,
+          updatedAt: new Date(),
+        })
+        .where(eq(products.id, productId));
+    }
+
+    // Enqueue ProductIndexJob to sync OpenSearch after price change (D-15, VEN-03)
+    // productIndexQueue is optional — safe to skip in test/dev environments without the queue
+    if (productIndexQueue) {
+      await productIndexQueue.add(
+        "product-index",
+        { productId, action: "index" },
+        {
+          jobId: `price-update:${productId}:${Date.now()}`,
+          removeOnComplete: true,
+          removeOnFail: { count: 3 },
+        }
+      );
+    }
   }
 }
