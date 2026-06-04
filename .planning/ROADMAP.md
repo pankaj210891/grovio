@@ -230,7 +230,7 @@ Plans:
 Plans:
 
 **Wave 1**
-- [ ] 06-01-PLAN.md — packages/contracts Phase 6 vendor + admin domains (profile, staff/roles, earnings, payouts, settings, audit, analytics, cms)
+- [x] 06-01-PLAN.md — packages/contracts Phase 6 vendor + admin domains (profile, staff/roles, earnings, payouts, settings, audit, analytics, cms)
 
 **Wave 2** *(blocked on Wave 1)*
 - [ ] 06-02-PLAN.md — 7 new Drizzle tables + vendors/coupons extensions + schema barrel
@@ -311,7 +311,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
 | 5. Commerce Core | 11/12 | In Progress|  |
-| 6. Vendor & Admin Tools | 0/TBD | Not started | - |
+| 6. Vendor & Admin Tools | 1/10 | In Progress|  |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
 | 9. Productization & Release | 0/TBD | Not started | - |
