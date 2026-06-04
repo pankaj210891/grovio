@@ -85,24 +85,40 @@ export async function checkoutRoutes(fastify: FastifyInstance): Promise<void> {
 
   /**
    * Resolve the basket session UUID for an authenticated customer.
-   * Checkout routes require auth so customerId is always available.
-   * The httpOnly grovio_basket_token cookie is NOT readable by the browser,
-   * so basketSessionId must never come from the request body (CHK-03).
+   * Tries customerId first (post-merge session), then falls back to the
+   * grovio_basket_token cookie (server-readable httpOnly cookie — not accessible
+   * by browser JS but fully visible to the server). This covers the case where
+   * a customer is logged in but their basket session was created as a guest and
+   * merge-on-login has not run yet.
    */
   async function resolveBasketSessionId(
     request: FastifyRequest
   ): Promise<string> {
     const customerId = getCustomerId(request);
+    const basketService = getBasketService();
+
+    // 1. Prefer customer-owned session (post merge-on-login)
     try {
-      return await getBasketService().getSessionIdByCustomerId(customerId);
-    } catch (err) {
-      if (err instanceof BasketNotFoundError) {
-        throw new BasketSessionNotFoundError(
-          `No basket session for customer ${customerId}`
-        );
-      }
-      throw err;
+      return await basketService.getSessionIdByCustomerId(customerId);
+    } catch {
+      // fall through to cookie fallback
     }
+
+    // 2. Fall back to the httpOnly basket cookie (readable server-side)
+    const guestToken = (request.cookies as Record<string, string | undefined>)[
+      "grovio_basket_token"
+    ];
+    if (guestToken) {
+      try {
+        return await basketService.getSessionIdByGuestToken(guestToken);
+      } catch {
+        // fall through to final error
+      }
+    }
+
+    throw new BasketSessionNotFoundError(
+      `No basket session for customer ${customerId}`
+    );
   }
 
   // ── GET /checkout/summary ──────────────────────────────────────────────────
