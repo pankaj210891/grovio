@@ -16,8 +16,14 @@ import { useUiStore } from '../../store/ui-store.js';
 import { ApiError } from '../../lib/api-client.js';
 
 // ---------------------------------------------------------------------------
-// Delivery options (driven by backend in a full integration; static list here
-// for UI shape — actual options would come from GET /checkout/delivery-options)
+// Delivery options (STUB — WR-04)
+//
+// In production these must come from GET /checkout/delivery-options (or be
+// returned from POST /checkout/initiate) so the price labels shown here match
+// the authoritative shippingMinor from GET /checkout/summary. The current
+// static list (Free / ₹99) does NOT match what the server charges — buyers
+// MUST replace this with a real API-driven fetch before going live to avoid
+// misleading customers with incorrect delivery costs.
 // ---------------------------------------------------------------------------
 
 interface DeliveryOption {
