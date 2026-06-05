@@ -29,20 +29,19 @@ const TeamPage = React.lazy(() => import('./pages/TeamPage.js'));
 const StoreProfilePage = React.lazy(() => import('./pages/StoreProfilePage.js'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage.js'));
 
-function PageFallback() {
-  return (
-    <div className="flex min-h-64 items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-grovio-primary border-t-transparent" />
-    </div>
-  );
-}
+// Minimal loading spinner used as Suspense fallback during lazy chunk loading
+const spinner = (
+  <div className="flex min-h-64 items-center justify-center">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-grovio-primary border-t-transparent" />
+  </div>
+);
 
 export const router = createBrowserRouter([
   // ── Public routes ──────────────────────────────────────────────────────────
   {
     path: '/auth/login',
     element: (
-      <React.Suspense fallback={<PageFallback />}>
+      <React.Suspense fallback={spinner}>
         <LoginPage />
       </React.Suspense>
     ),
@@ -50,7 +49,7 @@ export const router = createBrowserRouter([
   {
     path: '/accept-invite',
     element: (
-      <React.Suspense fallback={<PageFallback />}>
+      <React.Suspense fallback={spinner}>
         <AcceptInvitePage />
       </React.Suspense>
     ),
@@ -71,7 +70,7 @@ export const router = createBrowserRouter([
           {
             path: 'dashboard',
             element: (
-              <React.Suspense fallback={<PageFallback />}>
+              <React.Suspense fallback={spinner}>
                 <DashboardPage />
               </React.Suspense>
             ),
@@ -79,7 +78,7 @@ export const router = createBrowserRouter([
           {
             path: 'products',
             element: (
-              <React.Suspense fallback={<PageFallback />}>
+              <React.Suspense fallback={spinner}>
                 <ProductsPage />
               </React.Suspense>
             ),
@@ -87,7 +86,7 @@ export const router = createBrowserRouter([
           {
             path: 'inventory',
             element: (
-              <React.Suspense fallback={<PageFallback />}>
+              <React.Suspense fallback={spinner}>
                 <InventoryPage />
               </React.Suspense>
             ),
@@ -95,7 +94,7 @@ export const router = createBrowserRouter([
           {
             path: 'orders',
             element: (
-              <React.Suspense fallback={<PageFallback />}>
+              <React.Suspense fallback={spinner}>
                 <OrdersPage />
               </React.Suspense>
             ),
@@ -103,7 +102,7 @@ export const router = createBrowserRouter([
           {
             path: 'returns',
             element: (
-              <React.Suspense fallback={<PageFallback />}>
+              <React.Suspense fallback={spinner}>
                 <ReturnsPage />
               </React.Suspense>
             ),
@@ -111,7 +110,7 @@ export const router = createBrowserRouter([
           {
             path: 'earnings',
             element: (
-              <React.Suspense fallback={<PageFallback />}>
+              <React.Suspense fallback={spinner}>
                 <EarningsPage />
               </React.Suspense>
             ),
@@ -119,7 +118,7 @@ export const router = createBrowserRouter([
           {
             path: 'coupons',
             element: (
-              <React.Suspense fallback={<PageFallback />}>
+              <React.Suspense fallback={spinner}>
                 <CouponsPage />
               </React.Suspense>
             ),
@@ -132,7 +131,7 @@ export const router = createBrowserRouter([
               {
                 path: 'team',
                 element: (
-                  <React.Suspense fallback={<PageFallback />}>
+                  <React.Suspense fallback={spinner}>
                     <TeamPage />
                   </React.Suspense>
                 ),
@@ -140,7 +139,7 @@ export const router = createBrowserRouter([
               {
                 path: 'store-profile',
                 element: (
-                  <React.Suspense fallback={<PageFallback />}>
+                  <React.Suspense fallback={spinner}>
                     <StoreProfilePage />
                   </React.Suspense>
                 ),
@@ -148,7 +147,7 @@ export const router = createBrowserRouter([
               {
                 path: 'settings',
                 element: (
-                  <React.Suspense fallback={<PageFallback />}>
+                  <React.Suspense fallback={spinner}>
                     <SettingsPage />
                   </React.Suspense>
                 ),
