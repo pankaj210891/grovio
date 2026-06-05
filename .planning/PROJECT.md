@@ -25,7 +25,7 @@ A buyer can rebrand and reconfigure the entire marketplace for a new product ver
 - [ ] Monorepo foundation: shared packages, backend skeleton, web app shells (storefront/admin/vendor), React Native shell, design tokens/branding config, linting/formatting/testing/CI
 - [ ] Category engine: category CRUD, subcategory tree, per-category attribute schemas, per-category filter schemas, product templates, merchandising settings, vendor-category restrictions
 - [x] Customer storefront: homepage, category landing pages, search with suggestions + filter chips, dynamic category-specific filters, product listing + detail pages, Framer Motion interactions, responsive/mobile-first behavior — Validated in Phase 4: Customer Storefront (Web)
-- [ ] Commerce core: basket management, checkout flow, address handling, Stripe/Razorpay payment abstraction, wallet base, order placement + confirmation, multi-vendor single-order splitting
+- [x] Commerce core: basket management, checkout flow, inventory reservation, Stripe/Razorpay payment abstraction (PaymentProvider interface), wallet append-only ledger, order placement + multi-vendor splitting, commission engine, coupon engine, return/refund flow — Validated in Phase 5: Commerce Core
 - [x] Vendor & admin marketplace tools: vendor onboarding, vendor dashboard/product/inventory/pricing/orders/returns, commission engine, payout records, admin moderation/approval, category/attribute/CMS/settings/integrations/branding/analytics modules, vendor roles & permissions — Validated in Phase 6: Vendor & Admin Tools
 - [ ] React Native customer app: auth/onboarding, home, category browsing, search + filters, product detail, cart + checkout, wallet, orders + tracking, profile + saved addresses, Google Places
 - [ ] Fulfillment & communication: Google Places autocomplete, delivery/serviceability logic, tracking timeline + map shell (live or demo/simulation mode), Google SMTP transactional email, push-ready notification events
@@ -78,7 +78,7 @@ A buyer can rebrand and reconfigure the entire marketplace for a new product ver
 
 ## Current State
 
-Phase 6 complete (2026-06-05): Full vendor panel (cookie auth, role-aware sidebar, dashboard, inventory, orders, returns, earnings, team, profile, coupons) and full admin control plane (KPI dashboard + recharts, vendor lifecycle, commission rules, payouts, CMS, feature flags, settings, audit log) are live. All 17 automated verification checks passed. 10 E2E items tracked as UAT debt. Next: Phase 5 — Commerce Core (basket, checkout, payments, wallet, orders).
+Phase 5 complete (2026-06-05): Full commerce core — basket, checkout wizard (4-step guarded), Stripe Elements + Razorpay CDN + hybrid wallet payment, inventory reservation BullMQ jobs, multi-vendor order splitting with allocate(), append-only wallet ledger, coupon engine (feature-flagged), returns + refund flow, account order/wallet pages. All 12 plans complete; 1 browser E2E item tracked as UAT debt. Phase 6 also complete (vendor/admin panels). Next: Phase 7 (React Native App) or Phase 11 (UX/UI Redesign).
 
 ## Git Workflow
 
@@ -88,7 +88,7 @@ Every phase plan executes on its own feature branch. Use the `/git-workflow` ski
 
 This document evolves at phase transitions and milestone boundaries.
 
-Last updated: 2026-06-05
+Last updated: 2026-06-05 (Phase 5 completion)
 
 **After each phase transition** (via `/gsd-transition`):
 1. Requirements invalidated? → Move to Out of Scope with reason
