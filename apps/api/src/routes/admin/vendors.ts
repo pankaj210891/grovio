@@ -91,7 +91,9 @@ export async function adminVendorRoutes(fastify: FastifyInstance): Promise<void>
       const body = ConfigureVendorInputSchema.parse(request.body);
       const service = getService();
       const adminEmail = getAdminEmail(request);
-      await service.configureVendor(request.params.id, body, adminEmail);
+      // WR-03: pass adminId (UUID) separately from adminEmail so service can use
+      // the correct type for the createdByAdminId column (UUID, not email string)
+      await service.configureVendor(request.params.id, body, request.adminId!, adminEmail);
       return reply.send({ success: true, data: null });
     }
   );

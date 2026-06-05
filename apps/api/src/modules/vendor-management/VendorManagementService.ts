@@ -177,6 +177,7 @@ export class VendorManagementService {
   async configureVendor(
     vendorId: string,
     input: ConfigureVendorInput,
+    adminId: string,
     adminEmail: string
   ): Promise<void> {
     const { db, auditService } = this.deps;
@@ -218,7 +219,8 @@ export class VendorManagementService {
           input.categoryRestrictionIds.map((categoryId) => ({
             vendorId,
             categoryId,
-            createdByAdminId: adminEmail,
+            // WR-03: use adminId (UUID from JWT sub) — not adminEmail string
+            createdByAdminId: adminId,
           }))
         );
       }
