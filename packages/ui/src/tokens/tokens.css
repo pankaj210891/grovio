@@ -1,16 +1,208 @@
 /*
  * Grovio Design Tokens
  *
- * Buyers: change these values to rebrand the entire marketplace.
- * All three web apps (storefront, admin, vendor) import this file automatically.
+ * Buyers: change the OKLCH values in the :root block below to rebrand the
+ * entire marketplace. All three web apps (storefront, admin, vendor) import
+ * this file automatically.
  *
  * OKLCH color format: oklch(Lightness% Chroma Hue)
  *   L = lightness 0–100%  (higher = lighter)
  *   C = chroma    0–0.4   (higher = more saturated)
  *   H = hue       0–360   (250 = blue, 145 = green, 30 = orange-red)
  *
- * Example rebrand: change --color-grovio-primary to oklch(55% 0.2 145) for a green marketplace.
+ * Rebrand example: change --primary to oklch(55% 0.2 145) for a green marketplace.
+ *
+ * The @theme block registers Tailwind v4 utilities (bg-primary, text-foreground, etc.)
+ * by mapping them to the CSS variables below. Both approaches work:
+ *   • bg-primary         → Shadcn-style utility via CSS variable
+ *   • bg-grovio-primary  → Grovio legacy utility (kept for backward compatibility)
  */
+
+/* ─── Light mode variables ────────────────────────────────────────────────── */
+
+:root {
+  /* Grovio brand palette — maps 1-to-1 to Shadcn semantic names below */
+  --grovio-primary:        oklch(55% 0.2 250);
+  --grovio-primary-hover:  oklch(48% 0.2 250);
+  --grovio-secondary:      oklch(65% 0.15 190);
+  --grovio-success:        oklch(60% 0.15 145);
+  --grovio-error:          oklch(55% 0.2 30);
+  --grovio-warning:        oklch(70% 0.15 80);
+
+  /* Shadcn / Radix UI semantic tokens */
+  --background:            oklch(98% 0.005 250);
+  --foreground:            oklch(20% 0.02 250);
+
+  --card:                  oklch(100% 0 0);
+  --card-foreground:       oklch(20% 0.02 250);
+
+  --popover:               oklch(100% 0 0);
+  --popover-foreground:    oklch(20% 0.02 250);
+
+  --primary:               oklch(55% 0.2 250);
+  --primary-foreground:    oklch(98% 0.005 250);
+
+  --secondary:             oklch(93% 0.01 250);
+  --secondary-foreground:  oklch(20% 0.02 250);
+
+  --muted:                 oklch(93% 0.01 250);
+  --muted-foreground:      oklch(50% 0.02 250);
+
+  --accent:                oklch(93% 0.01 250);
+  --accent-foreground:     oklch(20% 0.02 250);
+
+  --destructive:           oklch(55% 0.2 30);
+  --destructive-foreground: oklch(98% 0.005 250);
+
+  --success:               oklch(60% 0.15 145);
+  --success-foreground:    oklch(98% 0.005 250);
+
+  --warning:               oklch(70% 0.15 80);
+  --warning-foreground:    oklch(20% 0.02 250);
+
+  --border:                oklch(90% 0.01 250);
+  --input:                 oklch(90% 0.01 250);
+  --ring:                  oklch(55% 0.2 250);
+
+  /* Border radius scale */
+  --radius:                0.5rem;
+
+  /* Chart palette */
+  --chart-1:               oklch(55% 0.2 250);
+  --chart-2:               oklch(65% 0.15 190);
+  --chart-3:               oklch(60% 0.15 145);
+  --chart-4:               oklch(70% 0.15 80);
+  --chart-5:               oklch(55% 0.2 30);
+
+  /* Sidebar */
+  --sidebar:               oklch(17% 0.02 250);
+  --sidebar-foreground:    oklch(93% 0.01 250);
+  --sidebar-primary:       oklch(65% 0.2 250);
+  --sidebar-primary-foreground: oklch(15% 0.02 250);
+  --sidebar-accent:        oklch(22% 0.02 250);
+  --sidebar-accent-foreground: oklch(93% 0.01 250);
+  --sidebar-border:        oklch(25% 0.02 250);
+  --sidebar-ring:          oklch(65% 0.2 250);
+}
+
+/* ─── Dark mode variables ─────────────────────────────────────────────────── */
+
+.dark {
+  --background:            oklch(15% 0.02 250);
+  --foreground:            oklch(95% 0.005 250);
+
+  --card:                  oklch(18% 0.02 250);
+  --card-foreground:       oklch(95% 0.005 250);
+
+  --popover:               oklch(18% 0.02 250);
+  --popover-foreground:    oklch(95% 0.005 250);
+
+  --primary:               oklch(65% 0.2 250);
+  --primary-foreground:    oklch(15% 0.02 250);
+
+  --secondary:             oklch(25% 0.02 250);
+  --secondary-foreground:  oklch(95% 0.005 250);
+
+  --muted:                 oklch(25% 0.02 250);
+  --muted-foreground:      oklch(65% 0.02 250);
+
+  --accent:                oklch(25% 0.02 250);
+  --accent-foreground:     oklch(95% 0.005 250);
+
+  --destructive:           oklch(60% 0.2 30);
+  --destructive-foreground: oklch(15% 0.02 250);
+
+  --success:               oklch(65% 0.15 145);
+  --success-foreground:    oklch(15% 0.02 250);
+
+  --warning:               oklch(75% 0.15 80);
+  --warning-foreground:    oklch(15% 0.02 250);
+
+  --border:                oklch(25% 0.02 250);
+  --input:                 oklch(25% 0.02 250);
+  --ring:                  oklch(65% 0.2 250);
+
+  --chart-1:               oklch(65% 0.2 250);
+  --chart-2:               oklch(70% 0.15 190);
+  --chart-3:               oklch(65% 0.15 145);
+  --chart-4:               oklch(75% 0.15 80);
+  --chart-5:               oklch(60% 0.2 30);
+
+  --sidebar:               oklch(12% 0.02 250);
+  --sidebar-foreground:    oklch(90% 0.01 250);
+  --sidebar-primary:       oklch(65% 0.2 250);
+  --sidebar-primary-foreground: oklch(12% 0.02 250);
+  --sidebar-accent:        oklch(18% 0.02 250);
+  --sidebar-accent-foreground: oklch(90% 0.01 250);
+  --sidebar-border:        oklch(20% 0.02 250);
+  --sidebar-ring:          oklch(65% 0.2 250);
+}
+
+/* ─── Tailwind v4 token registration ─────────────────────────────────────── */
+/*
+ * @theme inline maps CSS variables → Tailwind utilities.
+ * bg-primary, text-foreground, border-border, ring-ring, etc. all work.
+ * bg-grovio-primary etc. are registered via the @theme block below (backward compat).
+ */
+
+@theme inline {
+  --color-background:              var(--background);
+  --color-foreground:              var(--foreground);
+
+  --color-card:                    var(--card);
+  --color-card-foreground:         var(--card-foreground);
+
+  --color-popover:                 var(--popover);
+  --color-popover-foreground:      var(--popover-foreground);
+
+  --color-primary:                 var(--primary);
+  --color-primary-foreground:      var(--primary-foreground);
+
+  --color-secondary:               var(--secondary);
+  --color-secondary-foreground:    var(--secondary-foreground);
+
+  --color-muted:                   var(--muted);
+  --color-muted-foreground:        var(--muted-foreground);
+
+  --color-accent:                  var(--accent);
+  --color-accent-foreground:       var(--accent-foreground);
+
+  --color-destructive:             var(--destructive);
+  --color-destructive-foreground:  var(--destructive-foreground);
+
+  --color-success:                 var(--success);
+  --color-success-foreground:      var(--success-foreground);
+
+  --color-warning:                 var(--warning);
+  --color-warning-foreground:      var(--warning-foreground);
+
+  --color-border:                  var(--border);
+  --color-input:                   var(--input);
+  --color-ring:                    var(--ring);
+
+  --color-chart-1:                 var(--chart-1);
+  --color-chart-2:                 var(--chart-2);
+  --color-chart-3:                 var(--chart-3);
+  --color-chart-4:                 var(--chart-4);
+  --color-chart-5:                 var(--chart-5);
+
+  --color-sidebar:                 var(--sidebar);
+  --color-sidebar-foreground:      var(--sidebar-foreground);
+  --color-sidebar-primary:         var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent:          var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border:          var(--sidebar-border);
+  --color-sidebar-ring:            var(--sidebar-ring);
+
+  --radius-sm:                     calc(var(--radius) - 4px);
+  --radius-md:                     var(--radius);
+  --radius-lg:                     calc(var(--radius) + 4px);
+  --radius-xl:                     calc(var(--radius) + 8px);
+  --radius-2xl:                    calc(var(--radius) + 12px);
+}
+
+/* ─── Grovio legacy tokens (backward compatibility) ──────────────────────── */
 
 @theme {
   --color-grovio-primary:        oklch(55% 0.2 250);
@@ -26,9 +218,20 @@
   --color-grovio-warning:        oklch(70% 0.15 80);
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
 
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+/* ─── Base styles ─────────────────────────────────────────────────────────── */
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
