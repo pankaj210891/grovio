@@ -175,7 +175,7 @@ function InlineAddressForm({
 export default function CheckoutAddressPage() {
   const navigate = useNavigate();
   const addToast = useUiStore((s) => s.addToast);
-  const { setSelectedAddressId } = useCheckoutStore();
+  const { setSelectedAddressId, setSelectedDeliveryOption } = useCheckoutStore();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formError, setFormError] = useState('');
@@ -217,6 +217,11 @@ export default function CheckoutAddressPage() {
   function handleContinue() {
     if (!effectiveSelectedId) return;
     setSelectedAddressId(effectiveSelectedId);
+    // WR-02: clear delivery option so the delivery step re-initiates checkout
+    // (calls POST /checkout/initiate again) when the customer selects a different
+    // address on backward navigation. Without this, a stale selectedDeliveryOption
+    // bypasses the CheckoutGuard and submits the old reservation address.
+    setSelectedDeliveryOption(null);
     void navigate('/checkout/delivery');
   }
 
