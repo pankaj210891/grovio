@@ -11,6 +11,7 @@
  * and the handler destination for Razorpay's success callback.
  */
 
+import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
@@ -51,13 +52,11 @@ export default function OrderConfirmationPage() {
     isLoading,
     isError,
   } = useQuery<Order | null>({
-    queryKey: ['order', orderId],
+    queryKey: ['checkout', 'confirmation', orderId],
     queryFn: async () => {
       if (!orderId) return null;
       try {
         const res = await apiClient.get<OrderResponse>(`/account/orders/${orderId}`);
-        // Reset checkout flow state now that order is confirmed
-        resetFlow();
         return res.data;
       } catch (err: unknown) {
         if (err instanceof ApiError && err.status === 404) return null;
@@ -67,6 +66,16 @@ export default function OrderConfirmationPage() {
     enabled: !!orderId,
     retry: false,
   });
+
+  // Reset checkout flow state once the confirmed order loads successfully.
+  // This must live in useEffect (not queryFn) because queryFn must be a pure
+  // function — side effects in queryFn fire on every background refetch and
+  // can race with CheckoutGuard (CR-01).
+  useEffect(() => {
+    if (order) {
+      resetFlow();
+    }
+  }, [order, resetFlow]);
 
   return (
     <PageTransition>
