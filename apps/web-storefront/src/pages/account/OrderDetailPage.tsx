@@ -89,7 +89,8 @@ function ReturnDialog({ orderId, orderItemIds, onClose }: ReturnDialogProps) {
     mutationFn: (body: ReturnRequestInput) =>
       apiClient.post<{ success: boolean }>(`/account/orders/${orderId}/return-request`, body),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['order', orderId] });
+      // WR-07: key matches the useQuery key below
+      void qc.invalidateQueries({ queryKey: ['account', 'orders', orderId] });
       addToast({ id: crypto.randomUUID(), message: 'Return request submitted.', variant: 'success' });
       onClose();
     },
@@ -201,8 +202,10 @@ export default function OrderDetailPage() {
   const [showReturnDialog, setShowReturnDialog] = useState(false);
   const [returnItemIds, setReturnItemIds] = useState<string[]>([]);
 
+  // WR-07: use ['account', 'orders', id] to avoid unintended cache sharing with
+  // OrderConfirmationPage (which now uses ['checkout', 'confirmation', orderId]).
   const { data: order, isLoading, isError } = useQuery<Order | null>({
-    queryKey: ['order', id],
+    queryKey: ['account', 'orders', id],
     queryFn: async () => {
       if (!id) return null;
       try {
