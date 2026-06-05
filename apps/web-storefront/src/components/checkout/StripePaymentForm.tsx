@@ -35,7 +35,6 @@ const stripePromise = STRIPE_PUBLISHABLE_KEY
 
 interface StripeInnerFormProps {
   orderId: string;
-  amountMinor: number;
 }
 
 function StripeInnerForm({ orderId }: StripeInnerFormProps) {
@@ -97,15 +96,13 @@ interface StripePaymentFormProps {
   clientSecret: string;
   /** Internal order ID — used as the return_url path */
   orderId: string;
-  /** Amount in minor units (for display purposes only; Stripe charges the server amount) */
-  amountMinor: number;
 }
 
 /**
  * Mounts the Stripe Elements PaymentElement with the given clientSecret.
  * Calls stripe.confirmPayment on submit, which redirects to /order-confirmation.
  */
-export function StripePaymentForm({ clientSecret, orderId, amountMinor }: StripePaymentFormProps) {
+export function StripePaymentForm({ clientSecret, orderId }: StripePaymentFormProps) {
   if (!stripePromise) {
     return (
       <p className="text-sm text-grovio-error" role="alert">
@@ -122,7 +119,7 @@ export function StripePaymentForm({ clientSecret, orderId, amountMinor }: Stripe
         appearance: { theme: 'stripe' },
       }}
     >
-      <StripeInnerForm orderId={orderId} amountMinor={amountMinor} />
+      <StripeInnerForm orderId={orderId} />
     </Elements>
   );
 }

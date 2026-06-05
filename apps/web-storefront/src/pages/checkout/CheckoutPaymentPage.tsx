@@ -215,7 +215,6 @@ export default function CheckoutPaymentPage() {
               <StripePaymentForm
                 clientSecret={paymentResult.providerOrder.clientSecret}
                 orderId={paymentResult.orderId}
-                amountMinor={paymentResult.amountMinor}
               />
             )}
 
