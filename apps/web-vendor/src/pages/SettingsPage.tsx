@@ -11,11 +11,17 @@ import { motion } from 'motion/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient.js';
 import { useUiStore } from '../stores/uiStore.js';
-import type { VendorReturnPolicy } from '@grovio/contracts';
+
+// WR-06: local type matching the actual backend UpdateReturnPolicyInputSchema / GET response
+// (backend uses isReturnable, the @grovio/contracts VendorReturnPolicy uses returnsEnabled — diverged)
+interface VendorReturnPolicyActual {
+  returnWindowDays: number;
+  isReturnable: boolean;
+}
 
 interface ReturnPolicyResponse {
   success: boolean;
-  data: VendorReturnPolicy | null;
+  data: VendorReturnPolicyActual | null;
 }
 
 export default function SettingsPage() {
@@ -23,9 +29,10 @@ export default function SettingsPage() {
   const { addToast } = useUiStore();
 
   const [returnWindowDays, setReturnWindowDays] = useState('14');
-  const [returnsEnabled, setReturnsEnabled] = useState(true);
+  // WR-06: renamed from returnsEnabled to isReturnable to match backend field name
+  const [isReturnable, setIsReturnable] = useState(true);
 
-  const { data, isLoading } = useQuery<VendorReturnPolicy | null>({
+  const { data, isLoading } = useQuery<VendorReturnPolicyActual | null>({
     queryKey: ['vendorReturnPolicy'],
     queryFn: async () => {
       const res = await apiClient.get<ReturnPolicyResponse>('/vendor/profile/return-policy');
@@ -36,12 +43,14 @@ export default function SettingsPage() {
   useEffect(() => {
     if (data) {
       setReturnWindowDays(String(data.returnWindowDays));
-      setReturnsEnabled(data.returnsEnabled);
+      // WR-06: read isReturnable (not returnsEnabled) from backend response
+      setIsReturnable(data.isReturnable);
     }
   }, [data]);
 
   const saveMutation = useMutation({
-    mutationFn: (body: { returnWindowDays: number; returnsEnabled: boolean }) =>
+    // WR-06: send isReturnable to match backend UpdateReturnPolicyInputSchema
+    mutationFn: (body: { returnWindowDays: number; isReturnable: boolean }) =>
       apiClient.patch('/vendor/profile/return-policy', body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['vendorReturnPolicy'] });
@@ -56,7 +65,7 @@ export default function SettingsPage() {
     e.preventDefault();
     saveMutation.mutate({
       returnWindowDays: parseInt(returnWindowDays, 10),
-      returnsEnabled,
+      isReturnable,
     });
   }
 
@@ -102,24 +111,24 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   role="switch"
-                  aria-checked={returnsEnabled}
-                  onClick={() => setReturnsEnabled(!returnsEnabled)}
+                  aria-checked={isReturnable}
+                  onClick={() => setIsReturnable(!isReturnable)}
                   className={[
                     'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
-                    returnsEnabled ? 'bg-grovio-primary' : 'bg-grovio-border',
+                    isReturnable ? 'bg-grovio-primary' : 'bg-grovio-border',
                   ].join(' ')}
                 >
                   <span
                     className={[
                       'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                      returnsEnabled ? 'translate-x-6' : 'translate-x-1',
+                      isReturnable ? 'translate-x-6' : 'translate-x-1',
                     ].join(' ')}
                   />
                 </button>
               </div>
 
               {/* Return window */}
-              {returnsEnabled && (
+              {isReturnable && (
                 <div>
                   <label
                     htmlFor="return-window"
