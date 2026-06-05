@@ -59,8 +59,9 @@ export async function adminAuthRoutes(fastify: FastifyInstance): Promise<void> {
   });
 
   // ── POST /admin/auth/logout ────────────────────────────────────────────────
-  // Clears the admin_token cookie (no body, no guard needed).
-  fastify.post("/admin/auth/logout", async (_request, reply) => {
+  // WR-04: guard with requireAdminAuth to prevent CSRF logout with sameSite=lax cookies.
+  // A valid admin token is required to clear the cookie (mirrors GET /admin/auth/me pattern).
+  fastify.post("/admin/auth/logout", { preHandler: requireAdminAuth }, async (_request, reply) => {
     void reply.clearCookie("admin_token", { path: "/" });
     return reply.send({ success: true, data: null });
   });

@@ -118,8 +118,9 @@ export async function vendorAuthRoutes(fastify: FastifyInstance): Promise<void> 
   );
 
   // ── POST /vendor/auth/logout ──────────────────────────────────────────────
-  // Clears the vendor_token cookie (no auth guard needed — just deletes the cookie).
-  fastify.post("/vendor/auth/logout", async (_request, reply) => {
+  // WR-04: guard with requireVendorAuth to prevent CSRF logout with sameSite=lax cookies.
+  // A valid vendor token is required to clear the cookie (mirrors GET /vendor/auth/me pattern).
+  fastify.post("/vendor/auth/logout", { preHandler: requireVendorAuth }, async (_request, reply) => {
     void reply.clearCookie("vendor_token", { path: "/" });
     return reply.send({ success: true, data: null });
   });
