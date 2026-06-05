@@ -21,6 +21,11 @@
  *   orders + vendor-orders + customers → return-requests
  *   vendors → vendor-return-policies
  *   vendors + categories → commission-rules
+ * Phase 6 FK order (Plan 06-02):
+ *   vendors → vendor-users → vendor-staff-invites (via vendorId FKs)
+ *   vendors → vendor-payout-info (vendorId unique FK)
+ *   vendors → vendor-payouts (vendorId FK)
+ *   admin-users, marketplace-settings, audit-log (no FK dependencies on domain tables)
  *
  * Current schema modules:
  *   - Plan 01-06: feature_flags table
@@ -31,6 +36,10 @@
  *   - Plan 04-02: customers, password_reset_tokens, customer_addresses, homepage_blocks
  *   - Plan 05-03: Phase 5 commerce tables (basket, inventory, orders, wallet, payments,
  *                 commissions, coupons, returns)
+ *   - Plan 06-02: vendor_users, vendor_staff_invites, vendor_payout_info, vendor_payouts,
+ *                 admin_users, marketplace_settings, audit_log (+vendorOnboardingStatusEnum,
+ *                 +vendorUserRoleEnum, +store profile columns on vendors,
+ *                 +created_by_type/created_by_id on coupons)
  */
 
 // Category domain — exported in FK-dependency order (categories first)
@@ -88,3 +97,17 @@ export * from "./return-requests.js";
 
 // Vendor return policies: vendor-return-policies after vendors
 export * from "./vendor-return-policies.js";
+
+// Plan 06-02: Phase 6 vendor & admin tables — exported in FK-safe order
+// vendor-users after vendors (vendorId FK dependency)
+export * from "./vendor-users.js";
+// vendor-staff-invites after vendor-users (imports vendorUserRoleEnum)
+export * from "./vendor-staff-invites.js";
+// vendor-payout-info after vendors (vendorId unique FK)
+export * from "./vendor-payout-info.js";
+// vendor-payouts after vendors (vendorId FK)
+export * from "./vendor-payouts.js";
+// admin-users, marketplace-settings, audit-log: no FK dependencies on domain tables
+export * from "./admin-users.js";
+export * from "./marketplace-settings.js";
+export * from "./audit-log.js";

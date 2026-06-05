@@ -11,7 +11,7 @@ Grovio is a horizontal-layer infrastructure product. The roadmap builds complete
 - [x] **Phase 3: Catalog & Search** - Vendor product CRUD with dynamic attribute forms, admin moderation, OpenSearch index, full-text + faceted search API (completed 2026-06-01)
 - [x] **Phase 4: Customer Storefront (Web)** - Complete customer web experience: homepage, category pages, PLP, PDP, search, auth flows, responsive + animated UI (completed 2026-06-02)
 - [ ] **Phase 5: Commerce Core** - Basket, inventory reservation, checkout, PaymentProvider abstraction, wallet ledger, order placement + multi-vendor splitting, commission engine, coupon engine
-- [ ] **Phase 6: Vendor & Admin Tools** - Full vendor panel, full admin panel, commission/payout audit trail, marketplace operational tooling
+- [x] **Phase 6: Vendor & Admin Tools** - Full vendor panel, full admin panel, commission/payout audit trail, marketplace operational tooling (completed 2026-06-05)
 - [ ] **Phase 7: React Native App** - Full-featured customer mobile app consuming stable backend APIs via shared contracts
 - [ ] **Phase 8: Fulfillment & Communications** - Order tracking timeline + map shell, serviceability check, simulation mode, full transactional email suite, push-ready notification events
 - [ ] **Phase 9: Productization & Release** - Seed importer, five demo presets, full buyer documentation suite, preview assets, Envato packaging
@@ -60,7 +60,7 @@ Grovio is a horizontal-layer infrastructure product. The roadmap builds complete
 - [ ] 01-10-PLAN.md — Metro release build verification (FND-03 hard gate) + full-stack boot checkpoint
 
 Cross-cutting constraints: All apps import from @grovio/contracts (D-03); FEATURE_FLAG_TTL_SECONDS env var configures Redis TTL (D-05)
-**UI hint**: yes
+**UI hint**: yes — use `/frontend-design` skill for all UI generation tasks
 
 ### Phase 2: Category Engine
 
@@ -139,7 +139,7 @@ Plans:
   5. All storefront pages are responsive/mobile-first, pass keyboard navigation, use semantic markup, meet contrast requirements, and include Framer Motion micro-interactions
 
 **Plans**: 8 plans in 6 waves
-**UI hint**: yes
+**UI hint**: yes — use `/frontend-design` skill for all UI generation tasks
 
 Plans:
 
@@ -225,33 +225,33 @@ Plans:
   5. Admin can manage CMS/homepage blocks, branding/theme settings, global integration config, feature flag toggles, category/catalog moderation, and view an audit log of sensitive actions — all from the admin panel
 
 **Plans**: 10 plans in 7 waves
-**UI hint**: yes
+**UI hint**: yes — use `/frontend-design` skill for all UI generation tasks
 
 Plans:
 
 **Wave 1**
-- [ ] 06-01-PLAN.md — packages/contracts Phase 6 vendor + admin domains (profile, staff/roles, earnings, payouts, settings, audit, analytics, cms)
+- [x] 06-01-PLAN.md — packages/contracts Phase 6 vendor + admin domains (profile, staff/roles, earnings, payouts, settings, audit, analytics, cms)
 
 **Wave 2** *(blocked on Wave 1)*
-- [ ] 06-02-PLAN.md — 7 new Drizzle tables + vendors/coupons extensions + schema barrel
+- [x] 06-02-PLAN.md — 7 new Drizzle tables + vendors/coupons extensions + schema barrel
 
 **Wave 3** *(blocked on Wave 2)*
-- [ ] 06-03-PLAN.md — [BLOCKING] db:generate + db:migrate + idempotent vendor-owner data migration into vendor_users
+- [x] 06-03-PLAN.md — [BLOCKING] db:generate + db:migrate + idempotent vendor-owner data migration into vendor_users
 
 **Wave 4** *(blocked on Wave 3)*
-- [ ] 06-04-PLAN.md — VendorAuthService migration to vendor_users + role middleware + AdminAuthService + requireAdminAuth (TDD)
-- [ ] 06-05-PLAN.md — SettingsService (Redis-first) + AuditService (append-only) (TDD)
+- [x] 06-04-PLAN.md — VendorAuthService migration to vendor_users + role middleware + AdminAuthService + requireAdminAuth (TDD)
+- [x] 06-05-PLAN.md — SettingsService (Redis-first) + AuditService (append-only) (TDD)
 
 **Wave 5** *(blocked on Wave 4)*
-- [ ] 06-06-PLAN.md — Vendor services: profile/payout-info, staff invite/accept, analytics (earnings+dashboard), ReturnService.rejectReturn, inventory/pricing + reindex (TDD)
-- [ ] 06-07-PLAN.md — Admin services: vendor management, commission-rule CRUD (cache-invalidated, global protected), append-only payouts, feature-flag toggle, CMS writes (TDD)
+- [x] 06-06-PLAN.md — Vendor services: profile/payout-info, staff invite/accept, analytics (earnings+dashboard), ReturnService.rejectReturn, inventory/pricing + reindex (TDD)
+- [x] 06-07-PLAN.md — Admin services: vendor management, commission-rule CRUD (cache-invalidated, global protected), append-only payouts, feature-flag toggle, CMS writes (TDD)
 
 **Wave 6** *(blocked on Wave 5)*
-- [ ] 06-08-PLAN.md — All admin + vendor route plugins, requireAdminAuth replaces X-Internal-Admin-Token, role guards, Awilix + app.ts wiring
+- [x] 06-08-PLAN.md — All admin + vendor route plugins, requireAdminAuth replaces X-Internal-Admin-Token, role guards, Awilix + app.ts wiring
 
 **Wave 7** *(blocked on Wave 6)*
-- [ ] 06-09-PLAN.md — Vendor panel: router, cookie apiClient, sidebar layout, all vendor pages (human-verify)
-- [ ] 06-10-PLAN.md — Admin panel: cookie apiClient, createBrowserRouter migration (preserve category routes), all admin pages (human-verify)
+- [x] 06-09-PLAN.md — Vendor panel: router, cookie apiClient, sidebar layout, all vendor pages (human-verify)
+- [x] 06-10-PLAN.md — Admin panel: cookie apiClient, createBrowserRouter migration (preserve category routes), all admin pages (human-verify)
 
 ### Phase 7: React Native App
 
@@ -267,7 +267,7 @@ Plans:
   5. All screens consume shared `packages/contracts` types and include premium motion and micro-interactions using Reanimated
 
 **Plans**: TBD
-**UI hint**: yes
+**UI hint**: yes — use `/frontend-design` skill for all UI generation tasks
 
 ### Phase 8: Fulfillment & Communications
 
@@ -311,7 +311,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
 | 5. Commerce Core | 11/12 | In Progress|  |
-| 6. Vendor & Admin Tools | 0/TBD | Not started | - |
+| 6. Vendor & Admin Tools | 10/10 | Complete    | 2026-06-05 |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
 | 9. Productization & Release | 0/TBD | Not started | - |
@@ -352,7 +352,7 @@ Plans:
   10. Design system strategy, accessibility strategy, and performance strategy are locked before any screen is built
 
 **Plans**: TBD
-**UI hint**: yes
+**UI hint**: yes — use `/frontend-design` skill for all UI generation tasks
 
 **Scope:**
 

@@ -99,27 +99,27 @@ Requirements for the initial commercial release (the Envato-ready starter kit). 
 - [ ] **MKT-01**: A commission is computed per vendor sub-order using a priority chain (global → category → vendor)
 - [ ] **MKT-02**: Commission splits use integer minor-unit allocation so totals reconcile with no rounding drift
 - [ ] **MKT-03**: Refunds generate proportional commission reversal entries
-- [ ] **MKT-04**: Admin can view payout records per vendor with a full audit trail (earned, reversed, net) and record manual settlement
-- [ ] **MKT-05**: Vendor can view their earnings and payout status
+- [x] **MKT-04**: Admin can view payout records per vendor with a full audit trail (earned, reversed, net) and record manual settlement
+- [x] **MKT-05**: Vendor can view their earnings and payout status
 
 ### Vendor Panel (Web)
 
-- [ ] **VEN-01**: Vendor can complete onboarding and manage a store profile
-- [ ] **VEN-02**: Vendor has a dashboard summarizing orders, earnings, and inventory health
-- [ ] **VEN-03**: Vendor can manage inventory levels and pricing for their products
-- [ ] **VEN-04**: Vendor can manage orders (view, update status, handle returns/refunds)
-- [ ] **VEN-05**: Vendor owner can invite vendor staff and assign limited permissions (e.g., inventory, orders, product editing)
-- [ ] **VEN-06**: Vendor can manage promotions/coupons where enabled
+- [x] **VEN-01**: Vendor can complete onboarding and manage a store profile
+- [x] **VEN-02**: Vendor has a dashboard summarizing orders, earnings, and inventory health
+- [x] **VEN-03**: Vendor can manage inventory levels and pricing for their products
+- [x] **VEN-04**: Vendor can manage orders (view, update status, handle returns/refunds)
+- [x] **VEN-05**: Vendor owner can invite vendor staff and assign limited permissions (e.g., inventory, orders, product editing)
+- [x] **VEN-06**: Vendor can manage promotions/coupons where enabled
 
 ### Admin Panel (Web)
 
-- [ ] **ADM-01**: Admin has a dashboard with marketplace KPIs and reporting
-- [ ] **ADM-02**: Admin can manage vendors (approve, suspend, configure)
-- [ ] **ADM-03**: Admin can configure the commission engine (rules and rates)
-- [ ] **ADM-04**: Admin can manage CMS/content blocks and homepage merchandising
-- [ ] **ADM-05**: Admin can manage global settings, integrations setup, and theme/branding
-- [ ] **ADM-06**: Admin can manage feature flags (toggle wallet, coupons, tracking mode, providers, etc.)
-- [ ] **ADM-07**: Admin can moderate catalog and view an audit log of sensitive actions
+- [x] **ADM-01**: Admin has a dashboard with marketplace KPIs and reporting
+- [x] **ADM-02**: Admin can manage vendors (approve, suspend, configure)
+- [x] **ADM-03**: Admin can configure the commission engine (rules and rates)
+- [x] **ADM-04**: Admin can manage CMS/content blocks and homepage merchandising
+- [x] **ADM-05**: Admin can manage global settings, integrations setup, and theme/branding
+- [x] **ADM-06**: Admin can manage feature flags (toggle wallet, coupons, tracking mode, providers, etc.)
+- [x] **ADM-07**: Admin can moderate catalog and view an audit log of sensitive actions
 
 ### Mobile App (React Native)
 
@@ -257,21 +257,21 @@ Which phases cover which requirements. Populated during roadmap creation.
 | MKT-01 | Phase 5 | Pending |
 | MKT-02 | Phase 5 | Pending |
 | MKT-03 | Phase 5 | Pending |
-| MKT-04 | Phase 6 | Pending |
-| MKT-05 | Phase 6 | Pending |
-| VEN-01 | Phase 6 | Pending |
-| VEN-02 | Phase 6 | Pending |
-| VEN-03 | Phase 6 | Pending |
-| VEN-04 | Phase 6 | Pending |
-| VEN-05 | Phase 6 | Pending |
-| VEN-06 | Phase 6 | Pending |
-| ADM-01 | Phase 6 | Pending |
-| ADM-02 | Phase 6 | Pending |
-| ADM-03 | Phase 6 | Pending |
-| ADM-04 | Phase 6 | Pending |
-| ADM-05 | Phase 6 | Pending |
-| ADM-06 | Phase 6 | Pending |
-| ADM-07 | Phase 6 | Pending |
+| MKT-04 | Phase 6 | Complete |
+| MKT-05 | Phase 6 | Complete |
+| VEN-01 | Phase 6 | Complete |
+| VEN-02 | Phase 6 | Complete |
+| VEN-03 | Phase 6 | Complete |
+| VEN-04 | Phase 6 | Complete |
+| VEN-05 | Phase 6 | Complete |
+| VEN-06 | Phase 6 | Complete |
+| ADM-01 | Phase 6 | Complete |
+| ADM-02 | Phase 6 | Complete |
+| ADM-03 | Phase 6 | Complete |
+| ADM-04 | Phase 6 | Complete |
+| ADM-05 | Phase 6 | Complete |
+| ADM-06 | Phase 6 | Complete |
+| ADM-07 | Phase 6 | Complete |
 | MOB-01 | Phase 7 | Pending |
 | MOB-02 | Phase 7 | Pending |
 | MOB-03 | Phase 7 | Pending |

@@ -7,6 +7,12 @@ import {
   commissionRules,
   vendorCommissionEntries,
 } from "../../db/schema/index.js";
+import type { AuditService } from "../audit/AuditService.js";
+import type {
+  CommissionRulesResponse,
+  CreateCommissionRuleInput,
+  UpdateCommissionRuleInput,
+} from "@grovio/contracts/admin/commission-rules";
 
 // ---------------------------------------------------------------------------
 // Deps interface
@@ -17,6 +23,7 @@ interface CommissionServiceDeps {
   db: NodePgDatabase<any>;
   redis: Redis;
   env: Env;
+  auditService: AuditService;
 }
 
 // ---------------------------------------------------------------------------
@@ -38,6 +45,28 @@ export interface CommissionResult {
 }
 
 // ---------------------------------------------------------------------------
+// Coded error for global-rule deletion protection (T-06-21, D-18)
+// ---------------------------------------------------------------------------
+
+/**
+ * CommissionRuleProtectedError
+ *
+ * Thrown by deleteRule when the target rule has scope='global'.
+ * The global commission rule is undeletable — it is the final fallback
+ * in the priority chain (D-18 anti-pattern, T-06-21 mitigation).
+ *
+ * HTTP layer maps this error to a 403 Forbidden response.
+ */
+export class CommissionRuleProtectedError extends Error {
+  readonly code = "COMMISSION_RULE_PROTECTED";
+
+  constructor(ruleId: string) {
+    super(`Commission rule ${ruleId} cannot be deleted: global rules are protected`);
+    this.name = "CommissionRuleProtectedError";
+  }
+}
+
+// ---------------------------------------------------------------------------
 // CommissionService
 // ---------------------------------------------------------------------------
 
@@ -45,6 +74,8 @@ export interface CommissionResult {
  * CommissionService
  *
  * Resolves commission rates and computes commissions with zero rounding drift.
+ * Phase 6 adds admin CRUD for commission rules with cache invalidation and
+ * global-rule deletion protection.
  *
  * Rate resolution (D-14, MKT-01):
  *   Priority chain: vendor override > category override > global default.
@@ -56,13 +87,30 @@ export interface CommissionResult {
  *   The sum commissionMinor + netVendorMinor === subtotalMinor EXACTLY for all
  *   amounts, including awkward values like 10001 at 33%.
  *
+ * Admin CRUD (ADM-03, D-18, Phase 6):
+ *   - getRules() → { global, categoryOverrides[], vendorOverrides[] }
+ *   - createRule(input, adminEmail) → inserts rule, invalidates cache, audits
+ *   - updateRule(id, input, adminEmail) → updates rate, invalidates cache, audits
+ *   - deleteRule(id, adminEmail) → deletes rule (throws if global), invalidates cache, audits
+ *   - invalidateRateCache() → scans and deletes all commission:rate:* Redis keys
+ *
+ * Security:
+ *   - T-06-21: deleteRule throws CommissionRuleProtectedError for global rules
+ *   - T-06-22: every mutation calls invalidateRateCache() to prevent stale rates
+ *   - T-06-24: every mutation calls auditService.log with matching 'commission_rule.*' action
+ *
  * No floating-point arithmetic — no float commission math anywhere (Pitfall 1, Pitfall 7).
  *
  * Methods:
  * - resolveRate(vendorId, categoryId) → rate as integer (e.g. 10 = 10%)
  * - computeCommission(params) → {commissionMinor, netVendorMinor}; inserts earned entry
+ * - getRules() → CommissionRulesResponse
+ * - createRule(input, adminEmail) → void
+ * - updateRule(id, input, adminEmail) → void
+ * - deleteRule(id, adminEmail) → void (throws CommissionRuleProtectedError for global)
+ * - invalidateRateCache() → void
  *
- * Covers MKT-01, MKT-02, D-14, T-05-07.
+ * Covers MKT-01, MKT-02, D-14, T-05-07, ADM-03, D-18, T-06-21, T-06-22, T-06-24.
  */
 export class CommissionService {
   constructor(private deps: CommissionServiceDeps) {}
@@ -203,5 +251,196 @@ export class CommissionService {
     });
 
     return { commissionMinor, netVendorMinor };
+  }
+
+  // ── Admin CRUD (Phase 6, ADM-03, D-18) ───────────────────────────────────
+
+  /**
+   * Get all commission rules grouped by scope (ADM-03, D-18).
+   *
+   * Returns the three-section structure for the admin commission UI:
+   *   { global, categoryOverrides, vendorOverrides }
+   *
+   * The global rule is always present (seeded at install time).
+   */
+  async getRules(): Promise<CommissionRulesResponse> {
+    const { db } = this.deps;
+
+    const rules = await db.select().from(commissionRules);
+
+    const globalRule = rules.find((r) => r.scope === "global");
+    const categoryOverrides = rules.filter((r) => r.scope === "category");
+    const vendorOverrides = rules.filter((r) => r.scope === "vendor");
+
+    if (!globalRule) {
+      throw new Error("No global commission rule found — database may not be seeded");
+    }
+
+    const mapRule = (r: typeof globalRule) => ({
+      id: r.id,
+      scope: r.scope as "global" | "category" | "vendor",
+      categoryId: r.categoryId ?? null,
+      vendorId: r.vendorId ?? null,
+      ratePercent: parseFloat(r.ratePercent),
+    });
+
+    return {
+      global: mapRule(globalRule),
+      categoryOverrides: categoryOverrides.map(mapRule),
+      vendorOverrides: vendorOverrides.map(mapRule),
+    };
+  }
+
+  /**
+   * Create a new category or vendor commission rule override (ADM-03, D-18).
+   *
+   * Cannot create a second global rule (the global rule is seeded once — D-18).
+   * After insert: invalidates the rate cache (T-06-22) and audits 'commission_rule.created' (T-06-24).
+   */
+  async createRule(
+    input: CreateCommissionRuleInput,
+    adminEmail: string
+  ): Promise<void> {
+    const { db, auditService } = this.deps;
+
+    // Note: CreateCommissionRuleInput scope is limited to 'category' | 'vendor' by the contracts schema
+    // (prevents accidentally creating a second global rule at the contract layer — extra safety here)
+
+    await db.insert(commissionRules).values({
+      scope: input.scope,
+      categoryId: input.categoryId ?? null,
+      vendorId: input.vendorId ?? null,
+      ratePercent: input.ratePercent.toFixed(2),
+    });
+
+    // Invalidate all cached commission rates (T-06-22, Pitfall 4)
+    await this.invalidateRateCache();
+
+    await auditService.log({
+      actorType: "admin",
+      actorId: adminEmail,
+      actorEmail: adminEmail,
+      action: "commission_rule.created",
+      entityType: "commission_rule",
+      entityId: `${input.scope}:${input.categoryId ?? input.vendorId ?? "unknown"}`,
+      before: null,
+      after: {
+        scope: input.scope,
+        categoryId: input.categoryId,
+        vendorId: input.vendorId,
+        ratePercent: input.ratePercent,
+      },
+    });
+  }
+
+  /**
+   * Update the rate of an existing commission rule (ADM-03, D-18).
+   *
+   * Only ratePercent is editable (scope and FK columns are immutable after creation).
+   * After update: invalidates the rate cache (T-06-22) and audits 'commission_rule.updated' (T-06-24).
+   */
+  async updateRule(
+    id: string,
+    input: UpdateCommissionRuleInput,
+    adminEmail: string
+  ): Promise<void> {
+    const { db, auditService } = this.deps;
+
+    // Load before-state for audit
+    const existing = await db
+      .select()
+      .from(commissionRules)
+      .where(eq(commissionRules.id, id))
+      .limit(1);
+
+    const before = existing[0];
+    if (!before) throw new Error(`Commission rule not found: ${id}`);
+
+    await db
+      .update(commissionRules)
+      .set({ ratePercent: input.ratePercent.toFixed(2), updatedAt: new Date() })
+      .where(eq(commissionRules.id, id));
+
+    // Invalidate all cached commission rates (T-06-22)
+    await this.invalidateRateCache();
+
+    await auditService.log({
+      actorType: "admin",
+      actorId: adminEmail,
+      actorEmail: adminEmail,
+      action: "commission_rule.updated",
+      entityType: "commission_rule",
+      entityId: id,
+      before: { ratePercent: parseFloat(before.ratePercent) },
+      after: { ratePercent: input.ratePercent },
+    });
+  }
+
+  /**
+   * Delete a category or vendor commission rule override (ADM-03, D-18, T-06-21).
+   *
+   * THROWS CommissionRuleProtectedError if the rule scope is 'global'.
+   * The global rule is the undeletable fallback in the priority chain — deleting
+   * it would break commission resolution for all orders (T-06-21 mitigation, D-18).
+   *
+   * After delete: invalidates the rate cache (T-06-22) and audits 'commission_rule.deleted' (T-06-24).
+   */
+  async deleteRule(id: string, adminEmail: string): Promise<void> {
+    const { db, auditService } = this.deps;
+
+    // Load the rule to check scope and get before-state
+    const existing = await db
+      .select()
+      .from(commissionRules)
+      .where(eq(commissionRules.id, id))
+      .limit(1);
+
+    const rule = existing[0];
+    if (!rule) throw new Error(`Commission rule not found: ${id}`);
+
+    // Guard: global rules cannot be deleted (T-06-21, D-18 anti-pattern)
+    if (rule.scope === "global") {
+      throw new CommissionRuleProtectedError(id);
+    }
+
+    await db.delete(commissionRules).where(eq(commissionRules.id, id));
+
+    // Invalidate all cached commission rates (T-06-22)
+    await this.invalidateRateCache();
+
+    await auditService.log({
+      actorType: "admin",
+      actorId: adminEmail,
+      actorEmail: adminEmail,
+      action: "commission_rule.deleted",
+      entityType: "commission_rule",
+      entityId: id,
+      before: {
+        scope: rule.scope,
+        categoryId: rule.categoryId,
+        vendorId: rule.vendorId,
+        ratePercent: parseFloat(rule.ratePercent),
+      },
+      after: null,
+    });
+  }
+
+  /**
+   * Invalidate all cached commission rates in Redis.
+   *
+   * Scans for all keys matching 'commission:rate:*' and deletes them.
+   * Called after every rule mutation to prevent stale rates from being served
+   * to CommissionService.resolveRate() callers (T-06-22, Pitfall 4).
+   *
+   * Simple v1 approach: KEYS pattern then DEL (acceptable at v1 rule-set size).
+   * For larger deployments: SCAN + pipeline DEL for better memory efficiency.
+   */
+  async invalidateRateCache(): Promise<void> {
+    const { redis } = this.deps;
+
+    const keys = await redis.keys("commission:rate:*");
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
   }
 }

@@ -12,7 +12,7 @@
  * the server are surfaced by CategoryMetadataPage.
  */
 
-import type { BannerBlock, MerchandisingBlock, ProductGridBlock, TextBlock } from '@grovio/contracts';
+import type { BannerBlock, FeaturedCategoriesBlock, MerchandisingBlock, ProductGridBlock, TextBlock } from '@grovio/contracts';
 import { DndContext, closestCenter, type DragEndEvent, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -175,6 +175,67 @@ function TextBlockForm({ block, onChange }: TextBlockFormProps) {
   );
 }
 
+interface FeaturedCategoriesBlockFormProps {
+  block: FeaturedCategoriesBlock;
+  onChange: (updated: FeaturedCategoriesBlock) => void;
+}
+
+function FeaturedCategoriesBlockForm({ block, onChange }: FeaturedCategoriesBlockFormProps) {
+  const rawIds = block.categoryIds.join('\n');
+
+  function handleIdsChange(value: string) {
+    const ids = value
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    onChange({ ...block, categoryIds: ids });
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Field
+        label="Section title *"
+        value={block.title}
+        onChange={(v) => onChange({ ...block, title: v })}
+        placeholder="Shop by Category"
+      />
+      <div>
+        <label className="mb-1 block text-xs font-medium text-grovio-text-muted">
+          Category IDs * <span className="font-normal">(one UUID per line or comma-separated)</span>
+        </label>
+        <textarea
+          value={rawIds}
+          onChange={(e) => handleIdsChange(e.target.value)}
+          rows={4}
+          placeholder={'550e8400-e29b-41d4-a716-446655440000\n...'}
+          className="w-full rounded border border-grovio-border bg-grovio-surface px-2 py-1.5 text-xs font-mono text-grovio-text focus:border-grovio-primary focus:outline-none"
+        />
+        <p className="mt-0.5 text-xs text-grovio-text-muted">
+          {block.categoryIds.length} categor{block.categoryIds.length !== 1 ? 'ies' : 'y'} selected
+        </p>
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-grovio-text-muted">Layout</label>
+        <div className="flex gap-3">
+          {(['grid', 'row'] as const).map((layout) => (
+            <label key={layout} className="flex items-center gap-1.5 text-sm text-grovio-text">
+              <input
+                type="radio"
+                name={`fc_layout_${block.title}`}
+                value={layout}
+                checked={block.layout === layout}
+                onChange={() => onChange({ ...block, layout })}
+                className="border-grovio-border"
+              />
+              {layout.charAt(0).toUpperCase() + layout.slice(1)}
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Shared tiny field helper
 // ---------------------------------------------------------------------------
@@ -212,6 +273,7 @@ const BLOCK_TYPE_LABELS: Record<MerchandisingBlock['type'], string> = {
   banner: 'Banner',
   product_grid: 'Product Grid',
   text_block: 'Text Block',
+  featured_categories: 'Featured Categories',
 };
 
 interface BlockItemProps {
@@ -304,6 +366,12 @@ function BlockItem({ item, onBlockChange, onRemove }: BlockItemProps) {
               onChange={onBlockChange}
             />
           )}
+          {item.block.type === 'featured_categories' && (
+            <FeaturedCategoriesBlockForm
+              block={item.block}
+              onChange={onBlockChange}
+            />
+          )}
         </div>
       )}
     </div>
@@ -318,6 +386,7 @@ const ADD_BLOCK_OPTIONS: { type: MerchandisingBlock['type']; label: string }[] =
   { type: 'banner', label: 'Banner' },
   { type: 'product_grid', label: 'Product Grid' },
   { type: 'text_block', label: 'Text Block' },
+  { type: 'featured_categories', label: 'Featured Categories' },
 ];
 
 function createDefaultBlock(type: MerchandisingBlock['type']): MerchandisingBlock {
@@ -328,6 +397,8 @@ function createDefaultBlock(type: MerchandisingBlock['type']): MerchandisingBloc
       return { type: 'product_grid', title: '', productIds: [], layout: 'grid' };
     case 'text_block':
       return { type: 'text_block', title: '', content: '' };
+    case 'featured_categories':
+      return { type: 'featured_categories', title: '', categoryIds: [], layout: 'grid' };
   }
 }
 

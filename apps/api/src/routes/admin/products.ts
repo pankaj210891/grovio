@@ -1,5 +1,6 @@
 import { RejectProductInputSchema } from "@grovio/contracts";
 import type { FastifyInstance } from "fastify";
+import { requireAdminAuth } from "../../middleware/adminAuth.js";
 import {
   type ProductService,
   ProductStateError,
@@ -9,12 +10,10 @@ import {
 /**
  * Admin product moderation routes — guarded write surfaces (PROD-06).
  *
- * Security guard (T-03-W2):
- *   All admin routes are protected by the same preHandler pattern as
- *   admin/categories.ts — X-Internal-Admin-Token header check in production.
- *   The vendor JWT cannot satisfy this guard (separate env var, separate header).
- *
- *   TODO (Phase 4): Replace with JWT middleware using jose and admin role claim (ASVS V4).
+ * Security guard (Phase 6 — T-06-25 mitigation):
+ *   All admin routes are protected by requireAdminAuth — the Phase 2/3 X-Internal-Admin-Token
+ *   placeholder has been replaced (Pitfall 2). requireAdminAuth validates a JWT (HS256 with
+ *   JWT_SECRET) and checks that role === "admin".
  *
  * Body validation (T-03-W3 / ASVS V5):
  *   reject route validates body through RejectProductInputSchema (rejectionReason required, D-08).
@@ -28,44 +27,9 @@ import {
 export async function adminProductRoutes(
   fastify: FastifyInstance
 ): Promise<void> {
-  // ── Startup assertion: fail fast in production if the admin token is absent ──
-  // Mirrors admin/categories.ts exactly (PATTERNS.md Admin Token Guard).
-  if (
-    process.env["NODE_ENV"] === "production" &&
-    !process.env["INTERNAL_ADMIN_TOKEN"]
-  ) {
-    throw new Error(
-      "INTERNAL_ADMIN_TOKEN must be set in production. " +
-        "Admin routes cannot start without it."
-    );
-  }
-
-  // ── Placeholder admin guard (Phase 4 JWT replacement) ───────────────────
-  // Copied verbatim from admin/categories.ts lines 58-82 (PATTERNS.md).
-  fastify.addHook("preHandler", async (request, reply) => {
-    const isProd = process.env["NODE_ENV"] === "production";
-    if (!isProd) {
-      // Development/test: allow all requests through — log so it is visible.
-      fastify.log.warn(
-        { path: request.url, method: request.method },
-        "Admin auth bypassed (non-production NODE_ENV)"
-      );
-      return;
-    }
-    // Production: require a valid X-Internal-Admin-Token header (T-03-W2).
-    const adminToken = process.env["INTERNAL_ADMIN_TOKEN"];
-    const headerToken = request.headers["x-internal-admin-token"];
-    if (!adminToken || headerToken !== adminToken) {
-      return reply.status(401).send({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Admin authentication required",
-        },
-      });
-    }
-    // Phase 4 replaces this guard with JWT middleware (jose library, admin role claim).
-  });
+  // ── Admin JWT guard (Phase 6 — Pitfall 2 mitigation, T-06-25) ─────────────
+  // Replaces the X-Internal-Admin-Token placeholder used in Phases 2/3.
+  fastify.addHook("preHandler", requireAdminAuth);
 
   // ── GET /admin/products ───────────────────────────────────────────────────
   // Moderation queue: returns products in pending_review status (PROD-06, D-06).

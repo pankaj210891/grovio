@@ -11,6 +11,54 @@
     "./money": {
       "types": "./dist/money/index.d.ts",
       "import": "./dist/money/index.js"
+    },
+    "./admin/auth": {
+      "types": "./dist/admin/auth.d.ts",
+      "import": "./dist/admin/auth.js"
+    },
+    "./admin/vendors": {
+      "types": "./dist/admin/vendors.d.ts",
+      "import": "./dist/admin/vendors.js"
+    },
+    "./admin/commission-rules": {
+      "types": "./dist/admin/commission-rules.d.ts",
+      "import": "./dist/admin/commission-rules.js"
+    },
+    "./admin/payouts": {
+      "types": "./dist/admin/payouts.d.ts",
+      "import": "./dist/admin/payouts.js"
+    },
+    "./admin/settings": {
+      "types": "./dist/admin/settings.d.ts",
+      "import": "./dist/admin/settings.js"
+    },
+    "./admin/audit": {
+      "types": "./dist/admin/audit.d.ts",
+      "import": "./dist/admin/audit.js"
+    },
+    "./admin/analytics": {
+      "types": "./dist/admin/analytics.d.ts",
+      "import": "./dist/admin/analytics.js"
+    },
+    "./admin/cms": {
+      "types": "./dist/admin/cms.d.ts",
+      "import": "./dist/admin/cms.js"
+    },
+    "./vendor/profile": {
+      "types": "./dist/vendor/profile.d.ts",
+      "import": "./dist/vendor/profile.js"
+    },
+    "./vendor/staff": {
+      "types": "./dist/vendor/staff.d.ts",
+      "import": "./dist/vendor/staff.js"
+    },
+    "./vendor/earnings": {
+      "types": "./dist/vendor/earnings.d.ts",
+      "import": "./dist/vendor/earnings.js"
+    },
+    "./vendor/dashboard": {
+      "types": "./dist/vendor/dashboard.d.ts",
+      "import": "./dist/vendor/dashboard.js"
     }
   },
   "scripts": {

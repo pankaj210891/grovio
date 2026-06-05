@@ -32,10 +32,13 @@ export const desc = (col) => ({ type: 'desc', col });
 export const asc = (col) => ({ type: 'asc', col });
 export const inArray = (col, arr) => ({ type: 'inArray', col, arr });
 export const notInArray = (col, arr) => ({ type: 'notInArray', col, arr });
-export const sql = Object.assign(
-  (template, ...args) => ({ type: 'sql', template, args }),
-  { placeholder: () => ({}) }
-);
+const sqlExpr = (template, ...args) => {
+  const expr = { type: 'sql', template, args };
+  expr.as = (_alias) => expr;
+  expr.mapWith = (_mapper) => expr;
+  return expr;
+};
+export const sql = Object.assign(sqlExpr, { placeholder: () => ({}) });
 export const isNull = (col) => ({ type: 'isNull', col });
 export const isNotNull = (col) => ({ type: 'isNotNull', col });
 export const lt = (a, b) => ({ type: 'lt', a, b });
@@ -47,6 +50,7 @@ export const like = (a, b) => ({ type: 'like', a, b });
 export const ne = (a, b) => ({ type: 'ne', a, b });
 export const between = (a, b, c) => ({ type: 'between', a, b, c });
 export const exists = (subq) => ({ type: 'exists', subq });
+export const count = (col) => ({ type: 'count', col: col ?? '*' });
 
 // pg-core column types - chainable
 export const uuid = (name) => colDef(name);

@@ -8,6 +8,7 @@ import {
 } from "@grovio/contracts";
 import type { FastifyInstance } from "fastify";
 import { z, ZodError } from "zod";
+import { requireAdminAuth } from "../../middleware/adminAuth.js";
 import type { AttributeDefinitionService } from "../../modules/attribute-definitions/index.js";
 import type { CategoryMetadataService } from "../../modules/category-metadata/index.js";
 import { CategoryDepthError } from "../../modules/categories/CategoryService.js";
@@ -19,14 +20,10 @@ import type { VendorRestrictionService } from "../../modules/vendor-restrictions
 /**
  * Admin category mutation routes — guarded write surfaces (CAT-01 through CAT-07 write).
  *
- * Security guard (T-02-15 / Pitfall 8):
- *   All admin routes are protected by a preHandler that allows requests only when:
- *   - NODE_ENV !== "production" (development/test environments), OR
- *   - X-Internal-Admin-Token header matches the INTERNAL_ADMIN_TOKEN env var.
- *   Unauthorised requests receive 401 Unauthorised.
- *
- *   TODO (Phase 4): Replace this placeholder guard with JWT middleware using
- *   the `jose` library and admin role claim verification (ASVS V4 / ARCHITECTURE.md auth).
+ * Security guard (Phase 6 — T-06-25 mitigation):
+ *   All admin routes are protected by requireAdminAuth — the Phase 2/3 X-Internal-Admin-Token
+ *   placeholder has been replaced. requireAdminAuth validates a JWT (HS256 with JWT_SECRET)
+ *   and checks that role === "admin". On success, populates request.adminId and request.adminEmail.
  *
  * Body validation (T-02-16 / ASVS V5):
  *   Every admin route validates its request body through the corresponding
@@ -41,45 +38,10 @@ import type { VendorRestrictionService } from "../../modules/vendor-restrictions
 export async function adminCategoryRoutes(
   fastify: FastifyInstance
 ): Promise<void> {
-  // ── Startup assertion: fail fast in production if the admin token is absent ──
-  // Reading the token at request-time (in the preHandler below) means a missing
-  // env var would lock out ALL legitimate admin requests with a 401 flood and no
-  // startup-time warning. Throwing here surfaces the misconfiguration immediately.
-  if (
-    process.env["NODE_ENV"] === "production" &&
-    !process.env["INTERNAL_ADMIN_TOKEN"]
-  ) {
-    throw new Error(
-      "INTERNAL_ADMIN_TOKEN must be set in production. " +
-        "Admin routes cannot start without it."
-    );
-  }
-
-  // ── Placeholder admin guard (Phase 4 JWT replacement) ───────────────────
-  fastify.addHook("preHandler", async (request, reply) => {
-    const isProd = process.env["NODE_ENV"] === "production";
-    if (!isProd) {
-      // Development/test: allow all requests through — log so it is visible.
-      fastify.log.warn(
-        { path: request.url, method: request.method },
-        "Admin auth bypassed (non-production NODE_ENV)"
-      );
-      return;
-    }
-    // Production: require a valid X-Internal-Admin-Token header.
-    const adminToken = process.env["INTERNAL_ADMIN_TOKEN"];
-    const headerToken = request.headers["x-internal-admin-token"];
-    if (!adminToken || headerToken !== adminToken) {
-      return reply.status(401).send({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Admin authentication required",
-        },
-      });
-    }
-    // Phase 4 replaces this guard with JWT middleware (jose library, admin role claim).
-  });
+  // ── Admin JWT guard (Phase 6 — Pitfall 2 mitigation, T-06-25) ─────────────
+  // Replaces the X-Internal-Admin-Token placeholder used in Phases 2/3.
+  // requireAdminAuth validates a signed JWT and rejects all non-admin tokens.
+  fastify.addHook("preHandler", requireAdminAuth);
 
   // ── POST /admin/categories ────────────────────────────────────────────────
   // Create a new category. Returns 201 on success, 422 on depth violation (CAT-01).

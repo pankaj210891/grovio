@@ -26,6 +26,15 @@ import { OrderService } from "./modules/orders/index.js";
 import { CommissionService } from "./modules/commissions/index.js";
 import { CouponService } from "./modules/coupons/index.js";
 import { ReturnService } from "./modules/returns/index.js";
+// Phase 6 service imports
+import { AdminAuthService } from "./modules/admin-auth/index.js";
+import { SettingsService } from "./modules/settings/index.js";
+import { AuditService } from "./modules/audit/index.js";
+import { VendorManagementService } from "./modules/vendor-management/index.js";
+import { VendorProfileService } from "./modules/vendor-profile/index.js";
+import { VendorStaffService } from "./modules/vendor-staff/index.js";
+import { AnalyticsService } from "./modules/analytics/index.js";
+import { PayoutService } from "./modules/payouts/index.js";
 
 /**
  * Create the Awilix DI container for the application.
@@ -63,6 +72,7 @@ export function createAppContainer(fastify: FastifyInstance) {
     // Phase 5: BullMQ queues for reservation expiry and basket cleanup
     reservationQueue: asValue(reservationQueue),
     basketCleanupQueue: asValue(basketCleanupQueue),
+    // productIndexQueue is already registered above (Phase 3); also available for Phase 6 InventoryService pricing updates
   });
 
   // ── Domain services ──────────────────────────────────────────────────────
@@ -96,6 +106,15 @@ export function createAppContainer(fastify: FastifyInstance) {
     commissionService: asClass(CommissionService).singleton(),
     couponService: asClass(CouponService).singleton(),
     returnService: asClass(ReturnService).singleton(),
+    // Phase 6 services (plan 06-08 — full set registered for route wiring)
+    adminAuthService: asClass(AdminAuthService).singleton(),
+    settingsService: asClass(SettingsService).singleton(),
+    auditService: asClass(AuditService).singleton(),
+    vendorManagementService: asClass(VendorManagementService).singleton(),
+    vendorProfileService: asClass(VendorProfileService).singleton(),
+    vendorStaffService: asClass(VendorStaffService).singleton(),
+    analyticsService: asClass(AnalyticsService).singleton(),
+    payoutService: asClass(PayoutService).singleton(),
   });
 
   return container;

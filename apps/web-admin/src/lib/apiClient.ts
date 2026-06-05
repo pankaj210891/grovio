@@ -1,29 +1,14 @@
 /**
  * Typed API client for the Grovio admin panel.
  *
- * Targets the API base URL, sets JSON headers, includes the X-Internal-Admin-Token
- * header for admin mutations (read from an env var via import.meta.env), and unwraps
- * the { success, data } | { success, error } response envelope.
+ * Uses cookie-based authentication (credentials: 'include').
+ * The Phase 2 X-Internal-Admin-Token header bypass has been removed — Phase 6
+ * requires httpOnly cookie JWT auth on all admin endpoints (T-06-32).
  *
- * Throws an ApiError on { success: false } responses.
- * Phase 4 replaces the X-Internal-Admin-Token header with JWT middleware.
+ * On 401 responses, redirects to /auth/login so protected routes stay guarded.
  */
 
 const API_BASE = import.meta.env['VITE_API_BASE_URL'] ?? '/api';
-
-// SECURITY NOTE (T-02-18 / Phase 2 dev-only placeholder):
-// VITE_* variables are inlined into the browser bundle at build time and are
-// publicly visible in DevTools and the compiled JS. This token is a Phase 2
-// development convenience ONLY and must NOT be deployed to any externally
-// accessible URL until Phase 4 replaces it with JWT (jose, admin role claim).
-// Any user who can access the admin panel URL can extract this token.
-// Do NOT treat it as a secret in non-localhost environments.
-const ADMIN_TOKEN = import.meta.env['VITE_INTERNAL_ADMIN_TOKEN'] ?? '';
-if (!ADMIN_TOKEN) {
-  console.warn(
-    '[apiClient] VITE_INTERNAL_ADMIN_TOKEN is not set — admin mutations will be rejected by the server in production',
-  );
-}
 
 export class ApiError extends Error {
   readonly code: string;
@@ -53,8 +38,10 @@ interface ApiErrorEnvelope {
 type ApiEnvelope<T> = ApiSuccessEnvelope<T> | ApiErrorEnvelope;
 
 /**
- * Core fetch wrapper. Sets common headers and unwraps the API envelope.
+ * Core fetch wrapper. Sets common headers, sends credentials (cookies), and
+ * unwraps the API envelope.
  * Throws ApiError for non-2xx or { success: false } responses.
+ * Redirects to /auth/login on 401 (expired or missing admin session).
  */
 async function request<T>(
   path: string,
@@ -67,15 +54,17 @@ async function request<T>(
     ...(options.headers as Record<string, string> | undefined),
   };
 
-  // Include admin token for all requests — Phase 4 replaces with JWT
-  if (ADMIN_TOKEN) {
-    headers['X-Internal-Admin-Token'] = ADMIN_TOKEN;
-  }
-
   const response = await fetch(url, {
     ...options,
+    credentials: 'include',
     headers,
   });
+
+  // On 401, redirect to login — the admin session has expired or never started
+  if (response.status === 401) {
+    window.location.href = '/auth/login';
+    throw new ApiError('UNAUTHORIZED', 'Session expired — redirecting to login.', 401);
+  }
 
   let envelope: ApiEnvelope<T>;
   try {
