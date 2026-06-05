@@ -182,71 +182,79 @@ export class VendorManagementService {
     const { db, auditService } = this.deps;
 
     // Load before-state for audit
-    const vendor = await this.loadVendor(vendorId);
+    void (await this.loadVendor(vendorId)); // throws VendorNotFoundError if absent
 
     const beforeRestrictions = await db
       .select()
       .from(vendorCategoryRestrictions)
       .where(eq(vendorCategoryRestrictions.vendorId, vendorId));
 
-    // Replace category restrictions: delete all existing, then insert new set
-    await db
-      .delete(vendorCategoryRestrictions)
-      .where(eq(vendorCategoryRestrictions.vendorId, vendorId));
-
-    if (input.categoryRestrictionIds.length > 0) {
-      await db.insert(vendorCategoryRestrictions).values(
-        input.categoryRestrictionIds.map((categoryId) => ({
-          vendorId,
-          categoryId,
-          createdByAdminId: adminEmail, // stored as email string (loose ref)
-        }))
-      );
-    }
-
-    // Handle commission override
-    if (input.commissionOverridePercent !== null) {
-      // Find existing vendor-scoped rule for this vendor
-      const existingRules = await db
-        .select()
-        .from(commissionRules)
-        .where(
-          and(
-            eq(commissionRules.scope, "vendor"),
-            eq(commissionRules.vendorId, vendorId)
-          )
+    // WR-01: load existing commission override BEFORE any mutations so the audit
+    // before-state reflects the real current value (not always null).
+    const existingOverride = await db
+      .select()
+      .from(commissionRules)
+      .where(
+        and(
+          eq(commissionRules.scope, "vendor"),
+          eq(commissionRules.vendorId, vendorId)
         )
-        .limit(1);
+      )
+      .limit(1);
+    const beforeCommissionOverridePercent = existingOverride[0]
+      ? Number(existingOverride[0].ratePercent)
+      : null;
 
-      if (existingRules[0]) {
-        // Update existing vendor rule
-        await db
-          .update(commissionRules)
-          .set({
-            ratePercent: input.commissionOverridePercent.toFixed(2),
-            updatedAt: new Date(),
-          })
-          .where(eq(commissionRules.id, existingRules[0].id));
-      } else {
-        // Insert new vendor-scoped rule
-        await db.insert(commissionRules).values({
-          scope: "vendor",
-          vendorId,
-          categoryId: null,
-          ratePercent: input.commissionOverridePercent.toFixed(2),
-        });
-      }
-    } else {
-      // commissionOverridePercent is null — remove any vendor-scoped rule
-      await db
-        .delete(commissionRules)
-        .where(
-          and(
-            eq(commissionRules.scope, "vendor"),
-            eq(commissionRules.vendorId, vendorId)
-          )
+    // WR-02: wrap DELETE + INSERT in a transaction to prevent a concurrent read
+    // from seeing zero restrictions between the two statements.
+    await db.transaction(async (tx) => {
+      // Replace category restrictions: delete all existing, then insert new set
+      await tx
+        .delete(vendorCategoryRestrictions)
+        .where(eq(vendorCategoryRestrictions.vendorId, vendorId));
+
+      if (input.categoryRestrictionIds.length > 0) {
+        await tx.insert(vendorCategoryRestrictions).values(
+          input.categoryRestrictionIds.map((categoryId) => ({
+            vendorId,
+            categoryId,
+            createdByAdminId: adminEmail,
+          }))
         );
-    }
+      }
+
+      // Handle commission override inside the same transaction
+      if (input.commissionOverridePercent !== null) {
+        if (existingOverride[0]) {
+          // Update existing vendor rule
+          await tx
+            .update(commissionRules)
+            .set({
+              ratePercent: input.commissionOverridePercent.toFixed(2),
+              updatedAt: new Date(),
+            })
+            .where(eq(commissionRules.id, existingOverride[0].id));
+        } else {
+          // Insert new vendor-scoped rule
+          await tx.insert(commissionRules).values({
+            scope: "vendor",
+            vendorId,
+            categoryId: null,
+            ratePercent: input.commissionOverridePercent.toFixed(2),
+          });
+        }
+      } else {
+        // commissionOverridePercent is null — remove any vendor-scoped rule
+        await tx
+          .delete(commissionRules)
+          .where(
+            and(
+              eq(commissionRules.scope, "vendor"),
+              eq(commissionRules.vendorId, vendorId)
+            )
+          );
+      }
+    });
 
     await auditService.log({
       actorType: "admin",
@@ -257,15 +265,14 @@ export class VendorManagementService {
       entityId: vendorId,
       before: {
         categoryRestrictionIds: beforeRestrictions.map((r) => r.categoryId),
-        commissionOverridePercent: null, // approximate; current override not stored here
+        // WR-01: real before-state value, not hardcoded null
+        commissionOverridePercent: beforeCommissionOverridePercent,
       },
       after: {
         categoryRestrictionIds: input.categoryRestrictionIds,
         commissionOverridePercent: input.commissionOverridePercent,
       },
     });
-
-    void vendor; // used above for loadVendor side-effect
   }
 
   /**
