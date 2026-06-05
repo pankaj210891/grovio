@@ -1,17 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
 import App from './App.js';
+import { ApiError } from './lib/apiClient.js';
 import './app.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Stale time of 30 seconds — category tree is cached on the server via Redis
-      staleTime: 30_000,
-      // Retry failed requests once before showing an error
-      retry: 1,
+      staleTime: 1000 * 60 * 2, // 2 minutes
+      retry: (failureCount, error) => {
+        // Do not retry on auth errors or not-found
+        if (error instanceof ApiError && [401, 403, 404].includes(error.status)) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     },
   },
 });
@@ -19,9 +23,7 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <App />
     </QueryClientProvider>
   </React.StrictMode>,
 );
