@@ -8,7 +8,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { get, post } from '../lib/apiClient.js';
 
 interface AdminProduct {
@@ -45,6 +45,9 @@ export function CatalogModerationPage() {
   const [offset, setOffset] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>('pending_review');
   const [actionError, setActionError] = useState<string | null>(null);
+  // CR-03: reject requires a reason — capture via inline dialog before mutating
+  const [rejectTarget, setRejectTarget] = useState<{ id: string; name: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   const LIMIT = 20;
 
   const { data, isLoading, error } = useQuery<AdminProductsResponse>({
@@ -67,11 +70,29 @@ export function CatalogModerationPage() {
   });
 
   const rejectMutation = useMutation({
-    mutationFn: (productId: string) => post<void>(`/admin/products/${productId}/reject`, {}),
-    onSuccess: invalidate,
+    // CR-03: send { rejectionReason } — backend RejectProductInputSchema requires this field
+    mutationFn: ({ productId, rejectionReason }: { productId: string; rejectionReason: string }) =>
+      post<void>(`/admin/products/${productId}/reject`, { rejectionReason }),
+    onSuccess: () => {
+      invalidate();
+      setRejectTarget(null);
+      setRejectReason('');
+    },
     onError: (err: unknown) =>
       setActionError(err instanceof Error ? err.message : 'Failed to reject product'),
   });
+
+  function openRejectDialog(product: AdminProduct) {
+    setRejectTarget({ id: product.id, name: product.name });
+    setRejectReason('');
+    setActionError(null);
+  }
+
+  function handleRejectSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!rejectTarget || !rejectReason.trim()) return;
+    rejectMutation.mutate({ productId: rejectTarget.id, rejectionReason: rejectReason.trim() });
+  }
 
   const totalPages = data ? Math.ceil(data.total / LIMIT) : 0;
   const currentPage = Math.floor(offset / LIMIT) + 1;
@@ -198,7 +219,7 @@ export function CatalogModerationPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => rejectMutation.mutate(product.id)}
+                                  onClick={() => openRejectDialog(product)}
                                   disabled={rejectMutation.isPending}
                                   className="rounded bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-60"
                                 >
@@ -246,6 +267,53 @@ export function CatalogModerationPage() {
             </div>
           )}
         </>
+      )}
+      {/* CR-03: Reject reason dialog — captures rejectionReason before submitting */}
+      {rejectTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md rounded-xl border border-grovio-border bg-grovio-surface-raised p-6 shadow-xl"
+          >
+            <h2 className="mb-1 text-base font-semibold text-grovio-text">Reject Product</h2>
+            <p className="mb-4 text-sm text-grovio-text-muted">
+              Rejecting: <span className="font-medium text-grovio-text">{rejectTarget.name}</span>
+            </p>
+            <form onSubmit={handleRejectSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="reject-reason" className="mb-1 block text-sm font-medium text-grovio-text">
+                  Rejection reason <span className="text-grovio-error">*</span>
+                </label>
+                <textarea
+                  id="reject-reason"
+                  required
+                  rows={3}
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Explain why this product is being rejected…"
+                  className="w-full rounded-lg border border-grovio-border bg-grovio-surface px-3 py-2 text-sm text-grovio-text placeholder:text-grovio-text-muted focus:border-grovio-primary focus:outline-none"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setRejectTarget(null)}
+                  className="flex-1 rounded-lg border border-grovio-border px-4 py-2 text-sm font-medium text-grovio-text hover:bg-grovio-surface"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={rejectMutation.isPending || !rejectReason.trim()}
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {rejectMutation.isPending ? 'Rejecting…' : 'Reject'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
       )}
     </motion.div>
   );
