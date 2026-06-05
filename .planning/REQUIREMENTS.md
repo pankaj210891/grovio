@@ -64,41 +64,41 @@ Requirements for the initial commercial release (the Envato-ready starter kit). 
 
 ### Basket & Checkout
 
-- [ ] **CHK-01**: Customer can add/update/remove items in a basket spanning multiple vendors
-- [ ] **CHK-02**: Basket persists for guests and merges into the account on login
-- [ ] **CHK-03**: Customer can complete a checkout flow (address → delivery → payment → review)
-- [ ] **CHK-04**: All pricing, discounts, and order totals are computed backend-authoritatively (never trusted from client)
-- [ ] **CHK-05**: Stock is reserved atomically at checkout initiation (not on basket add) with timed release of abandoned reservations
-- [ ] **CHK-06**: Customer can apply a coupon during checkout (simple coupon engine, feature-flagged)
+- [x] **CHK-01**: Customer can add/update/remove items in a basket spanning multiple vendors
+- [x] **CHK-02**: Basket persists for guests and merges into the account on login
+- [x] **CHK-03**: Customer can complete a checkout flow (address → delivery → payment → review)
+- [x] **CHK-04**: All pricing, discounts, and order totals are computed backend-authoritatively (never trusted from client)
+- [x] **CHK-05**: Stock is reserved atomically at checkout initiation (not on basket add) with timed release of abandoned reservations
+- [x] **CHK-06**: Customer can apply a coupon during checkout (simple coupon engine, feature-flagged)
 
 ### Payments
 
 - [x] **PAY-01**: Payment processing goes through a `PaymentProvider` abstraction; no provider SDK is called from business logic
 - [x] **PAY-02**: Buyer can enable Stripe, Razorpay, or both via configuration
-- [ ] **PAY-03**: Payment webhooks are verified and processed idempotently (no double-processing on retry)
+- [x] **PAY-03**: Payment webhooks are verified and processed idempotently (no double-processing on retry)
 - [x] **PAY-04**: Customer can pay using a configured provider and receives confirmation on success/failure
 
 ### Wallet
 
-- [ ] **WAL-01**: Customer can view wallet balance
-- [ ] **WAL-02**: Customer can view a wallet ledger/history of credits and debits
-- [ ] **WAL-03**: Wallet is modeled as an append-only ledger (no direct balance edits) with idempotent entries
-- [ ] **WAL-04**: Refunds can be issued to the customer wallet
-- [ ] **WAL-05**: Customer can pay (fully or partially) using wallet balance at checkout
+- [x] **WAL-01**: Customer can view wallet balance
+- [x] **WAL-02**: Customer can view a wallet ledger/history of credits and debits
+- [x] **WAL-03**: Wallet is modeled as an append-only ledger (no direct balance edits) with idempotent entries
+- [x] **WAL-04**: Refunds can be issued to the customer wallet
+- [x] **WAL-05**: Customer can pay (fully or partially) using wallet balance at checkout
 
 ### Orders
 
-- [ ] **ORD-01**: Customer can place an order and receive an order confirmation
-- [ ] **ORD-02**: A single customer order containing multiple vendors splits into per-vendor sub-orders backend-side
-- [ ] **ORD-03**: Customer can view order history and order detail
-- [ ] **ORD-04**: Customer can request a return/refund on eligible order items
-- [ ] **ORD-05**: Vendor and admin can view and update the status of sub-orders they own
+- [x] **ORD-01**: Customer can place an order and receive an order confirmation
+- [x] **ORD-02**: A single customer order containing multiple vendors splits into per-vendor sub-orders backend-side
+- [x] **ORD-03**: Customer can view order history and order detail
+- [x] **ORD-04**: Customer can request a return/refund on eligible order items
+- [x] **ORD-05**: Vendor and admin can view and update the status of sub-orders they own
 
 ### Multi-Vendor: Commissions & Payouts
 
-- [ ] **MKT-01**: A commission is computed per vendor sub-order using a priority chain (global → category → vendor)
-- [ ] **MKT-02**: Commission splits use integer minor-unit allocation so totals reconcile with no rounding drift
-- [ ] **MKT-03**: Refunds generate proportional commission reversal entries
+- [x] **MKT-01**: A commission is computed per vendor sub-order using a priority chain (global → category → vendor)
+- [x] **MKT-02**: Commission splits use integer minor-unit allocation so totals reconcile with no rounding drift
+- [x] **MKT-03**: Refunds generate proportional commission reversal entries
 - [x] **MKT-04**: Admin can view payout records per vendor with a full audit trail (earned, reversed, net) and record manual settlement
 - [x] **MKT-05**: Vendor can view their earnings and payout status
 
@@ -234,29 +234,29 @@ Which phases cover which requirements. Populated during roadmap creation.
 | AUTH-04 | Phase 4 | Complete |
 | AUTH-05 | Phase 4 | Complete |
 | AUTH-06 | Phase 4 | Complete |
-| CHK-01 | Phase 5 | Pending |
-| CHK-02 | Phase 5 | Pending |
-| CHK-03 | Phase 5 | Pending |
-| CHK-04 | Phase 5 | Pending |
-| CHK-05 | Phase 5 | Pending |
-| CHK-06 | Phase 5 | Pending |
+| CHK-01 | Phase 5 | Complete |
+| CHK-02 | Phase 5 | Complete |
+| CHK-03 | Phase 5 | Complete |
+| CHK-04 | Phase 5 | Complete |
+| CHK-05 | Phase 5 | Complete |
+| CHK-06 | Phase 5 | Complete |
 | PAY-01 | Phase 5 | Complete |
 | PAY-02 | Phase 5 | Complete |
-| PAY-03 | Phase 5 | Pending |
+| PAY-03 | Phase 5 | Complete |
 | PAY-04 | Phase 5 | Complete |
-| WAL-01 | Phase 5 | Pending |
-| WAL-02 | Phase 5 | Pending |
-| WAL-03 | Phase 5 | Pending |
-| WAL-04 | Phase 5 | Pending |
-| WAL-05 | Phase 5 | Pending |
-| ORD-01 | Phase 5 | Pending |
-| ORD-02 | Phase 5 | Pending |
-| ORD-03 | Phase 5 | Pending |
-| ORD-04 | Phase 5 | Pending |
-| ORD-05 | Phase 5 | Pending |
-| MKT-01 | Phase 5 | Pending |
-| MKT-02 | Phase 5 | Pending |
-| MKT-03 | Phase 5 | Pending |
+| WAL-01 | Phase 5 | Complete |
+| WAL-02 | Phase 5 | Complete |
+| WAL-03 | Phase 5 | Complete |
+| WAL-04 | Phase 5 | Complete |
+| WAL-05 | Phase 5 | Complete |
+| ORD-01 | Phase 5 | Complete |
+| ORD-02 | Phase 5 | Complete |
+| ORD-03 | Phase 5 | Complete |
+| ORD-04 | Phase 5 | Complete |
+| ORD-05 | Phase 5 | Complete |
+| MKT-01 | Phase 5 | Complete |
+| MKT-02 | Phase 5 | Complete |
+| MKT-03 | Phase 5 | Complete |
 | MKT-04 | Phase 6 | Complete |
 | MKT-05 | Phase 6 | Complete |
 | VEN-01 | Phase 6 | Complete |

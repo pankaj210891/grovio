@@ -10,7 +10,7 @@ Grovio is a horizontal-layer infrastructure product. The roadmap builds complete
 - [x] **Phase 2: Category Engine** - Admin-managed category tree, per-category attribute/filter schemas, product templates, vendor-category restrictions (completed 2026-05-30)
 - [x] **Phase 3: Catalog & Search** - Vendor product CRUD with dynamic attribute forms, admin moderation, OpenSearch index, full-text + faceted search API (completed 2026-06-01)
 - [x] **Phase 4: Customer Storefront (Web)** - Complete customer web experience: homepage, category pages, PLP, PDP, search, auth flows, responsive + animated UI (completed 2026-06-02)
-- [ ] **Phase 5: Commerce Core** - Basket, inventory reservation, checkout, PaymentProvider abstraction, wallet ledger, order placement + multi-vendor splitting, commission engine, coupon engine
+- [x] **Phase 5: Commerce Core** - Basket, inventory reservation, checkout, PaymentProvider abstraction, wallet ledger, order placement + multi-vendor splitting, commission engine, coupon engine (completed 2026-06-05)
 - [x] **Phase 6: Vendor & Admin Tools** - Full vendor panel, full admin panel, commission/payout audit trail, marketplace operational tooling (completed 2026-06-05)
 - [ ] **Phase 7: React Native App** - Full-featured customer mobile app consuming stable backend APIs via shared contracts
 - [ ] **Phase 8: Fulfillment & Communications** - Order tracking timeline + map shell, serviceability check, simulation mode, full transactional email suite, push-ready notification events
@@ -209,7 +209,7 @@ Plans:
 - [x] 05-11-PLAN.md — Storefront useBasket hook + CartPage (vendor-grouped) + PDP Add-to-Cart wiring + header count (human-verify)
 
 **Wave 9**
-- [ ] 05-12-PLAN.md — Checkout wizard (4 steps + guard) + Stripe/Razorpay/wallet payment + order confirmation + account orders/wallet pages (human-verify)
+- [x] 05-12-PLAN.md — Checkout wizard (4 steps + guard) + Stripe/Razorpay/wallet payment + order confirmation + account orders/wallet pages (human-verify)
 
 ### Phase 6: Vendor & Admin Tools
 
@@ -310,7 +310,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Category Engine | 8/8 | Complete    | 2026-05-30 |
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
-| 5. Commerce Core | 11/12 | In Progress|  |
+| 5. Commerce Core | 12/12 | Complete    | 2026-06-05 |
 | 6. Vendor & Admin Tools | 10/10 | Complete    | 2026-06-05 |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
