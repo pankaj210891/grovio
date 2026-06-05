@@ -21,7 +21,8 @@ interface Coupon {
   code: string;
   discountType: 'flat' | 'percent';
   discountValue: number;
-  minOrderAmountMinor: number;
+  // CR-05: field name matches backend DB column and Zod schema (minOrderMinor)
+  minOrderMinor: number;
   expiresAt: string | null;
   maxRedemptions: number | null;
   redemptionCount: number;
@@ -37,7 +38,8 @@ interface CreateCouponInput {
   code: string;
   discountType: 'flat' | 'percent';
   discountValue: number;
-  minOrderAmountMinor: number;
+  // CR-05: field name matches backend CreateCouponInputSchema (minOrderMinor)
+  minOrderMinor: number;
   expiresAt?: string;
   maxRedemptions?: number;
 }
@@ -110,7 +112,8 @@ export default function CouponsPage() {
       discountValue: discountType === 'flat'
         ? Math.round(parseFloat(discountValue) * 100) // convert to minor if flat
         : parseFloat(discountValue),
-      minOrderAmountMinor: Math.round(parseFloat(minOrder) * 100),
+      // CR-05: use minOrderMinor to match backend CreateCouponInputSchema
+      minOrderMinor: Math.round(parseFloat(minOrder) * 100),
     };
     if (expiresAt) body.expiresAt = expiresAt;
     if (maxRedemptions) body.maxRedemptions = parseInt(maxRedemptions, 10);
@@ -205,7 +208,7 @@ export default function CouponsPage() {
                         : formatMajor(coupon.discountValue)}
                     </td>
                     <td className="px-4 py-3 text-grovio-text">
-                      {formatMajor(coupon.minOrderAmountMinor)}
+                      {formatMajor(coupon.minOrderMinor)}
                     </td>
                     <td className="px-4 py-3 text-grovio-text-muted">
                       {coupon.redemptionCount}
