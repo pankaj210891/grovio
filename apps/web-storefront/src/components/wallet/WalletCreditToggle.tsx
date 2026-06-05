@@ -10,7 +10,6 @@
  * but all authoritative amounts come from GET /checkout/summary.
  */
 
-import { useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -46,15 +45,14 @@ export function WalletCreditToggle({
   onAppliedChange,
 }: WalletCreditToggleProps) {
   const maxCredit = Math.min(balanceMinor, orderTotalMinor);
-  const isApplied = appliedMinor > 0;
 
-  const [checked, setChecked] = useState(isApplied);
+  // CR-04: derive checked from props (controlled component) so the checkbox
+  // stays in sync if the parent resets appliedMinor to 0 (e.g. on wallet refresh).
+  const checked = appliedMinor > 0;
 
   function handleToggle(e: React.ChangeEvent<HTMLInputElement>) {
-    const newChecked = e.target.checked;
-    setChecked(newChecked);
     // Apply full wallet credit by default when checked (capped at maxCredit)
-    onAppliedChange(newChecked ? maxCredit : 0);
+    onAppliedChange(e.target.checked ? maxCredit : 0);
   }
 
   function handleAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
