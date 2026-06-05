@@ -84,7 +84,11 @@ export function CheckoutGuard({ step }: CheckoutGuardProps) {
     paymentResult,
   );
 
-  // If the earliest allowed step is further back than the requested step, redirect
+  // Guard direction: forward-skip prevention only.
+  // Backward navigation (e.g. /payment → /address) is intentionally permitted so
+  // customers can correct a wrong address selection. CheckoutAddressPage clears
+  // selectedDeliveryOption on continue (WR-02) so re-entry resets the delivery
+  // step rather than silently reusing the old reservation.
   if (STEP_ORDER[earliestAllowed] < STEP_ORDER[step]) {
     return (
       <Navigate
@@ -109,7 +113,7 @@ export function CheckoutGuard({ step }: CheckoutGuardProps) {
  */
 export function CheckoutRootGuard() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { basket, isLoading: basketLoading } = useBasket();
+  const { basket, isLoading: basketLoading, isSuccess: basketSuccess } = useBasket();
   const location = useLocation();
 
   if (authLoading || basketLoading) {
@@ -126,7 +130,9 @@ export function CheckoutRootGuard() {
     );
   }
 
-  if ((basket?.itemCount ?? 0) === 0 && basket !== undefined) {
+  // WR-06: use isSuccess as the "basket loaded" signal so a basket query that
+  // returns undefined (error fallback) does not accidentally pass the guard.
+  if (basketSuccess && (basket?.itemCount ?? 0) === 0) {
     // Basket loaded and is empty — redirect to cart
     return <Navigate to="/cart" replace />;
   }

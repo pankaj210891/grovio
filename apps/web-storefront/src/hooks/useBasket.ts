@@ -47,7 +47,7 @@ export const BASKET_QUERY_KEY = ['basket'] as const;
 // ---------------------------------------------------------------------------
 
 export function useBasket() {
-  const { data: basket, isLoading, isError } = useQuery<Basket | null>({
+  const { data: basket, isLoading, isError, isSuccess } = useQuery<Basket | null>({
     queryKey: BASKET_QUERY_KEY,
     queryFn: async () => {
       try {
@@ -71,6 +71,7 @@ export function useBasket() {
     basket,
     isLoading,
     isError,
+    isSuccess,
     itemCount,
   };
 }
