@@ -49,16 +49,26 @@ declare global {
 // ---------------------------------------------------------------------------
 
 const RAZORPAY_SCRIPT_URL = 'https://checkout.razorpay.com/v1/checkout.js';
+
+// CR-07: default currency from env so buyers targeting non-INR markets set
+// VITE_RAZORPAY_CURRENCY=USD (or similar) without changing source code.
+const DEFAULT_RAZORPAY_CURRENCY =
+  (import.meta.env['VITE_RAZORPAY_CURRENCY'] as string | undefined) ?? 'INR';
 let scriptLoaded = false;
 let scriptLoading = false;
 
 function loadRazorpayScript(): Promise<void> {
   if (scriptLoaded) return Promise.resolve();
   if (scriptLoading) {
-    // Wait for existing load
-    return new Promise((resolve) => {
+    // WR-03: poll with timeout + error-state check to prevent interval leak on
+    // component unmount or script load failure. The interval now also rejects
+    // if scriptLoading flips to false (onerror) or times out after 10 seconds.
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
       const interval = setInterval(() => {
-        if (scriptLoaded) { clearInterval(interval); resolve(); }
+        if (scriptLoaded) { clearInterval(interval); resolve(); return; }
+        if (!scriptLoading) { clearInterval(interval); reject(new Error('Razorpay script load failed')); return; }
+        if (Date.now() - start > 10_000) { clearInterval(interval); reject(new Error('Razorpay script load timeout')); }
       }, 50);
     });
   }
@@ -87,6 +97,12 @@ interface RazorpayButtonProps {
   amountMinor: number;
   /** Internal order ID for logging / error messages */
   orderId: string;
+  /**
+   * CR-07: ISO 4217 currency code (e.g. 'INR', 'USD', 'SGD').
+   * Defaults to VITE_RAZORPAY_CURRENCY env var, then 'INR'.
+   * Buyers targeting non-INR markets must set VITE_RAZORPAY_CURRENCY.
+   */
+  currency?: string;
   /** Called when Razorpay modal reports payment success */
   onSuccess: (response: RazorpayResponse) => void;
   /** Called when modal is dismissed without payment */
@@ -107,6 +123,7 @@ export function RazorpayButton({
   providerOrderRef,
   amountMinor,
   orderId,
+  currency = DEFAULT_RAZORPAY_CURRENCY,
   onSuccess,
   onDismiss,
 }: RazorpayButtonProps) {
@@ -135,7 +152,7 @@ export function RazorpayButton({
       key: providerKey,
       order_id: providerOrderRef, // REQUIRED per Pitfall 4
       amount: amountMinor,
-      currency: 'INR',
+      currency,
       name: 'Grovio',
       description: `Order ${orderId}`,
       handler: onSuccess,
