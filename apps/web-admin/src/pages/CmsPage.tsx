@@ -226,8 +226,9 @@ export function CmsPage() {
   });
 
   const toggleMutation = useMutation({
+    // WR-07: backend only exposes PATCH /admin/homepage-blocks/:id (no /toggle sub-path)
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
-      patch<void>(`/admin/homepage-blocks/${id}/toggle`, { active }),
+      patch<void>(`/admin/homepage-blocks/${id}`, { active }),
     onSuccess: invalidate,
     onError: (err: unknown) =>
       setMutationError(err instanceof Error ? err.message : 'Failed to toggle block'),
