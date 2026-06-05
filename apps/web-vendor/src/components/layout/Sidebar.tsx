@@ -41,7 +41,7 @@ function useCouponsEnabled(): boolean {
     staleTime: 1000 * 60 * 5,
     retry: false,
   });
-  return data ?? true; // default to visible until flag resolves
+  return data ?? false; // CR-06: default to hidden until flag is confirmed enabled
 }
 
 const iconSize = 'h-5 w-5';
