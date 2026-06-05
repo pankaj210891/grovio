@@ -77,8 +77,9 @@ export default function ReturnsPage() {
   });
 
   const rejectMutation = useMutation({
+    // WR-05: backend RejectInputSchema expects { rejectionReason }, not { reason }
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
-      apiClient.post(`/vendor/returns/${id}/reject`, { reason }),
+      apiClient.post(`/vendor/returns/${id}/reject`, { rejectionReason: reason }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['vendorReturns'] });
     },
