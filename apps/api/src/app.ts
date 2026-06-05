@@ -82,8 +82,14 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
 
   // --- Phase 4: CORS + cookie — must be registered BEFORE all routes ---
   // CORS: credentials mode — origin must be exact (never "*"), T-04-13 / Pitfall 2
+  // CR-02: include admin panel + vendor panel origins so their credentialed requests succeed.
+  // All three origins use httpOnly cookie auth and require an exact origin allowlist.
   await fastify.register(cors, {
-    origin: env.STOREFRONT_ORIGIN,
+    origin: [
+      env.STOREFRONT_ORIGIN,
+      env.WEB_ADMIN_URL,
+      env.WEB_VENDOR_URL,
+    ],
     credentials: true,
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   });
