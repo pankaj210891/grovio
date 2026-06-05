@@ -25,6 +25,21 @@ import type {
 } from '@grovio/contracts';
 
 // ---------------------------------------------------------------------------
+// Envelope helper (WR-01)
+// ---------------------------------------------------------------------------
+
+/**
+ * Asserts the standard { success: true, data } envelope and returns data.
+ * Throws if the server returns success: false or an unexpected shape, so
+ * React Query surfaces a proper error rather than letting undefined propagate
+ * silently to callers that expect a non-null value.
+ */
+function unwrapEnvelope<T>(res: { success: boolean; data: T }): T {
+  if (!res.success) throw new Error('API returned success: false');
+  return res.data;
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -116,7 +131,7 @@ export function useCheckoutSummary() {
     queryFn: async () => {
       try {
         const res = await apiClient.get<CheckoutSummaryResponse>('/checkout/summary');
-        return res.data;
+        return unwrapEnvelope(res);
       } catch (err: unknown) {
         if (err instanceof ApiError && err.status === 404) return null;
         throw err;
@@ -137,7 +152,7 @@ export function useCheckoutProviders() {
     queryFn: async () => {
       try {
         const res = await apiClient.get<EnabledProvidersResponse>('/checkout/providers');
-        return res.data;
+        return unwrapEnvelope(res);
       } catch (err: unknown) {
         if (err instanceof ApiError && err.status === 404) return null;
         throw err;
