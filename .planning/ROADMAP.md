@@ -250,7 +250,7 @@ Plans:
 - [x] 06-08-PLAN.md — All admin + vendor route plugins, requireAdminAuth replaces X-Internal-Admin-Token, role guards, Awilix + app.ts wiring
 
 **Wave 7** *(blocked on Wave 6)*
-- [ ] 06-09-PLAN.md — Vendor panel: router, cookie apiClient, sidebar layout, all vendor pages (human-verify)
+- [x] 06-09-PLAN.md — Vendor panel: router, cookie apiClient, sidebar layout, all vendor pages (human-verify)
 - [ ] 06-10-PLAN.md — Admin panel: cookie apiClient, createBrowserRouter migration (preserve category routes), all admin pages (human-verify)
 
 ### Phase 7: React Native App
@@ -311,7 +311,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
 | 5. Commerce Core | 11/12 | In Progress|  |
-| 6. Vendor & Admin Tools | 8/10 | In Progress|  |
+| 6. Vendor & Admin Tools | 9/10 | In Progress|  |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
 | 9. Productization & Release | 0/TBD | Not started | - |
