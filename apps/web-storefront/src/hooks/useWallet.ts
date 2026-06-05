@@ -55,14 +55,23 @@ export function useWallet() {
 
 // ---------------------------------------------------------------------------
 // useWalletEntries — GET /account/wallet/entries (WAL-02: ledger entries)
+//
+// CR-05: Not currently used — WalletPage uses useWallet() which already
+// includes entries. Added 401 guard so unauthenticated requests return []
+// rather than propagating uncaught to the React Query error boundary.
 // ---------------------------------------------------------------------------
 
 export function useWalletEntries() {
   return useQuery<WalletEntry[]>({
     queryKey: WALLET_ENTRIES_KEY,
     queryFn: async () => {
-      const res = await apiClient.get<WalletEntriesResponse>('/account/wallet/entries');
-      return res.data.entries;
+      try {
+        const res = await apiClient.get<WalletEntriesResponse>('/account/wallet/entries');
+        return res.data.entries;
+      } catch (err: unknown) {
+        if (err instanceof ApiError && err.status === 401) return [];
+        throw err;
+      }
     },
     staleTime: 1000 * 30,
     retry: false,
