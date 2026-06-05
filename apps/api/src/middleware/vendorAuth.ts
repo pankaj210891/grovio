@@ -34,11 +34,20 @@ export async function requireVendorAuth(
   request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> {
-  // Extract token: Authorization header first, then vendor_token cookie (Phase 6 D-21 pattern)
+  // Extract token: cookie first (production-safe path), Bearer header dev/test only.
+  // WR-09: Bearer header auth is disabled in production — httpOnly cookies are the sole
+  // auth mechanism there. Bearer tokens can be extracted from non-httpOnly storage by XSS
+  // payloads, widening the attack surface. In dev/test environments Bearer auth is kept
+  // to support integration tests and CLI tooling.
   let token: string | undefined;
 
   const authHeader = request.headers.authorization;
-  if (authHeader?.startsWith("Bearer ")) {
+  if (
+    authHeader?.startsWith("Bearer ") &&
+    process.env["NODE_ENV"] !== "production"
+  ) {
+    // WARNING: Bearer header auth bypasses httpOnly cookie protection.
+    // Only active in development/test environments.
     token = authHeader.slice(7);
   } else {
     // Fall back to httpOnly cookie set by POST /vendor/auth/login
