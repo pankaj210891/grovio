@@ -56,13 +56,15 @@ export function PayoutManagementPage() {
     error: payoutError,
   } = useQuery<AdminVendorPayoutResponse>({
     queryKey: ['admin', 'payouts', selectedVendorId],
-    queryFn: () => get<AdminVendorPayoutResponse>(`/admin/vendors/${selectedVendorId}/payouts`),
+    // CR-04: correct path is /admin/payouts/:vendorId (not /admin/vendors/:id/payouts)
+    queryFn: () => get<AdminVendorPayoutResponse>(`/admin/payouts/${selectedVendorId}`),
     enabled: !!selectedVendorId,
   });
 
   const settleMutation = useMutation({
     mutationFn: (body: RecordSettlementInput) =>
-      post<void>(`/admin/vendors/${selectedVendorId}/payouts/settlements`, body),
+      // CR-04: correct path is /admin/payouts/:vendorId/settlements
+      post<void>(`/admin/payouts/${selectedVendorId}/settlements`, body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'payouts', selectedVendorId] });
       setShowSettlePanel(false);
