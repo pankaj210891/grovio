@@ -75,6 +75,13 @@ export async function requireVendorAuth(
     }
     request.vendorId = rawVendorId;
 
+    // WR-08: expose vendor_users.id from the JWT `sub` claim for routes that need
+    // the user ID (e.g. invitedByUserId in team management) rather than the store ID.
+    const rawSub = payload["sub"];
+    if (typeof rawSub === "string" && rawSub.length > 0) {
+      request.vendorUserId = rawSub;
+    }
+
     // Phase 6: expose the role on the request for role-gated route handlers (D-05)
     request.vendorRole = role as "owner" | "manager" | "staff";
   } catch {

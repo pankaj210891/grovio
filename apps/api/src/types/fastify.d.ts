@@ -44,6 +44,13 @@ declare module "fastify" {
     vendorId?: string;
 
     /**
+     * Vendor user UUID (vendor_users.id) extracted from the JWT `sub` claim by requireVendorAuth.
+     * Present only on /vendor/* routes after the preHandler runs (Phase 6, WR-08).
+     * Distinct from vendorId (vendors.id FK) — use this for invitedByUserId and audit actor IDs.
+     */
+    vendorUserId?: string;
+
+    /**
      * Vendor team role extracted from the verified JWT by requireVendorAuth preHandler.
      * Present only on /vendor/* routes after the preHandler runs (Phase 6, D-05).
      * Values: "owner" | "manager" | "staff".

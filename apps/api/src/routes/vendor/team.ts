@@ -85,8 +85,10 @@ export async function vendorTeamRoutes(fastify: FastifyInstance): Promise<void> 
     const service = getService();
 
     try {
-      // invitedByUserId: use vendorId from JWT as the inviter identity (loose ref)
-      const invite = await service.invite(vendorId, vendorId, body);
+      // WR-08: use vendorUserId (vendor_users.id from JWT sub) as invitedByUserId,
+      // not vendorId (vendors.id). Falls back to vendorId if sub not present (legacy tokens).
+      const invitedByUserId = request.vendorUserId ?? vendorId;
+      const invite = await service.invite(vendorId, invitedByUserId, body);
       return reply.status(201).send({ success: true, data: invite });
     } catch (err) {
       if (err instanceof OwnerRoleNotInvitableError) {
