@@ -11,7 +11,7 @@ Grovio is a horizontal-layer infrastructure product. The roadmap builds complete
 - [x] **Phase 3: Catalog & Search** - Vendor product CRUD with dynamic attribute forms, admin moderation, OpenSearch index, full-text + faceted search API (completed 2026-06-01)
 - [x] **Phase 4: Customer Storefront (Web)** - Complete customer web experience: homepage, category pages, PLP, PDP, search, auth flows, responsive + animated UI (completed 2026-06-02)
 - [ ] **Phase 5: Commerce Core** - Basket, inventory reservation, checkout, PaymentProvider abstraction, wallet ledger, order placement + multi-vendor splitting, commission engine, coupon engine
-- [ ] **Phase 6: Vendor & Admin Tools** - Full vendor panel, full admin panel, commission/payout audit trail, marketplace operational tooling
+- [x] **Phase 6: Vendor & Admin Tools** - Full vendor panel, full admin panel, commission/payout audit trail, marketplace operational tooling (completed 2026-06-05)
 - [ ] **Phase 7: React Native App** - Full-featured customer mobile app consuming stable backend APIs via shared contracts
 - [ ] **Phase 8: Fulfillment & Communications** - Order tracking timeline + map shell, serviceability check, simulation mode, full transactional email suite, push-ready notification events
 - [ ] **Phase 9: Productization & Release** - Seed importer, five demo presets, full buyer documentation suite, preview assets, Envato packaging
@@ -251,7 +251,7 @@ Plans:
 
 **Wave 7** *(blocked on Wave 6)*
 - [x] 06-09-PLAN.md — Vendor panel: router, cookie apiClient, sidebar layout, all vendor pages (human-verify)
-- [ ] 06-10-PLAN.md — Admin panel: cookie apiClient, createBrowserRouter migration (preserve category routes), all admin pages (human-verify)
+- [x] 06-10-PLAN.md — Admin panel: cookie apiClient, createBrowserRouter migration (preserve category routes), all admin pages (human-verify)
 
 ### Phase 7: React Native App
 
@@ -311,7 +311,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Catalog & Search | 7/7 | Complete    | 2026-06-01 |
 | 4. Customer Storefront (Web) | 9/9 | Complete    | 2026-06-02 |
 | 5. Commerce Core | 11/12 | In Progress|  |
-| 6. Vendor & Admin Tools | 9/10 | In Progress|  |
+| 6. Vendor & Admin Tools | 10/10 | Complete    | 2026-06-05 |
 | 7. React Native App | 0/TBD | Not started | - |
 | 8. Fulfillment & Communications | 0/TBD | Not started | - |
 | 9. Productization & Release | 0/TBD | Not started | - |
