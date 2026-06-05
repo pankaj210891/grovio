@@ -21,12 +21,20 @@ coverage
 # TypeScript build info
 *.tsbuildinfo
 
-# TypeScript compiled output emitted in-place by tsc -b (web-storefront has no outDir).
+# TypeScript compiled output emitted in-place by tsc -b (web apps have no outDir).
 # Vite reads .tsx/.ts directly; these are build artifacts, not source files.
 apps/web-storefront/src/**/*.js
 apps/web-storefront/src/**/*.js.map
 apps/web-storefront/src/**/*.d.ts
 apps/web-storefront/src/**/*.d.ts.map
+apps/web-vendor/src/**/*.js
+apps/web-vendor/src/**/*.js.map
+apps/web-vendor/src/**/*.d.ts
+apps/web-vendor/src/**/*.d.ts.map
+apps/web-admin/src/**/*.js
+apps/web-admin/src/**/*.js.map
+apps/web-admin/src/**/*.d.ts
+apps/web-admin/src/**/*.d.ts.map
 
 # OS artifacts
 .DS_Store
