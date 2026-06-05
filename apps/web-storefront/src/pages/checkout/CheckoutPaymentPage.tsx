@@ -8,9 +8,6 @@
  *
  * Provider visibility is driven by GET /checkout/providers (D-09).
  * All amounts sourced from GET /checkout/summary (CHK-04, T-05-04).
- *
- * This file is created in Task 2 (05-12). The stub here satisfies the
- * Task 1 router import; the full implementation replaces it in Task 2.
  */
 
 import { useState } from 'react';
@@ -30,7 +27,7 @@ import {
 } from '../../hooks/useCheckout.js';
 import { useWallet } from '../../hooks/useWallet.js';
 import { useUiStore } from '../../store/ui-store.js';
-import { ApiError } from '../../lib/api-client.js';
+import { apiClient, ApiError } from '../../lib/api-client.js';
 import type { PaymentProviderId } from '@grovio/contracts';
 
 // ---------------------------------------------------------------------------
@@ -53,10 +50,12 @@ export default function CheckoutPaymentPage() {
   const { data: providers, isLoading: providersLoading } = useCheckoutProviders();
   const { data: wallet } = useWallet();
 
+  // CR-02: single useCheckoutStore subscription — both paymentResult and setters
   const {
     selectedAddressId,
     walletCreditRequested,
     appliedCouponCode,
+    paymentResult,
     setWalletCreditRequested,
     setPaymentResult,
   } = useCheckoutStore();
@@ -113,9 +112,6 @@ export default function CheckoutPaymentPage() {
     }
   }
 
-  // Payment result from store (set after placeOrder success)
-  const { paymentResult } = useCheckoutStore();
-
   return (
     <PageTransition>
       <div className="max-w-screen-md mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -168,7 +164,7 @@ export default function CheckoutPaymentPage() {
             {balanceMinor > 0 && (
               <WalletCreditToggle
                 balanceMinor={balanceMinor}
-                orderTotalMinor={summary.subtotalMinor + summary.shippingMinor - summary.discountMinor}
+                orderTotalMinor={summary.grandTotalMinor + summary.walletAppliedMinor}
                 appliedMinor={walletCreditRequested}
                 onAppliedChange={setWalletCreditRequested}
               />
@@ -245,7 +241,26 @@ export default function CheckoutPaymentPage() {
                   providerOrderRef={paymentResult.providerOrder.providerOrderRef}
                   amountMinor={paymentResult.amountMinor}
                   orderId={paymentResult.orderId}
-                  onSuccess={() => { void navigate(`/order-confirmation/${paymentResult.orderId}`); }}
+                  onSuccess={async (response) => {
+                    // CR-03: verify HMAC signature server-side before navigating.
+                    // The Razorpay modal is client-controlled — without this POST
+                    // a caller could skip payment and navigate directly.
+                    try {
+                      await apiClient.post('/checkout/razorpay/verify', {
+                        razorpayPaymentId: response.razorpay_payment_id,
+                        razorpayOrderId: response.razorpay_order_id,
+                        razorpaySignature: response.razorpay_signature,
+                        orderId: paymentResult.orderId,
+                      });
+                      void navigate(`/order-confirmation/${paymentResult.orderId}`);
+                    } catch {
+                      addToast({
+                        id: crypto.randomUUID(),
+                        message: 'Payment verification failed. Please contact support.',
+                        variant: 'error',
+                      });
+                    }
+                  }}
                 />
               )}
           </div>
