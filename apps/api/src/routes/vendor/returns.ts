@@ -66,6 +66,7 @@ export async function vendorReturnRoutes(fastify: FastifyInstance): Promise<void
 
   // ── POST /vendor/returns/:id/approve ─────────────────────────────────────
   // Approve a return request. Manager + owner only (T-06-26).
+  // T-06-28: ownership enforced by verifying return belongs to this vendor via JOIN.
   fastify.post<{ Params: { id: string } }>(
     "/vendor/returns/:id/approve",
     async (request, reply) => {
@@ -74,6 +75,28 @@ export async function vendorReturnRoutes(fastify: FastifyInstance): Promise<void
         return reply.status(403).send({
           success: false,
           error: { code: "FORBIDDEN", message: "Manager or owner access required" },
+        });
+      }
+
+      const vendorId = getVendorId(request);
+
+      // T-06-28: ownership check — confirm return request belongs to this vendor's orders
+      const ownershipRows = await fastify.db
+        .select({ id: returnRequests.id })
+        .from(returnRequests)
+        .innerJoin(vendorOrders, eq(returnRequests.vendorOrderId, vendorOrders.id))
+        .where(
+          and(
+            eq(returnRequests.id, request.params.id),
+            eq(vendorOrders.vendorId, vendorId)
+          )
+        )
+        .limit(1);
+
+      if (!ownershipRows[0]) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: "RETURN_REQUEST_NOT_FOUND", message: "Return request not found" },
         });
       }
 
@@ -96,6 +119,7 @@ export async function vendorReturnRoutes(fastify: FastifyInstance): Promise<void
 
   // ── POST /vendor/returns/:id/reject ───────────────────────────────────────
   // Reject a return request. Manager + owner only (T-06-26).
+  // T-06-28: ownership enforced by verifying return belongs to this vendor via JOIN.
   fastify.post<{ Params: { id: string } }>(
     "/vendor/returns/:id/reject",
     async (request, reply) => {
@@ -104,6 +128,28 @@ export async function vendorReturnRoutes(fastify: FastifyInstance): Promise<void
         return reply.status(403).send({
           success: false,
           error: { code: "FORBIDDEN", message: "Manager or owner access required" },
+        });
+      }
+
+      const vendorId = getVendorId(request);
+
+      // T-06-28: ownership check — confirm return request belongs to this vendor's orders
+      const ownershipRows = await fastify.db
+        .select({ id: returnRequests.id })
+        .from(returnRequests)
+        .innerJoin(vendorOrders, eq(returnRequests.vendorOrderId, vendorOrders.id))
+        .where(
+          and(
+            eq(returnRequests.id, request.params.id),
+            eq(vendorOrders.vendorId, vendorId)
+          )
+        )
+        .limit(1);
+
+      if (!ownershipRows[0]) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: "RETURN_REQUEST_NOT_FOUND", message: "Return request not found" },
         });
       }
 
