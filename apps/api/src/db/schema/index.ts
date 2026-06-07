@@ -26,6 +26,15 @@
  *   vendors → vendor-payout-info (vendorId unique FK)
  *   vendors → vendor-payouts (vendorId FK)
  *   admin-users, marketplace-settings, audit-log (no FK dependencies on domain tables)
+ * Phase 11 FK order (Plan 11-05):
+ *   customers + products → wishlists (FK to both)
+ *   customers + products → product-reviews (FK to both)
+ *   customers → customer-notifications (FK to customers)
+ *   customers → customer-notification-preferences (FK to customers, unique)
+ *   customers + products → customer-product-views (FK to both)
+ *   support-tickets (no FK to domain tables — submittedById is loose reference)
+ *   support-ticket-replies → support-tickets (FK to tickets)
+ *   search-query-log (no FK dependencies)
  *
  * Current schema modules:
  *   - Plan 01-06: feature_flags table
@@ -40,6 +49,10 @@
  *                 admin_users, marketplace_settings, audit_log (+vendorOnboardingStatusEnum,
  *                 +vendorUserRoleEnum, +store profile columns on vendors,
  *                 +created_by_type/created_by_id on coupons)
+ *   - Plan 11-05: wishlists, product_reviews, customer_notifications,
+ *                 customer_notification_preferences, customer_product_views,
+ *                 support_tickets, support_ticket_replies, search_query_log
+ *                 (+avg_rating, +review_count, +sold_count on products)
  */
 
 // Category domain — exported in FK-dependency order (categories first)
@@ -111,3 +124,18 @@ export * from "./vendor-payouts.js";
 export * from "./admin-users.js";
 export * from "./marketplace-settings.js";
 export * from "./audit-log.js";
+
+// Plan 11-05: New feature tables — exported in FK-dependency order
+// wishlists + product-reviews: after customers + products (FK to both)
+export * from "./wishlists.js";
+export * from "./product-reviews.js";
+// customer-notifications + preferences: after customers (FK dependency)
+export * from "./customer-notifications.js";
+export * from "./customer-notification-preferences.js";
+// customer-product-views: after customers + products (FK to both)
+export * from "./customer-product-views.js";
+// support-tickets: no FK dependencies on domain tables (loose reference pattern)
+// support-ticket-replies: after support-tickets (FK dependency)
+export * from "./support-tickets.js";
+// search-query-log: no FK dependencies
+export * from "./search-query-log.js";

@@ -1,6 +1,8 @@
 import {
   bigint,
+  doublePrecision,
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -126,6 +128,28 @@ export const products = pgTable(
      * Hard delete is intentionally unavailable — maintains order history integrity.
      */
     archivedAt: timestamp("archived_at", { withTimezone: true }),
+
+    /**
+     * Cached average rating from product_reviews (Plan 11-05 T1.5).
+     * NUMERIC(3,2) — values range from 1.00 to 5.00 (or 0.00 when no reviews).
+     * Updated by ReviewService on review insert/update/delete via aggregation query.
+     * Displayed as a cached value — refreshed on every review write.
+     */
+    avgRating: doublePrecision("avg_rating").notNull().default(0),
+
+    /**
+     * Cached count of published (non-moderated) reviews (Plan 11-05 T1.5).
+     * Updated by ReviewService on review insert/update/delete.
+     */
+    reviewCount: integer("review_count").notNull().default(0),
+
+    /**
+     * Cached count of units sold (Plan 11-05 T1.6).
+     * Incremented synchronously in OrderService.createPendingOrder() for each
+     * order line item using: UPDATE products SET sold_count = sold_count + quantity.
+     * No BullMQ needed — updated within the order creation transaction (T8).
+     */
+    soldCount: integer("sold_count").notNull().default(0),
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
