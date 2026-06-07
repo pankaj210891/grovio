@@ -9,7 +9,7 @@
       "import": "./dist/index.js"
     },
     "./tokens": {
-      "style": "./src/tokens/tokens.css"
+      "default": "./src/tokens/tokens.css"
     }
   },
   "scripts": {
