@@ -36,7 +36,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-grovio-surface-raised border-b border-grovio-border">
+    <header className="hidden md:block sticky top-0 z-40 bg-grovio-surface-raised border-b border-grovio-border">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4 min-h-[64px]">
           {/* Logo */}

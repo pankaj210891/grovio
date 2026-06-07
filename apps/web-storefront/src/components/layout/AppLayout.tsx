@@ -2,6 +2,7 @@ import { AnimatePresence } from 'motion/react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Header } from './Header.js';
 import { Footer } from './Footer.js';
+import { BottomNav } from './BottomNav.js';
 import { ToastContainer } from '../ui/Toast.js';
 
 /**
@@ -24,7 +25,8 @@ export function AppLayout() {
     <div className="flex min-h-screen flex-col bg-grovio-surface">
       <Header />
 
-      <main className="flex-1">
+      {/* pb-16 on mobile provides clearance above the 56px BottomNav; md:pb-0 removes it on desktop */}
+      <main className="flex-1 pb-16 md:pb-0">
         <AnimatePresence mode="wait">
           {/* key= forces AnimatePresence to unmount/remount on route change */}
           <div key={location.pathname}>
@@ -34,6 +36,9 @@ export function AppLayout() {
       </main>
 
       <Footer />
+
+      {/* Mobile bottom navigation (hidden md+) */}
+      <BottomNav />
 
       {/* Toast notifications — fixed position, top-right */}
       <ToastContainer />
