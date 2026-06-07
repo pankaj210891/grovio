@@ -32,6 +32,7 @@ import {
 import { PageTransition } from '../../components/layout/PageTransition.js';
 import { Button } from '../../components/ui/Button.js';
 import { Skeleton } from '../../components/ui/Skeleton.js';
+import { SeoHead } from '../../components/seo/SeoHead.js';
 import { apiClient, ApiError } from '../../lib/api-client.js';
 import { useUiStore } from '../../store/ui-store.js';
 import { BASKET_QUERY_KEY } from '../../hooks/useBasket.js';
@@ -402,6 +403,10 @@ export default function OrderDetailPage() {
 
   return (
     <PageTransition>
+      <SeoHead
+        title={order ? `Order ${order.displayId} | Grovio` : 'Order Detail | Grovio'}
+        noIndex
+      />
       <div className="max-w-screen-md mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Loading */}
         {isLoading && (

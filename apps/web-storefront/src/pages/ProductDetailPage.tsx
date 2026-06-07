@@ -9,6 +9,8 @@ import { ReviewsSection } from '../components/pdp/ReviewsSection.js';
 import { apiClient } from '../lib/api-client.js';
 import { useAddToBasket } from '../hooks/useBasket.js';
 import { useUiStore } from '../store/ui-store.js';
+import { SeoHead } from '../components/seo/SeoHead.js';
+import { ProductJsonLd, BreadcrumbJsonLd } from '../components/seo/JsonLd.js';
 import type { Product, ProductImage, ProductVariant } from '@grovio/contracts';
 
 // ---------------------------------------------------------------------------
@@ -436,9 +438,37 @@ export default function ProductDetailPage() {
   if (!product) return null;
 
   const mainImage = images[selectedImage] ?? null;
+  const seoDescription = product.description
+    ? product.description.slice(0, 160)
+    : `Buy ${product.name} online${product.vendorName ? ` from ${product.vendorName}` : ''}. Fast delivery, great prices.`;
+  const productPriceMajor = (selectedVariant?.priceMinor ?? product.basePriceMinor) / 100;
 
   return (
     <PageTransition>
+      <SeoHead
+        title={`${product.name} | Grovio`}
+        description={seoDescription}
+        canonicalPath={`/products/${slug}`}
+        ogImage={images[0]?.url}
+        ogType="product"
+      />
+      <ProductJsonLd
+        id={product.id}
+        name={product.name}
+        description={product.description ?? undefined}
+        imageUrl={images[0]?.url}
+        priceMajor={productPriceMajor}
+        availability="InStock"
+        brandName={product.vendorName ?? undefined}
+        slug={slug ?? ''}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', path: '/' },
+          { name: 'Search', path: '/search' },
+          { name: product.name },
+        ]}
+      />
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back link */}
         <Link

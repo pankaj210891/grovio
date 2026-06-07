@@ -5,6 +5,7 @@ import { SearchBar } from '../components/search/SearchBar.js';
 import { useUiStore } from '../store/ui-store.js';
 import { useFilterState } from '../hooks/useFilterState.js';
 import { SlidersHorizontal } from 'lucide-react';
+import { SeoHead } from '../components/seo/SeoHead.js';
 
 /**
  * Search / Product Listing Page (/search).
@@ -24,8 +25,19 @@ export default function SearchPage() {
   const { filterDrawerOpen, setFilterDrawerOpen } = useUiStore();
   const { filters } = useFilterState();
 
+  const siteName = import.meta.env['VITE_SITE_NAME'] as string | undefined ?? 'Grovio';
+  const searchTitle = filters.q
+    ? `Search results for "${filters.q}" | ${siteName}`
+    : `All Products | ${siteName}`;
+
   return (
     <PageTransition>
+      <SeoHead
+        title={searchTitle}
+        description={filters.q ? `Search results for "${filters.q}" on ${siteName}.` : `Browse all products on ${siteName}.`}
+        canonicalPath="/search"
+        noIndex={!!filters.q} // Dynamic search pages should not be indexed
+      />
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Page title — single h1 */}

@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PageTransition } from '../../components/layout/PageTransition.js';
 import { Skeleton } from '../../components/ui/Skeleton.js';
+import { SeoHead } from '../../components/seo/SeoHead.js';
 import { apiClient } from '../../lib/api-client.js';
 import type { Order, OrderStatus } from '@grovio/contracts';
 
@@ -70,6 +71,7 @@ export default function OrdersPage() {
 
   return (
     <PageTransition>
+      <SeoHead title="My Orders | Grovio" noIndex />
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-xl font-semibold text-grovio-text mb-8">My Orders</h1>
 

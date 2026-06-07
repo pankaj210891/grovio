@@ -12,6 +12,8 @@ import { useUiStore } from '../store/ui-store.js';
 import { useComparisonStore } from '../stores/useComparisonStore.js';
 import { apiClient } from '../lib/api-client.js';
 import { SlidersHorizontal, LayoutGrid, LayoutList } from 'lucide-react';
+import { SeoHead } from '../components/seo/SeoHead.js';
+import { BreadcrumbJsonLd } from '../components/seo/JsonLd.js';
 import type { CategoryTreeResponse } from '@grovio/contracts';
 
 export type PlpView = 'grid' | 'list';
@@ -102,8 +104,25 @@ export default function CategoryPage() {
     }
   }, [category, filters.categoryId, setFilter]);
 
+  const siteName = import.meta.env['VITE_SITE_NAME'] as string | undefined ?? 'Grovio';
+
   return (
     <PageTransition>
+      {category && (
+        <>
+          <SeoHead
+            title={`${category.name} | ${siteName}`}
+            description={`Shop ${category.name} products from multiple vendors. Fast delivery and great prices at ${siteName}.`}
+            canonicalPath={`/category/${category.slug}`}
+          />
+          <BreadcrumbJsonLd
+            items={[
+              { name: 'Home', path: '/' },
+              { name: category.name },
+            ]}
+          />
+        </>
+      )}
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Loading state */}

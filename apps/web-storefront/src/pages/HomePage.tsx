@@ -4,6 +4,7 @@ import { BlockRenderer } from '../components/blocks/BlockRenderer.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { Button } from '../components/ui/Button.js';
 import { apiClient } from '../lib/api-client.js';
+import { SeoHead } from '../components/seo/SeoHead.js';
 import type { MerchandisingBlock } from '@grovio/contracts';
 
 interface HomepageResponse {
@@ -33,6 +34,11 @@ export default function HomePage() {
 
   return (
     <PageTransition>
+      <SeoHead
+        title="Grovio — Online Marketplace"
+        description="Shop a wide range of products from multiple vendors. Fast delivery, great prices."
+        canonicalPath="/"
+      />
       {/* Visually-hidden page title for screen readers / a11y — single h1 */}
       <h1 className="sr-only">Grovio — Online Marketplace</h1>
 
