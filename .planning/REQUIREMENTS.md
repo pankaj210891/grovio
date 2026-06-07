@@ -152,6 +152,19 @@ Requirements for the initial commercial release (the Envato-ready starter kit). 
 - [ ] **PRD-05**: Integration setup docs cover Stripe, Razorpay, Google SMTP, and Google Places
 - [ ] **PRD-06**: Preview assets/screenshots are produced and file organization is support-friendly for Envato review
 
+### UX/UI Platform Redesign
+
+- [ ] **UX-01**: Admin portal has a command-center executive dashboard surfacing revenue, orders, vendor health, pending actions, and risk alerts on a single screen without navigation
+- [ ] **UX-02**: Admin AI insights panel surfaces revenue trends, vendor performance anomalies, customer behavior patterns, and growth opportunities — actionable, not decorative
+- [ ] **UX-03**: Vendor morning-glance dashboard shows today's sales, weekly/monthly revenue, released/pending payouts, order counts, returns, and inventory alerts without any navigation
+- [ ] **UX-04**: Vendor finance center makes all payout calculations transparent (gross sales → platform fees → taxes → net revenue → upcoming payout) with ledger drill-down
+- [ ] **UX-05**: Customer homepage is personalized with recently viewed, continue shopping, dynamic recommendations, trending products, and category shortcuts above the fold
+- [ ] **UX-06**: Customer checkout is one-page: address, delivery, payment, and review without full-page navigations; coupon discovery is inline; guest checkout is supported
+- [ ] **UX-07**: Customer order tracking uses a visual timeline view with status transitions clearly communicated
+- [ ] **UX-08**: All three portals are mobile-first with thumb-friendly navigation; customer web and mobile app share bottom navigation on small screens
+- [x] **UX-09**: Complete IA, user journey maps, navigation structure, screen hierarchy, and wireframes are documented before portal implementation begins
+- [x] **UX-10**: Design system strategy (Shadcn UI + Radix UI component library in `packages/ui`), accessibility strategy, and performance strategy are locked before any screen is built
+
 ## v2 Requirements
 
 Acknowledged but deferred. Not in the current roadmap.
@@ -291,10 +304,20 @@ Which phases cover which requirements. Populated during roadmap creation.
 | PRD-04 | Phase 9 | Pending |
 | PRD-05 | Phase 9 | Pending |
 | PRD-06 | Phase 9 | Pending |
+| UX-01 | Phase 11 | Pending |
+| UX-02 | Phase 11 | Pending |
+| UX-03 | Phase 11 | Pending |
+| UX-04 | Phase 11 | Pending |
+| UX-05 | Phase 11 | Pending |
+| UX-06 | Phase 11 | Pending |
+| UX-07 | Phase 11 | Pending |
+| UX-08 | Phase 11 | Pending |
+| UX-09 | Phase 11 | Complete |
+| UX-10 | Phase 11 | Complete |
 
 **Coverage:**
-- v1 requirements: 94 total (note: 94 requirements counted across 17 categories; original header estimated 73)
-- Mapped to phases: 94
+- v1 requirements: 104 total (94 original + 10 UX requirements added 2026-06-07)
+- Mapped to phases: 104
 - Unmapped: 0 ✓
 
 **Phase distribution:**
@@ -307,7 +330,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 - Phase 7 (React Native App): 7 requirements
 - Phase 8 (Fulfillment & Communications): 6 requirements
 - Phase 9 (Productization & Release): 6 requirements
+- Phase 11 (UX/UI Platform Redesign): 10 requirements
 
 ---
 *Requirements defined: 2026-05-29*
-*Last updated: 2026-05-29 — Traceability populated after roadmap creation*
+*Last updated: 2026-06-07 — UX-01 through UX-10 added for Phase 11 traceability (F-01)*
