@@ -53,7 +53,7 @@ export interface SearchResult {
 }
 
 export interface SuggestResult {
-  products: Array<{ id: string; name: string; slug: string }>;
+  products: Array<{ id: string; name: string; slug: string; categoryName?: string }>;
   categories: Array<{ id: string; name: string; slug: string }>;
 }
 
@@ -332,7 +332,9 @@ export class SearchService {
       const name = (src["name"] as string) ?? "";
       const slug = (src["slug"] as string) ?? "";
 
-      products.push({ id, name, slug });
+      // Include categoryName in product suggestion for storefront typeahead grouping (Phase 11 T9)
+      const productCatName = src["categoryName"] as string | undefined;
+      products.push({ id, name, slug, ...(productCatName ? { categoryName: productCatName } : {}) });
 
       // Collect unique category suggestions from the hit's categoryId/Name
       const catId = src["categoryId"] as string;

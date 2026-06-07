@@ -7,6 +7,7 @@ import type { SearchService } from "../modules/search/index.js";
  *
  * GET /search          — full-text product search with faceted filtering (SRCH-01, SRCH-02)
  * GET /search/suggest  — type-ahead autocomplete (SRCH-04, D-16)
+ * GET /search/popular  — popular searches for storefront typeahead (Phase 11 T9)
  *
  * Graceful degradation (T-03-W5):
  *   When OpenSearch is unavailable (OPENSEARCH_URL unset or searchService.isAvailable()
@@ -111,5 +112,35 @@ export async function searchRoutes(fastify: FastifyInstance): Promise<void> {
         categories: result.categories,
       },
     });
+  });
+
+  // ── GET /search/popular ──────────────────────────────────────────────────
+  // Returns popular search terms from Redis for storefront typeahead (Phase 11 T9).
+  //
+  // Redis key: popular_searches — stores a JSON array of up to 10 strings.
+  // Written by BullMQ jobs that tally search term frequency (future wave).
+  // Falls back to an empty array when the key is absent (new installs / cold start).
+  //
+  // TTL: the key itself is written by a background job with its own TTL; this
+  // endpoint just reads it. 1-hour staleTime recommended on the client side.
+  fastify.get("/search/popular", async (_request, reply) => {
+    const { redis } = fastify;
+    let popularTerms: string[] = [];
+
+    try {
+      const raw = await redis.get("popular_searches");
+      if (raw) {
+        const parsed = JSON.parse(raw) as unknown;
+        if (Array.isArray(parsed)) {
+          popularTerms = (parsed as unknown[])
+            .filter((t): t is string => typeof t === "string")
+            .slice(0, 10);
+        }
+      }
+    } catch {
+      // Redis read failure or JSON parse error — return empty list gracefully
+    }
+
+    return reply.send({ success: true, data: { terms: popularTerms } });
   });
 }
