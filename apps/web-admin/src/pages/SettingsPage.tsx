@@ -1,184 +1,50 @@
 /**
- * SettingsPage — admin marketplace settings & branding (ADM-05, D-19).
+ * SettingsPage — admin settings + branding + admin user management (Phase 11, T11).
  *
- * Grouped sections: General / Branding / Email.
- * GET /admin/settings → MarketplaceSettingsResponse.
- * PATCH /admin/settings/:key → UpdateSettingInput.
+ * Tabs:
+ *   1. Branding    — platform name, logo URL, theme colors (read-only labels for now)
+ *   2. Admin Users — list admin users, update role (super_admin only)
  *
- * Integration secret keys (smtp credentials) are shown masked/read-only (T-06-35, D-19).
- * Changes are logged to audit_log by the backend.
+ * Accessible to: super_admin only
  */
 
-import type { MarketplaceSettingKey, MarketplaceSettingsResponse } from '@grovio/contracts';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import React, { useEffect, useState } from 'react';
-import { get, patch } from '../lib/apiClient.js';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { get, post } from '../lib/apiClient.js';
 
-// Keys shown masked (read-only in UI) — T-06-35
-const SECRET_KEYS: MarketplaceSettingKey[] = ['smtp_sender_email'];
+type SettingsTab = 'branding' | 'admin-users';
 
-interface SettingGroup {
-  title: string;
-  description: string;
-  keys: MarketplaceSettingKey[];
-}
-
-const SETTING_GROUPS: SettingGroup[] = [
-  {
-    title: 'General',
-    description: 'Core marketplace configuration',
-    keys: [
-      'store_name',
-      'default_currency',
-      'timezone',
-      'default_return_window_days',
-      'low_stock_threshold',
-    ],
-  },
-  {
-    title: 'Branding',
-    description: 'Visual identity and design tokens',
-    keys: ['primary_color', 'logo_url', 'favicon_url'],
-  },
-  {
-    title: 'Email',
-    description: 'Transactional email configuration (Google SMTP)',
-    keys: ['smtp_sender_name', 'smtp_sender_email'],
-  },
+const TABS: { value: SettingsTab; label: string }[] = [
+  { value: 'branding', label: 'Branding' },
+  { value: 'admin-users', label: 'Admin Users' },
 ];
 
-const SETTING_LABELS: Record<MarketplaceSettingKey, string> = {
-  store_name: 'Store Name',
-  default_currency: 'Default Currency',
-  timezone: 'Timezone',
-  default_return_window_days: 'Default Return Window (days)',
-  low_stock_threshold: 'Low Stock Threshold',
-  primary_color: 'Primary Color (hex)',
-  logo_url: 'Logo URL',
-  favicon_url: 'Favicon URL',
-  smtp_sender_name: 'Sender Name',
-  smtp_sender_email: 'Sender Email (read-only)',
-};
-
-interface SettingRowProps {
-  settingKey: MarketplaceSettingKey;
-  value: unknown;
-  onSave: (key: MarketplaceSettingKey, value: unknown) => void;
-  isPending: boolean;
+interface AdminUser {
+  id: string;
+  email: string;
+  role: string;
+  createdAt: string;
 }
 
-function SettingRow({ settingKey, value, onSave, isPending }: SettingRowProps) {
-  const isSecret = SECRET_KEYS.includes(settingKey);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value ?? ''));
-
-  // Keep draft in sync when value changes externally
-  useEffect(() => {
-    if (!editing) setDraft(String(value ?? ''));
-  }, [value, editing]);
-
-  if (isSecret) {
-    return (
-      <div className="flex items-center justify-between gap-4 py-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-grovio-text">{SETTING_LABELS[settingKey]}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value="••••••••••••"
-            readOnly
-            aria-label={`${SETTING_LABELS[settingKey]} (masked — read-only)`}
-            className="w-48 rounded-lg border border-grovio-border bg-grovio-surface px-3 py-1.5 font-mono text-sm text-grovio-text-muted cursor-not-allowed"
-          />
-          <span className="text-xs text-grovio-text-muted">(read-only)</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center justify-between gap-4 py-3">
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-grovio-text">{SETTING_LABELS[settingKey]}</p>
-        <p className="font-mono text-xs text-grovio-text-muted">{settingKey}</p>
-      </div>
-      {editing ? (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            // For numeric keys, coerce to number
-            const numericKeys: MarketplaceSettingKey[] = [
-              'default_return_window_days',
-              'low_stock_threshold',
-            ];
-            const newValue = numericKeys.includes(settingKey) ? Number(draft) : draft;
-            onSave(settingKey, newValue);
-            setEditing(false);
-          }}
-          className="flex items-center gap-2"
-        >
-          <input
-            type="text"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            autoFocus
-            className="w-48 rounded-lg border border-grovio-primary bg-grovio-surface px-3 py-1.5 text-sm text-grovio-text focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={isPending}
-            className="rounded-lg bg-grovio-primary px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-60"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setEditing(false);
-              setDraft(String(value ?? ''));
-            }}
-            className="rounded-lg border border-grovio-border px-3 py-1.5 text-xs font-medium text-grovio-text hover:bg-grovio-surface"
-          >
-            Cancel
-          </button>
-        </form>
-      ) : (
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-sm text-grovio-text">
-            {value != null ? String(value) : <span className="text-grovio-text-muted italic">not set</span>}
-          </span>
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="rounded border border-grovio-border px-2.5 py-1 text-xs font-medium text-grovio-text hover:bg-grovio-surface"
-          >
-            Edit
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+const ROLE_OPTIONS = ['super_admin', 'moderator', 'finance_admin'] as const;
+type AdminRole = typeof ROLE_OPTIONS[number];
 
 export function SettingsPage() {
   const queryClient = useQueryClient();
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [tab, setTab] = useState<SettingsTab>('branding');
 
-  const { data, isLoading, error } = useQuery<MarketplaceSettingsResponse>({
-    queryKey: ['admin', 'settings'],
-    queryFn: () => get<MarketplaceSettingsResponse>('/admin/settings'),
+  const { data: adminUsers = [], isLoading: usersLoading } = useQuery<AdminUser[]>({
+    queryKey: ['admin', 'users'],
+    queryFn: () => get<AdminUser[]>('/admin/users'),
+    staleTime: 60_000,
+    enabled: tab === 'admin-users',
   });
 
-  const saveMutation = useMutation({
-    mutationFn: ({ key, value }: { key: MarketplaceSettingKey; value: unknown }) =>
-      patch<void>(`/admin/settings/${key}`, { key, value }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
-    },
-    onError: (err: unknown) =>
-      setSaveError(err instanceof Error ? err.message : 'Failed to save setting'),
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: AdminRole }) =>
+      post(`/admin/users/${userId}/role`, { role }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
   });
 
   return (
@@ -186,56 +52,127 @@ export function SettingsPage() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
+      className="space-y-5"
     >
-      <div className="mb-6">
+      <div>
         <h1 className="text-2xl font-bold text-grovio-text">Settings & Branding</h1>
-        <p className="mt-1 text-sm text-grovio-text-muted">
-          Configure marketplace name, branding, email, and integration settings. Changes are logged to the audit log.
-        </p>
+        <p className="mt-1 text-sm text-grovio-text-muted">Platform configuration and admin users</p>
       </div>
 
-      {saveError && (
-        <div className="mb-4 rounded-lg border border-grovio-error/20 bg-grovio-error/10 px-4 py-3 text-sm text-grovio-error">
-          {saveError}
-          <button type="button" onClick={() => setSaveError(null)} className="ml-2 text-xs underline">
-            Dismiss
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-grovio-border">
+        {TABS.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => setTab(t.value)}
+            className={[
+              'px-4 py-2 text-sm font-medium transition-colors border-b-2',
+              tab === t.value
+                ? 'border-grovio-primary text-grovio-primary'
+                : 'border-transparent text-grovio-text-muted hover:text-grovio-text',
+            ].join(' ')}
+          >
+            {t.label}
           </button>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {isLoading && (
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-grovio-primary border-t-transparent" />
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded-lg border border-grovio-error/20 bg-grovio-error/10 p-4 text-sm text-grovio-error">
-          Failed to load settings: {error instanceof Error ? error.message : 'Unknown error'}
-        </div>
-      )}
-
-      {data && (
-        <div className="space-y-6">
-          {SETTING_GROUPS.map((group) => (
-            <div key={group.title} className="rounded-xl border border-grovio-border bg-grovio-surface-raised">
-              <div className="border-b border-grovio-border px-6 py-4">
-                <h2 className="text-sm font-semibold text-grovio-text">{group.title}</h2>
-                <p className="mt-0.5 text-xs text-grovio-text-muted">{group.description}</p>
+      {/* Branding tab */}
+      {tab === 'branding' && (
+        <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised p-6">
+          <p className="text-sm text-grovio-text-muted">
+            Branding configuration is managed through the{' '}
+            <code className="rounded bg-grovio-surface px-1.5 py-0.5 text-xs font-mono text-grovio-text">
+              platform_config
+            </code>{' '}
+            table and feature flags. Changes made here will be reflected across all customer-facing
+            surfaces after a cache flush.
+          </p>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {[
+              { label: 'Platform Name', placeholder: 'Grovio', key: 'platform_name' },
+              { label: 'Support Email', placeholder: 'support@example.com', key: 'support_email' },
+              { label: 'Logo URL', placeholder: 'https://…', key: 'logo_url' },
+              { label: 'Primary Brand Color', placeholder: '#6366f1', key: 'primary_color' },
+            ].map(({ label, placeholder }) => (
+              <div key={label}>
+                <label className="mb-1 block text-xs font-medium text-grovio-text-muted">
+                  {label}
+                </label>
+                <input
+                  type="text"
+                  placeholder={placeholder}
+                  disabled
+                  className="w-full rounded-lg border border-grovio-border bg-grovio-surface px-3 py-2 text-sm text-grovio-text-muted cursor-not-allowed opacity-60"
+                />
               </div>
-              <div className="divide-y divide-grovio-border px-6">
-                {group.keys.map((key) => (
-                  <SettingRow
-                    key={key}
-                    settingKey={key}
-                    value={data[key]}
-                    onSave={(k, v) => saveMutation.mutate({ key: k, value: v })}
-                    isPending={saveMutation.isPending}
-                  />
+            ))}
+          </div>
+          <p className="mt-4 text-xs text-grovio-text-muted">
+            Branding editor coming in a future update.
+          </p>
+        </div>
+      )}
+
+      {/* Admin Users tab */}
+      {tab === 'admin-users' && (
+        <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised overflow-hidden">
+          {usersLoading ? (
+            <p className="py-8 text-center text-sm text-grovio-text-muted">Loading…</p>
+          ) : adminUsers.length === 0 ? (
+            <p className="py-8 text-center text-sm text-grovio-text-muted">No admin users found.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="border-b border-grovio-border bg-grovio-surface">
+                <tr>
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-grovio-text-muted">Email</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-grovio-text-muted">Role</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-grovio-text-muted">Created</th>
+                  <th className="px-5 py-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {adminUsers.map((user) => (
+                  <tr key={user.id} className="border-b border-grovio-border/50 hover:bg-grovio-surface">
+                    <td className="px-5 py-3 font-medium text-grovio-text">{user.email}</td>
+                    <td className="px-5 py-3">
+                      <select
+                        defaultValue={user.role}
+                        onChange={(e) =>
+                          updateRoleMutation.mutate({
+                            userId: user.id,
+                            role: e.target.value as AdminRole,
+                          })
+                        }
+                        disabled={updateRoleMutation.isPending}
+                        className="rounded-lg border border-grovio-border bg-grovio-surface px-2 py-1 text-xs text-grovio-text focus:border-grovio-primary focus:outline-none"
+                      >
+                        {ROLE_OPTIONS.map((r) => (
+                          <option key={r} value={r}>
+                            {r.replace('_', ' ')}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-5 py-3 text-grovio-text-muted">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <span className={[
+                        'rounded-full px-2 py-0.5 text-[10px] font-bold capitalize',
+                        user.role === 'super_admin' ? 'bg-grovio-primary/10 text-grovio-primary'
+                        : user.role === 'finance_admin' ? 'bg-amber-100 text-amber-700'
+                        : 'bg-gray-100 text-gray-600',
+                      ].join(' ')}>
+                        {user.role.replace('_', ' ')}
+                      </span>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            </div>
-          ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </motion.div>

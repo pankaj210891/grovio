@@ -318,6 +318,24 @@ export const envSchema = z.object({
    * Defaults to http://localhost:5175 (Vite dev server for web-admin).
    */
   WEB_ADMIN_URL: z.string().url().default("http://localhost:5175"),
+
+  // ---------------------------------------------------------------------------
+  // Phase 11 — StorageClient: S3-compatible uploads (KYC docs, vendor logos, images)
+  // All optional — StorageClient throws StorageNotConfiguredError when not set.
+  // ---------------------------------------------------------------------------
+
+  /** S3-compatible endpoint (Cloudflare R2: https://<account-id>.r2.cloudflarestorage.com) */
+  STORAGE_ENDPOINT: z.string().url().optional(),
+  /** S3-compatible bucket name */
+  STORAGE_BUCKET: z.string().optional(),
+  /** S3-compatible access key ID */
+  STORAGE_ACCESS_KEY: z.string().optional(),
+  /** S3-compatible secret access key — never logged */
+  STORAGE_SECRET_KEY: z.string().optional(),
+  /** Public CDN base URL for uploaded files (e.g. https://pub.r2.dev/your-bucket) */
+  STORAGE_PUBLIC_URL: z.string().url().optional(),
+  /** AWS region — defaults to "auto" for Cloudflare R2 */
+  STORAGE_REGION: z.string().default("auto"),
 });
 
 /** TypeScript type inferred from envSchema */

@@ -28,6 +28,9 @@ import { CouponService } from "./modules/coupons/index.js";
 import { ReturnService } from "./modules/returns/index.js";
 // Phase 6 service imports
 import { AdminAuthService } from "./modules/admin-auth/index.js";
+// Phase 11 service imports
+import { AdminService } from "./modules/admin/index.js";
+import { storageClient } from "./infrastructure/storage/StorageClient.js";
 import { SettingsService } from "./modules/settings/index.js";
 import { AuditService } from "./modules/audit/index.js";
 import { VendorManagementService } from "./modules/vendor-management/index.js";
@@ -72,6 +75,8 @@ export function createAppContainer(fastify: FastifyInstance) {
     // Phase 5: BullMQ queues for reservation expiry and basket cleanup
     reservationQueue: asValue(reservationQueue),
     basketCleanupQueue: asValue(basketCleanupQueue),
+    // Phase 11: S3-compatible storage client (Cloudflare R2 or Supabase Storage)
+    storageClient: asValue(storageClient),
     // productIndexQueue is already registered above (Phase 3); also available for Phase 6 InventoryService pricing updates
   });
 
@@ -115,6 +120,8 @@ export function createAppContainer(fastify: FastifyInstance) {
     vendorStaffService: asClass(VendorStaffService).singleton(),
     analyticsService: asClass(AnalyticsService).singleton(),
     payoutService: asClass(PayoutService).singleton(),
+    // Phase 11 services (plan 11-02)
+    adminService: asClass(AdminService).singleton(),
   });
 
   return container;

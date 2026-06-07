@@ -1,318 +1,216 @@
 /**
- * CatalogModerationPage — admin catalog moderation (ADM-07).
+ * CatalogModerationPage — product moderation queue (Phase 11).
  *
- * Lists pending vendor products via GET /admin/products (with status filter).
- * Admin can approve or reject products via POST endpoints.
- * Cookie-guarded Phase 6 backend endpoints.
+ * Features:
+ *   - Tabs: Pending Review / Flagged / Approved / Rejected
+ *   - Product cards with thumbnail, name, vendor, price, flag reason
+ *   - Approve / Reject / Flag actions per product
+ *   - Bulk product CSV import link to /catalog-moderation/import
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { get, post } from '../lib/apiClient.js';
 
-interface AdminProduct {
+type ModerationStatus = 'pending' | 'flagged' | 'approved' | 'rejected';
+
+interface Product {
   id: string;
   name: string;
-  slug: string;
-  status: string;
+  thumbnailUrl: string | null;
   vendorName: string;
-  vendorId: string;
-  createdAt: string;
-  basePriceMinor?: number;
+  priceMinorUnits: number;
+  moderationStatus: string;
+  flagReason: string | null;
+  submittedAt: string;
 }
 
-interface AdminProductsResponse {
-  items: AdminProduct[];
+interface ProductListResponse {
+  items: Product[];
   total: number;
-  limit: number;
-  offset: number;
 }
+
+const TABS: { value: ModerationStatus; label: string }[] = [
+  { value: 'pending', label: 'Pending Review' },
+  { value: 'flagged', label: 'Flagged' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+];
 
 function formatInr(minor: number): string {
-  return `₹${(minor / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  return `₹${(minor / 100).toLocaleString('en-IN', { minimumFractionDigits: 0 })}`;
 }
-
-const STATUS_BADGE: Record<string, string> = {
-  pending_review: 'bg-amber-100 text-amber-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  archived: 'bg-gray-100 text-gray-700',
-};
 
 export function CatalogModerationPage() {
   const queryClient = useQueryClient();
-  const [offset, setOffset] = useState(0);
-  const [statusFilter, setStatusFilter] = useState<string>('pending_review');
-  const [actionError, setActionError] = useState<string | null>(null);
-  // CR-03: reject requires a reason — capture via inline dialog before mutating
-  const [rejectTarget, setRejectTarget] = useState<{ id: string; name: string } | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
-  const LIMIT = 20;
+  const [tab, setTab] = useState<ModerationStatus>('pending');
+  const [page, setPage] = useState(1);
 
-  const { data, isLoading, error } = useQuery<AdminProductsResponse>({
-    queryKey: ['admin', 'products', statusFilter, offset],
+  const { data, isLoading } = useQuery<ProductListResponse>({
+    queryKey: ['admin', 'catalog', tab, page],
     queryFn: () =>
-      get<AdminProductsResponse>(
-        `/admin/products?status=${statusFilter}&limit=${LIMIT}&offset=${offset}`,
-      ),
+      get<ProductListResponse>(`/admin/catalog/products?moderationStatus=${tab}&page=${page}&pageSize=20`),
+    staleTime: 30_000,
   });
 
-  function invalidate() {
-    void queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
-  }
-
-  const approveMutation = useMutation({
-    mutationFn: (productId: string) => post<void>(`/admin/products/${productId}/approve`, {}),
-    onSuccess: invalidate,
-    onError: (err: unknown) =>
-      setActionError(err instanceof Error ? err.message : 'Failed to approve product'),
+  const moderateMutation = useMutation({
+    mutationFn: ({
+      productId,
+      action,
+      reason,
+    }: {
+      productId: string;
+      action: 'approve' | 'reject' | 'flag';
+      reason?: string;
+    }) => post(`/admin/catalog/products/${productId}/moderate`, { action, reason }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin', 'catalog'] }),
   });
 
-  const rejectMutation = useMutation({
-    // CR-03: send { rejectionReason } — backend RejectProductInputSchema requires this field
-    mutationFn: ({ productId, rejectionReason }: { productId: string; rejectionReason: string }) =>
-      post<void>(`/admin/products/${productId}/reject`, { rejectionReason }),
-    onSuccess: () => {
-      invalidate();
-      setRejectTarget(null);
-      setRejectReason('');
-    },
-    onError: (err: unknown) =>
-      setActionError(err instanceof Error ? err.message : 'Failed to reject product'),
-  });
-
-  function openRejectDialog(product: AdminProduct) {
-    setRejectTarget({ id: product.id, name: product.name });
-    setRejectReason('');
-    setActionError(null);
-  }
-
-  function handleRejectSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!rejectTarget || !rejectReason.trim()) return;
-    rejectMutation.mutate({ productId: rejectTarget.id, rejectionReason: rejectReason.trim() });
-  }
-
-  const totalPages = data ? Math.ceil(data.total / LIMIT) : 0;
-  const currentPage = Math.floor(offset / LIMIT) + 1;
+  const products = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
+      className="space-y-5"
     >
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-grovio-text">Catalog Moderation</h1>
-          <p className="mt-1 text-sm text-grovio-text-muted">
-            Review and approve or reject vendor product submissions.
-          </p>
+          <p className="mt-1 text-sm text-grovio-text-muted">{total} products in this view</p>
         </div>
-
-        {/* Status filter */}
-        <div className="flex rounded-lg border border-grovio-border bg-grovio-surface-raised p-0.5">
-          {['pending_review', 'approved', 'rejected'].map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => {
-                setStatusFilter(s);
-                setOffset(0);
-              }}
-              className={[
-                'rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors',
-                statusFilter === s
-                  ? 'bg-grovio-primary text-white shadow-sm'
-                  : 'text-grovio-text-muted hover:text-grovio-text',
-              ].join(' ')}
-            >
-              {s.replace('_', ' ')}
-            </button>
-          ))}
-        </div>
+        <Link
+          to="/catalog-moderation/import"
+          className="rounded-lg border border-grovio-border px-3 py-1.5 text-xs font-medium text-grovio-text hover:bg-grovio-surface"
+        >
+          Bulk CSV Import
+        </Link>
       </div>
 
-      {/* Error */}
-      {actionError && (
-        <div className="mb-4 rounded-lg border border-grovio-error/20 bg-grovio-error/10 px-4 py-3 text-sm text-grovio-error">
-          {actionError}
-          <button type="button" onClick={() => setActionError(null)} className="ml-2 text-xs underline">
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-grovio-primary border-t-transparent" />
-        </div>
-      )}
-
-      {/* Fetch error */}
-      {error && (
-        <div className="rounded-lg border border-grovio-error/20 bg-grovio-error/10 p-4 text-sm text-grovio-error">
-          Failed to load products: {error instanceof Error ? error.message : 'Unknown error'}
-        </div>
-      )}
-
-      {/* Table */}
-      {data && (
-        <>
-          <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised">
-            {data.items.length === 0 ? (
-              <p className="px-6 py-12 text-center text-sm text-grovio-text-muted">
-                No {statusFilter.replace('_', ' ')} products.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-grovio-border text-left">
-                      {['Product', 'Vendor', 'Price', 'Status', 'Submitted', 'Actions'].map((h) => (
-                        <th
-                          key={h}
-                          className="px-5 py-3 text-xs font-medium uppercase tracking-wide text-grovio-text-muted"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-grovio-border">
-                    {data.items.map((product) => (
-                      <tr key={product.id} className="hover:bg-grovio-surface/40">
-                        <td className="px-5 py-3">
-                          <p className="font-medium text-grovio-text">{product.name}</p>
-                          <p className="text-xs text-grovio-text-muted">{product.slug}</p>
-                        </td>
-                        <td className="px-5 py-3 text-grovio-text-muted">{product.vendorName}</td>
-                        <td className="px-5 py-3 text-grovio-text">
-                          {product.basePriceMinor != null ? formatInr(product.basePriceMinor) : '—'}
-                        </td>
-                        <td className="px-5 py-3">
-                          <span
-                            className={[
-                              'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize',
-                              STATUS_BADGE[product.status] ?? 'bg-gray-100 text-gray-800',
-                            ].join(' ')}
-                          >
-                            {product.status.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3 text-xs text-grovio-text-muted">
-                          {new Date(product.createdAt).toLocaleDateString('en-IN')}
-                        </td>
-                        <td className="px-5 py-3">
-                          <div className="flex gap-2">
-                            {product.status === 'pending_review' && (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => approveMutation.mutate(product.id)}
-                                  disabled={approveMutation.isPending}
-                                  className="rounded bg-green-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-60"
-                                >
-                                  Approve
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => openRejectDialog(product)}
-                                  disabled={rejectMutation.isPending}
-                                  className="rounded bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-60"
-                                >
-                                  Reject
-                                </button>
-                              </>
-                            )}
-                            {product.status !== 'pending_review' && (
-                              <span className="text-xs text-grovio-text-muted">—</span>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between text-sm text-grovio-text-muted">
-              <span>
-                Page {currentPage} of {totalPages} ({data.total} total)
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOffset(Math.max(0, offset - LIMIT))}
-                  disabled={offset === 0}
-                  className="rounded border border-grovio-border px-3 py-1 hover:bg-grovio-surface disabled:opacity-50"
-                >
-                  ← Prev
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOffset(offset + LIMIT)}
-                  disabled={offset + LIMIT >= data.total}
-                  className="rounded border border-grovio-border px-3 py-1 hover:bg-grovio-surface disabled:opacity-50"
-                >
-                  Next →
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-      {/* CR-03: Reject reason dialog — captures rejectionReason before submitting */}
-      {rejectTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md rounded-xl border border-grovio-border bg-grovio-surface-raised p-6 shadow-xl"
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-grovio-border">
+        {TABS.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => { setTab(t.value); setPage(1); }}
+            className={[
+              'px-4 py-2 text-sm font-medium transition-colors border-b-2',
+              tab === t.value
+                ? 'border-grovio-primary text-grovio-primary'
+                : 'border-transparent text-grovio-text-muted hover:text-grovio-text',
+            ].join(' ')}
           >
-            <h2 className="mb-1 text-base font-semibold text-grovio-text">Reject Product</h2>
-            <p className="mb-4 text-sm text-grovio-text-muted">
-              Rejecting: <span className="font-medium text-grovio-text">{rejectTarget.name}</span>
-            </p>
-            <form onSubmit={handleRejectSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="reject-reason" className="mb-1 block text-sm font-medium text-grovio-text">
-                  Rejection reason <span className="text-grovio-error">*</span>
-                </label>
-                <textarea
-                  id="reject-reason"
-                  required
-                  rows={3}
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Explain why this product is being rejected…"
-                  className="w-full rounded-lg border border-grovio-border bg-grovio-surface px-3 py-2 text-sm text-grovio-text placeholder:text-grovio-text-muted focus:border-grovio-primary focus:outline-none"
-                />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Product list */}
+      {isLoading ? (
+        <p className="py-12 text-center text-sm text-grovio-text-muted">Loading…</p>
+      ) : products.length === 0 ? (
+        <p className="py-12 text-center text-sm text-grovio-text-muted">No products in this queue.</p>
+      ) : (
+        <div className="space-y-3">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              className="flex items-center gap-4 rounded-xl border border-grovio-border bg-grovio-surface-raised p-4"
+            >
+              {/* Thumbnail */}
+              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-grovio-border bg-grovio-surface">
+                {product.thumbnailUrl ? (
+                  <img
+                    src={product.thumbnailUrl}
+                    alt={product.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-2xl">📦</div>
+                )}
               </div>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRejectTarget(null)}
-                  className="flex-1 rounded-lg border border-grovio-border px-4 py-2 text-sm font-medium text-grovio-text hover:bg-grovio-surface"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={rejectMutation.isPending || !rejectReason.trim()}
-                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {rejectMutation.isPending ? 'Rejecting…' : 'Reject'}
-                </button>
+
+              {/* Info */}
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-grovio-text">{product.name}</p>
+                <p className="text-xs text-grovio-text-muted">
+                  by {product.vendorName} · {formatInr(product.priceMinorUnits)}
+                </p>
+                {product.flagReason && (
+                  <p className="mt-1 text-xs text-grovio-error">Flag: {product.flagReason}</p>
+                )}
               </div>
-            </form>
-          </motion.div>
+
+              {/* Date */}
+              <span className="shrink-0 text-xs text-grovio-text-muted">
+                {new Date(product.submittedAt).toLocaleDateString()}
+              </span>
+
+              {/* Actions */}
+              {(tab === 'pending' || tab === 'flagged') && (
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => moderateMutation.mutate({ productId: product.id, action: 'approve' })}
+                    disabled={moderateMutation.isPending}
+                    className="rounded-lg bg-green-600 px-2.5 py-1 text-xs font-medium text-white hover:opacity-90 disabled:opacity-60"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moderateMutation.mutate({ productId: product.id, action: 'reject' })}
+                    disabled={moderateMutation.isPending}
+                    className="rounded-lg border border-grovio-error px-2.5 py-1 text-xs font-medium text-grovio-error hover:bg-grovio-error/5 disabled:opacity-60"
+                  >
+                    Reject
+                  </button>
+                  {tab === 'pending' && (
+                    <button
+                      type="button"
+                      onClick={() => moderateMutation.mutate({ productId: product.id, action: 'flag', reason: 'Requires review' })}
+                      disabled={moderateMutation.isPending}
+                      className="rounded-lg border border-amber-300 px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-60"
+                    >
+                      Flag
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-grovio-text-muted">Page {page} of {totalPages}</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="rounded border border-grovio-border px-3 py-1.5 text-xs font-medium text-grovio-text-muted hover:bg-grovio-surface disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="rounded border border-grovio-border px-3 py-1.5 text-xs font-medium text-grovio-text-muted hover:bg-grovio-surface disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
     </motion.div>

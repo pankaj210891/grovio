@@ -1,21 +1,50 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
 /**
- * Admin authentication store — Zustand slice for admin session state.
+ * Admin auth store — tracks the authenticated admin's identity and RBAC role.
  *
- * Stores the current admin user profile after a successful login/session probe.
- * useAdminAuth hook reads and updates this store.
+ * Persisted to sessionStorage so the session survives page refreshes
+ * without requiring an API round-trip on every load.
+ *
+ * Role values (Phase 11 RBAC):
+ *   'super_admin'   — full access to all sections
+ *   'moderator'     — catalog, vendors, support (no finance, settings)
+ *   'finance_admin' — finance only (no vendors, catalog, settings, support)
  */
 
-import { create } from 'zustand';
-import type { AdminProfile } from '@grovio/contracts';
-
-interface AdminAuthState {
-  /** Current authenticated admin user, or null if not authenticated */
-  admin: AdminProfile | null;
-  /** Update the admin user (called by useAdminAuth on login/session probe) */
-  setAdmin: (admin: AdminProfile | null) => void;
+export interface AdminUser {
+  id: string;
+  email: string;
+  role: 'super_admin' | 'moderator' | 'finance_admin';
 }
 
-export const useAdminAuthStore = create<AdminAuthState>((set) => ({
-  admin: null,
-  setAdmin: (admin) => set({ admin }),
-}));
+interface AdminAuthState {
+  admin: AdminUser | null;
+  isAuthenticated: boolean;
+  setAdmin: (admin: AdminUser) => void;
+  clearAdmin: () => void;
+}
+
+export const useAdminAuthStore = create<AdminAuthState>()(
+  persist(
+    (set) => ({
+      admin: null,
+      isAuthenticated: false,
+
+      setAdmin: (admin) => set({ admin, isAuthenticated: true }),
+      clearAdmin: () => set({ admin: null, isAuthenticated: false }),
+    }),
+    {
+      name: 'grovio-admin-auth',
+      storage: {
+        getItem: (name) => {
+          const val = sessionStorage.getItem(name);
+          return val ? JSON.parse(val) : null;
+        },
+        setItem: (name, value) => sessionStorage.setItem(name, JSON.stringify(value)),
+        removeItem: (name) => sessionStorage.removeItem(name),
+      },
+    }
+  )
+);

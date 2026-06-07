@@ -16,7 +16,8 @@ import type { CategoryMetadata, MerchandisingBlock } from '@grovio/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { get, put, ApiError } from '../../lib/apiClient.js';
+import { get, put } from '../../lib/apiClient.js';
+import { ApiError } from '../../lib/apiClient.js';
 import BlockEditor, { type BlockWithLocalId } from '../../components/categories/BlockEditor.js';
 
 interface CategoryMetadataPageProps {

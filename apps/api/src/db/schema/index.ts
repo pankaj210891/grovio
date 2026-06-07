@@ -125,6 +125,10 @@ export * from "./admin-users.js";
 export * from "./marketplace-settings.js";
 export * from "./audit-log.js";
 
+// Plan 11-02: New admin portal tables
+export * from "./vendor-kyc-documents.js"; // FK to vendors
+export * from "./announcements.js"; // no FK dependencies
+
 // Plan 11-05: New feature tables — exported in FK-dependency order
 // wishlists + product-reviews: after customers + products (FK to both)
 export * from "./wishlists.js";

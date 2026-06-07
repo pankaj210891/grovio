@@ -47,6 +47,8 @@ import { vendorReturnRoutes } from "./routes/vendor/returns.js";
 import { vendorEarningsRoutes } from "./routes/vendor/earnings.js";
 import { vendorTeamRoutes, vendorTeamPublicRoutes } from "./routes/vendor/team.js";
 import { vendorCouponRoutes } from "./routes/vendor/coupons.js";
+// Phase 11 admin portal routes
+import { adminRoutes } from "./routes/admin/admin.js";
 
 /**
  * Build and configure the Fastify application.
@@ -128,6 +130,9 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   await fastify.register(accountWalletRoutes);    // GET /account/wallet, GET /account/wallet/entries
   // Vendor orders (vendor JWT guard, ORD-05)
   await fastify.register(vendorOrderRoutes);      // GET /vendor/orders, PATCH /vendor/orders/:id/status
+
+  // --- Routes (Phase 11 — plan 11-02 admin portal) ---
+  await fastify.register(adminRoutes);   // /announcements/active (public) + /admin/* (RBAC-gated)
 
   // --- Routes (Phase 6 — plan 06-08) ---
   // Admin auth (public login + protected me/logout)

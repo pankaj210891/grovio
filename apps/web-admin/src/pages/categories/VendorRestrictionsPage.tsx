@@ -18,6 +18,10 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { del, get, patch, post } from '../../lib/apiClient.js';
 
+interface CategoryRestrictionState {
+  id: string;
+  isRestricted: boolean;
+}
 
 interface VendorRestrictionsPageProps {
   categoryId: string;

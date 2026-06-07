@@ -1,84 +1,71 @@
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useAdminAuthStore } from '../stores/adminAuthStore.js';
+import { get, post } from '../lib/apiClient.js';
+
 /**
- * useAdminAuth — session probe, login, and logout for the admin panel.
+ * useAdminAuth — provides admin authentication state and actions.
  *
- * Session probe: GET /admin/auth/me — 200 = authenticated (populates store),
- *   401 = unauthenticated (clears store). Does NOT redirect — ProtectedAdminRoute handles that.
+ * Uses React Query to probe the session on mount (GET /admin/auth/me)
+ * and manages login/logout mutations with cookie-based JWT auth.
  *
- * login: POST /admin/auth/login → sets cookie; invalidates the session query.
- * logout: POST /admin/auth/logout → clears cookie; invalidates the session query.
+ * The underlying JWT is stored in an httpOnly cookie set by the server —
+ * this hook does NOT read or store the raw token.
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { ApiError, get, post } from '../lib/apiClient.js';
-import { useAdminAuthStore } from '../stores/adminAuthStore.js';
-import type { AdminProfile } from '@grovio/contracts';
-
-interface LoginInput {
+interface AdminMeResponse {
+  id: string;
   email: string;
-  password: string;
+  role: string;
 }
 
-const SESSION_QUERY_KEY = ['adminSession'] as const;
-
 export function useAdminAuth() {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const { admin, setAdmin } = useAdminAuthStore();
+  const { admin, isAuthenticated, setAdmin, clearAdmin } = useAdminAuthStore();
 
-  // ── Session probe ──────────────────────────────────────────────────────────
-  const { isLoading } = useQuery<AdminProfile | null>({
-    queryKey: SESSION_QUERY_KEY,
+  // Probe session on mount — resolves the loading state
+  const { isLoading } = useQuery({
+    queryKey: ['admin', 'me'],
     queryFn: async () => {
-      try {
-        const profile = await get<AdminProfile>('/admin/auth/me');
-        setAdmin(profile);
-        return profile;
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 401) {
-          setAdmin(null);
-          return null;
-        }
-        throw err;
-      }
+      const data = await get<AdminMeResponse>('/admin/auth/me');
+      setAdmin({
+        id: data.id,
+        email: data.email,
+        role: data.role as 'super_admin' | 'moderator' | 'finance_admin',
+      });
+      return data;
     },
-    staleTime: 1000 * 60 * 5, // 5 min — re-probe after page idle
     retry: false,
+    staleTime: 5 * 60 * 1000,
+    // If request fails (401), clear auth state
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    throwOnError: false,
   });
 
-  // ── Login ──────────────────────────────────────────────────────────────────
   const loginMutation = useMutation({
-    mutationFn: (input: LoginInput) =>
-      post<{ expiresIn: number }>('/admin/auth/login', input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
-      navigate('/dashboard', { replace: true });
+    mutationFn: async (credentials: { email: string; password: string }) => {
+      const data = await post<AdminMeResponse>('/admin/auth/login', credentials);
+      setAdmin({
+        id: data.id,
+        email: data.email,
+        role: data.role as 'super_admin' | 'moderator' | 'finance_admin',
+      });
+      return data;
     },
   });
 
-  // ── Logout ─────────────────────────────────────────────────────────────────
   const logoutMutation = useMutation({
-    mutationFn: () => post<void>('/admin/auth/logout'),
-    onSuccess: async () => {
-      setAdmin(null);
-      await queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
-      navigate('/auth/login', { replace: true });
-    },
-    onError: () => {
-      // Force local state clear even if logout request fails
-      setAdmin(null);
-      navigate('/auth/login', { replace: true });
+    mutationFn: async () => {
+      await post<void>('/admin/auth/logout', {});
+      clearAdmin();
     },
   });
 
   return {
     admin,
-    isAuthenticated: admin !== null,
+    isAuthenticated,
     isLoading,
     login: loginMutation.mutate,
-    loginAsync: loginMutation.mutateAsync,
-    loginError: loginMutation.error,
     isLoggingIn: loginMutation.isPending,
+    loginError: loginMutation.error,
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
   };

@@ -1,109 +1,97 @@
 /**
- * LoginPage — admin panel login.
+ * LoginPage — admin panel login (Phase 11).
  *
- * POST /admin/auth/login → sets httpOnly cookie → redirects to /dashboard.
- * Uses framer-motion (web-admin convention per PATTERNS.md).
+ * Submits credentials to POST /admin/auth/login which sets the httpOnly
+ * admin_token cookie. On success, navigates to the dashboard.
  */
 
 import { motion } from 'framer-motion';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../hooks/useAdminAuth.js';
-import { ApiError } from '../../lib/apiClient.js';
 
 export function LoginPage() {
+  const navigate = useNavigate();
   const { login, isLoggingIn, loginError } = useAdminAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    login({ email: email.trim(), password });
+    login(
+      { email, password },
+      {
+        onSuccess: () => navigate('/dashboard', { replace: true }),
+      }
+    );
   }
-
-  const errorMessage =
-    loginError instanceof ApiError
-      ? loginError.message
-      : loginError instanceof Error
-        ? loginError.message
-        : null;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-grovio-surface px-4">
       <motion.div
-        className="w-full max-w-sm"
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
+        className="w-full max-w-sm"
       >
         {/* Logo */}
-        <div className="mb-8 flex flex-col items-center gap-2">
-          <span className="rounded-lg bg-grovio-primary px-4 py-2 text-xl font-bold text-white">
+        <div className="mb-8 flex flex-col items-center gap-3">
+          <span className="rounded-xl bg-grovio-primary px-4 py-2 text-2xl font-bold text-white">
             Grovio
           </span>
-          <p className="text-sm text-grovio-text-muted">Admin Panel — Sign in</p>
+          <h1 className="text-xl font-bold text-grovio-text">Admin Portal</h1>
+          <p className="text-sm text-grovio-text-muted">Sign in to your admin account</p>
         </div>
 
-        {/* Card */}
-        <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised p-8 shadow-sm">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="rounded-2xl border border-grovio-border bg-grovio-surface-raised p-6 shadow-sm">
+          <div className="space-y-4">
             <div>
-              <label
-                htmlFor="login-email"
-                className="mb-1.5 block text-sm font-medium text-grovio-text"
-              >
-                Email
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-grovio-text">
+                Email address
               </label>
               <input
-                id="login-email"
+                id="email"
                 type="email"
+                autoComplete="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-grovio-border bg-grovio-surface px-3 py-2.5 text-sm text-grovio-text placeholder-grovio-text-muted/60 focus:border-grovio-primary focus:outline-none"
                 placeholder="admin@example.com"
-                required
-                autoComplete="email"
-                className="w-full rounded-lg border border-grovio-border bg-grovio-surface px-3 py-2 text-sm text-grovio-text placeholder:text-grovio-text-muted focus:border-grovio-primary focus:outline-none"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="login-password"
-                className="mb-1.5 block text-sm font-medium text-grovio-text"
-              >
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-grovio-text">
                 Password
               </label>
               <input
-                id="login-password"
+                id="password"
                 type="password"
+                autoComplete="current-password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-                className="w-full rounded-lg border border-grovio-border bg-grovio-surface px-3 py-2 text-sm text-grovio-text placeholder:text-grovio-text-muted focus:border-grovio-primary focus:outline-none"
+                className="w-full rounded-lg border border-grovio-border bg-grovio-surface px-3 py-2.5 text-sm text-grovio-text placeholder-grovio-text-muted/60 focus:border-grovio-primary focus:outline-none"
+                placeholder="Enter your password"
               />
             </div>
 
-            {/* Error */}
-            {errorMessage && (
+            {loginError && (
               <div className="rounded-lg border border-grovio-error/20 bg-grovio-error/10 px-3 py-2 text-sm text-grovio-error">
-                {errorMessage}
+                {loginError instanceof Error ? loginError.message : 'Login failed. Please try again.'}
               </div>
             )}
 
             <button
               type="submit"
-              disabled={isLoggingIn || !email || !password}
-              className="w-full rounded-lg bg-grovio-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isLoggingIn}
+              className="w-full rounded-lg bg-grovio-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoggingIn ? 'Signing in…' : 'Sign in'}
             </button>
-          </form>
-        </div>
-
-        <p className="mt-6 text-center text-xs text-grovio-text-muted">
-          Grovio Marketplace Admin &mdash; Authorized Personnel Only
-        </p>
+          </div>
+        </form>
       </motion.div>
     </div>
   );

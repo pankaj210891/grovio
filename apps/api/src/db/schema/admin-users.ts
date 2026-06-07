@@ -6,38 +6,37 @@ import {
 } from "drizzle-orm/pg-core";
 
 /**
- * admin_users table — admin panel accounts (D-21, ADM-auth).
+ * admin_users table — admin panel accounts (D-21, ADM-auth, Phase 11 RBAC).
  *
  * Admin accounts are managed separately from vendor/customer accounts.
- * Phase 4 admin routes used a placeholder X-Internal-Admin-Token header.
- * Phase 6 introduces this table for proper admin authentication via AdminAuthService.
+ * Phase 11 adds the `role` column for RBAC enforcement in the admin panel.
  *
- * Key design decisions:
- * - Separate table from vendors and customers (D-21): distinct JWT payload with role='admin',
- *   separate TTL (8h admin sessions vs 1h vendor sessions).
- * - No onboarding_status or archivedAt: admin accounts are managed directly in the DB
- *   (or via future admin-created-admin flow in v2). No approval workflow needed.
- * - passwordHash: Argon2id consistent with vendor/customer auth patterns.
- * - No role column: all admin_users have full admin access (single role = 'admin').
- *   Future v2 may add role-based admin access (super-admin vs ops-admin).
+ * Role values:
+ *   - 'super_admin': full access to all sections
+ *   - 'moderator': catalog, vendors, support — no finance or settings
+ *   - 'finance_admin': finance only — no vendors, settings
  *
- * Covers D-21, ADM authentication.
+ * Covers D-21, ADM authentication, Phase 11 T1.
  */
 export const adminUsers = pgTable("admin_users", {
   id: uuid("id").defaultRandom().primaryKey(),
 
   /**
    * Admin login email. Must be unique across all admin accounts.
-   * Used as the login identifier in AdminAuthService JWT issuance (D-21).
    */
   email: text("email").notNull().unique(),
 
   /**
    * Argon2id password hash. Never stored as plaintext.
-   * Hashed by AdminAuthService using the argon2 library (OWASP-recommended).
-   * Not returned in any API response.
    */
   passwordHash: text("password_hash").notNull(),
+
+  /**
+   * RBAC role for admin panel sections (Phase 11).
+   * Values: 'super_admin' | 'moderator' | 'finance_admin'
+   * Defaults to 'moderator' (least-privilege default).
+   */
+  role: text("role").notNull().default("moderator"),
 
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

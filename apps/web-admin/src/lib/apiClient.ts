@@ -1,14 +1,14 @@
 /**
- * Typed API client for the Grovio admin panel.
+ * Typed API client for the Grovio admin panel (Phase 11).
  *
- * Uses cookie-based authentication (credentials: 'include').
- * The Phase 2 X-Internal-Admin-Token header bypass has been removed — Phase 6
- * requires httpOnly cookie JWT auth on all admin endpoints (T-06-32).
+ * Uses cookie-based JWT auth (httpOnly admin_token cookie set by the server).
+ * credentials: 'include' is set on all requests so the cookie is sent automatically.
  *
- * On 401 responses, redirects to /auth/login so protected routes stay guarded.
+ * Unwraps the { success, data } | { success, error } API response envelope.
+ * Throws an ApiError on { success: false } responses.
  */
 
-const API_BASE = import.meta.env['VITE_API_BASE_URL'] ?? '/api';
+const API_BASE = import.meta.env['VITE_API_BASE_URL'] ?? 'http://localhost:3001';
 
 export class ApiError extends Error {
   readonly code: string;
@@ -38,10 +38,8 @@ interface ApiErrorEnvelope {
 type ApiEnvelope<T> = ApiSuccessEnvelope<T> | ApiErrorEnvelope;
 
 /**
- * Core fetch wrapper. Sets common headers, sends credentials (cookies), and
- * unwraps the API envelope.
- * Throws ApiError for non-2xx or { success: false } responses.
- * Redirects to /auth/login on 401 (expired or missing admin session).
+ * Core fetch wrapper. Sets JSON headers, includes credentials (httpOnly cookie),
+ * and unwraps the API envelope.
  */
 async function request<T>(
   path: string,
@@ -56,15 +54,9 @@ async function request<T>(
 
   const response = await fetch(url, {
     ...options,
-    credentials: 'include',
     headers,
+    credentials: 'include', // Send httpOnly admin_token cookie
   });
-
-  // On 401, redirect to login — the admin session has expired or never started
-  if (response.status === 401) {
-    window.location.href = '/auth/login';
-    throw new ApiError('UNAUTHORIZED', 'Session expired — redirecting to login.', 401);
-  }
 
   let envelope: ApiEnvelope<T>;
   try {
@@ -107,4 +99,33 @@ export function put<T>(path: string, body?: unknown): Promise<T> {
 
 export function del<T>(path: string): Promise<T> {
   return request<T>(path, { method: 'DELETE' });
+}
+
+/**
+ * Upload a file using multipart/form-data (for KYC documents, product images).
+ * Does NOT set Content-Type header — browser sets it automatically with the boundary.
+ */
+export async function uploadFile<T>(path: string, formData: FormData): Promise<T> {
+  const url = `${API_BASE}${path}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
+    // NOTE: Do NOT set Content-Type header — browser must set it with the multipart boundary
+  });
+
+  let envelope: ApiEnvelope<T>;
+  try {
+    envelope = (await response.json()) as ApiEnvelope<T>;
+  } catch {
+    throw new ApiError('PARSE_ERROR', `Failed to parse response from ${path}`, response.status);
+  }
+
+  if (!envelope.success) {
+    const err = (envelope as ApiErrorEnvelope).error;
+    throw new ApiError(err.code, err.message, response.status);
+  }
+
+  return (envelope as ApiSuccessEnvelope<T>).data;
 }

@@ -1,24 +1,30 @@
 /**
- * PanelLayout — root shell for the admin panel.
+ * PanelLayout — root shell for the admin panel (Phase 11, T4).
  *
- * Renders: Sidebar (left) + Header (top) + animated Outlet (main content).
+ * Structure:
+ *   CommandBar (56px fixed top bar, z-50)
+ *   └─ flex-row: Sidebar (left, fixed width) + animated Outlet (main content)
  *
- * IMPORTANT: Uses framer-motion (not motion/react) per PATTERNS.md — web-admin convention.
+ * The CommandBar is placed ABOVE the sidebar+content layout.
+ * Content height accounts for the 56px CommandBar via flex-col.
  */
 
 import { AnimatePresence } from 'framer-motion';
 import { Outlet, useLocation } from 'react-router-dom';
-import { Header } from './Header.js';
+import { CommandBar } from './CommandBar.js';
 import { Sidebar } from './Sidebar.js';
 
 export function PanelLayout() {
   const location = useLocation();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-grovio-surface text-grovio-text">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
+    <div className="flex h-screen flex-col overflow-hidden bg-grovio-surface text-grovio-text">
+      {/* Command bar — fixed top row (56px height accounted for via flex) */}
+      <CommandBar />
+
+      {/* Sidebar + content row — fills remaining height */}
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
         <main className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             <div key={location.pathname} className="h-full p-6">
