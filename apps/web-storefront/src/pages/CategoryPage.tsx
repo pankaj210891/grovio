@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { PageTransition } from '../components/layout/PageTransition.js';
 import { FilterSidebar } from '../components/search/FilterSidebar.js';
@@ -9,6 +9,7 @@ import { Skeleton } from '../components/ui/Skeleton.js';
 import { Button } from '../components/ui/Button.js';
 import { useFilterState } from '../hooks/useFilterState.js';
 import { useUiStore } from '../store/ui-store.js';
+import { useComparisonStore } from '../stores/useComparisonStore.js';
 import { apiClient } from '../lib/api-client.js';
 import { SlidersHorizontal, LayoutGrid, LayoutList } from 'lucide-react';
 import type { CategoryTreeResponse } from '@grovio/contracts';
@@ -31,8 +32,17 @@ const PLP_VIEW_KEY = 'pref_plp_view';
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { filters, setFilter, setAttributeFilter } = useFilterState();
   const { filterDrawerOpen, setFilterDrawerOpen } = useUiStore();
+  const clearComparison = useComparisonStore((s) => s.clear);
+
+  // Auto-clear comparison tray when leaving CategoryPage
+  useEffect(() => {
+    return () => {
+      clearComparison();
+    };
+  }, [clearComparison, location.pathname]);
 
   // View preference persisted in localStorage
   const [plpView, setPlpView] = useState<PlpView>(() => {

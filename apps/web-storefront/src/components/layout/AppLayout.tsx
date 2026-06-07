@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Header } from './Header.js';
 import { Footer } from './Footer.js';
 import { BottomNav } from './BottomNav.js';
+import { ComparisonTray } from '../ui/ComparisonTray.js';
 import { ToastContainer } from '../ui/Toast.js';
 
 /**
@@ -39,6 +40,9 @@ export function AppLayout() {
 
       {/* Mobile bottom navigation (hidden md+) */}
       <BottomNav />
+
+      {/* Comparison tray — always mounted, visible when products selected */}
+      <ComparisonTray />
 
       {/* Toast notifications — fixed position, top-right */}
       <ToastContainer />
