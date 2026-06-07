@@ -1,13 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { X, SlidersHorizontal } from 'lucide-react';
+import { X, SlidersHorizontal, ChevronDown, ChevronRight } from 'lucide-react';
 import { apiClient } from '../../lib/api-client.js';
 import { useUiStore } from '../../store/ui-store.js';
 import { useFilterState } from '../../hooks/useFilterState.js';
 import { FilterChip } from '../ui/FilterChip.js';
 import { Skeleton } from '../ui/Skeleton.js';
 import type { FacetResult } from '@grovio/contracts';
+
+const SIDEBAR_COLLAPSED_KEY = 'pref_filter_sidebar_collapsed';
 
 interface FilterSidebarProps {
   categoryId?: string | undefined;
@@ -29,6 +31,23 @@ export function FilterSidebar({ categoryId }: FilterSidebarProps) {
   const { filters, setAttributeFilter, clearFilters } = useFilterState();
   const drawerRef = useRef<HTMLDivElement>(null);
   const firstFocusRef = useRef<HTMLButtonElement>(null);
+
+  // Collapsible sidebar state — persisted in localStorage
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  function toggleSidebar() {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try { localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
 
   const { data: facets, isLoading: facetsLoading } = useQuery<FacetResult[]>({
     queryKey: ['category-filters', categoryId],
@@ -60,7 +79,7 @@ export function FilterSidebar({ categoryId }: FilterSidebarProps) {
   const hasActiveFilters = Object.keys(filters.activeFilters).length > 0;
 
   const filterContent = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-grovio-border">
         <div className="flex items-center gap-2">
@@ -164,11 +183,43 @@ export function FilterSidebar({ categoryId }: FilterSidebarProps) {
 
   return (
     <>
-      {/* Desktop sidebar — fixed left column, hidden on mobile */}
-      {/* aria-hidden when drawer is open: prevents duplicate screen-reader content (WR-06) */}
-      <aside className="hidden lg:block w-64 flex-shrink-0" aria-hidden={filterDrawerOpen}>
-        {filterContent}
-      </aside>
+      {/* Desktop sidebar — sticky left column, hidden on mobile */}
+      {/* Collapsible via toggle; aria-hidden when mobile drawer is open (WR-06) */}
+      <div className="hidden lg:flex flex-col flex-shrink-0" aria-hidden={filterDrawerOpen}>
+        {/* Collapse toggle button on sidebar edge */}
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label={sidebarCollapsed ? 'Expand filters' : 'Collapse filters'}
+          aria-expanded={!sidebarCollapsed}
+          className="flex items-center gap-1.5 text-xs font-medium text-grovio-text-muted hover:text-grovio-primary mb-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2 rounded self-start"
+        >
+          {sidebarCollapsed ? (
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+          Filters
+        </button>
+
+        <AnimatePresence initial={false}>
+          {!sidebarCollapsed && (
+            <motion.aside
+              key="sidebar-content"
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 256 }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <div className="w-64">
+                {filterContent}
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Mobile drawer (AnimatePresence) */}
       <AnimatePresence>

@@ -1,16 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { PageTransition } from '../components/layout/PageTransition.js';
 import { FilterSidebar } from '../components/search/FilterSidebar.js';
 import { ProductGrid } from '../components/search/ProductGrid.js';
+import { FilterChip } from '../components/ui/FilterChip.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { Button } from '../components/ui/Button.js';
 import { useFilterState } from '../hooks/useFilterState.js';
 import { useUiStore } from '../store/ui-store.js';
 import { apiClient } from '../lib/api-client.js';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, LayoutGrid, LayoutList } from 'lucide-react';
 import type { CategoryTreeResponse } from '@grovio/contracts';
-import { useEffect } from 'react';
+
+export type PlpView = 'grid' | 'list';
+const PLP_VIEW_KEY = 'pref_plp_view';
 
 /**
  * Category landing page (/category/:slug).
@@ -27,8 +31,28 @@ import { useEffect } from 'react';
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { filters, setFilter } = useFilterState();
+  const { filters, setFilter, setAttributeFilter } = useFilterState();
   const { filterDrawerOpen, setFilterDrawerOpen } = useUiStore();
+
+  // View preference persisted in localStorage
+  const [plpView, setPlpView] = useState<PlpView>(() => {
+    try {
+      const stored = localStorage.getItem(PLP_VIEW_KEY);
+      return (stored === 'list' ? 'list' : 'grid') as PlpView;
+    } catch {
+      return 'grid';
+    }
+  });
+
+  function handleViewChange(v: PlpView) {
+    setPlpView(v);
+    try { localStorage.setItem(PLP_VIEW_KEY, v); } catch { /* ignore */ }
+  }
+
+  // Active filter chips derived from URL search params
+  const activeChips = Object.entries(filters.activeFilters).flatMap(([key, values]) =>
+    values.map((value) => ({ key, value })),
+  );
 
   // Fetch category tree to resolve the slug
   const { data: categoryTree, isLoading, isError, refetch } = useQuery<CategoryTreeResponse>({
@@ -149,24 +173,90 @@ export default function CategoryPage() {
               </div>
             )}
 
-            {/* Mobile "Filters" button */}
-            <div className="flex items-center justify-between mb-4 lg:hidden">
+            {/* Toolbar row: mobile filters button + view toggle */}
+            <div className="flex items-center justify-between mb-4 gap-3">
+              {/* Mobile "Filters" button — hidden on desktop */}
               <button
                 type="button"
                 onClick={() => setFilterDrawerOpen(true)}
                 aria-label="Open filters"
                 aria-expanded={filterDrawerOpen}
-                className="inline-flex items-center gap-2 text-sm font-medium text-grovio-text border border-grovio-border rounded-md px-4 py-2 bg-grovio-surface-raised hover:border-grovio-primary hover:text-grovio-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2 min-h-[48px]"
+                className="lg:hidden inline-flex items-center gap-2 text-sm font-medium text-grovio-text border border-grovio-border rounded-md px-4 py-2 bg-grovio-surface-raised hover:border-grovio-primary hover:text-grovio-primary transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2 min-h-[48px]"
               >
                 <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
                 Filters
+                {activeChips.length > 0 && (
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-grovio-primary text-white text-[10px] font-bold">
+                    {activeChips.length}
+                  </span>
+                )}
               </button>
+
+              {/* View toggle: grid / list */}
+              <div
+                className="ml-auto flex items-center gap-1 rounded-md border border-grovio-border bg-grovio-surface-raised p-0.5"
+                role="group"
+                aria-label="Product list view"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleViewChange('grid')}
+                  aria-pressed={plpView === 'grid'}
+                  aria-label="Grid view"
+                  className={`flex items-center justify-center p-2 rounded transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-1 ${
+                    plpView === 'grid'
+                      ? 'bg-grovio-primary text-white'
+                      : 'text-grovio-text-muted hover:text-grovio-text'
+                  }`}
+                >
+                  <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewChange('list')}
+                  aria-pressed={plpView === 'list'}
+                  aria-label="List view"
+                  className={`flex items-center justify-center p-2 rounded transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-1 ${
+                    plpView === 'list'
+                      ? 'bg-grovio-primary text-white'
+                      : 'text-grovio-text-muted hover:text-grovio-text'
+                  }`}
+                >
+                  <LayoutList className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
             </div>
+
+            {/* Active filter chips strip — horizontal scrollable row above product grid */}
+            {activeChips.length > 0 && (
+              <div
+                className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide"
+                aria-label="Active filters"
+              >
+                {activeChips.map(({ key, value }) => (
+                  <FilterChip
+                    key={`${key}-${value}`}
+                    label={value}
+                    active
+                    onRemove={() => {
+                      const remaining = (filters.activeFilters[key] ?? []).filter((v) => v !== value);
+                      setAttributeFilter(key, remaining);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Main layout: sidebar + product grid */}
             <div className="flex gap-8">
               <FilterSidebar categoryId={category.id} />
-              {isGridReady && <ProductGrid emptyStateType="category" categoryName={category.name} />}
+              {isGridReady && (
+                <ProductGrid
+                  emptyStateType="category"
+                  categoryName={category.name}
+                  view={plpView}
+                />
+              )}
             </div>
           </>
         )}

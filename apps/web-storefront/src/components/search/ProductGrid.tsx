@@ -39,11 +39,14 @@ interface ProductGridProps {
   emptyStateType?: 'filters' | 'query' | 'category';
   /** Category name for the category empty state copy */
   categoryName?: string | undefined;
+  /** Grid (2-3 col) or list (1 col) view — default 'grid' */
+  view?: 'grid' | 'list';
 }
 
 export function ProductGrid({
   emptyStateType = 'query',
   categoryName,
+  view = 'grid',
 }: ProductGridProps) {
   const { filters, setFilter, setAttributeFilter, clearFilters } = useFilterState();
 
@@ -199,6 +202,20 @@ export function ProductGrid({
                   </Link>
                 </>
               )}
+            </div>
+          ) : view === 'list' ? (
+            <div className="flex flex-col gap-3">
+              {allHits.map((hit) => (
+                <ProductCard
+                  key={hit.id}
+                  slug={hit.slug}
+                  name={hit.name}
+                  priceMajor={formatPrice(hit.basePriceMinor)}
+                  vendorName=""
+                  listView
+                  {...(hit.imageUrl != null ? { imageUrl: hit.imageUrl } : {})}
+                />
+              ))}
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
