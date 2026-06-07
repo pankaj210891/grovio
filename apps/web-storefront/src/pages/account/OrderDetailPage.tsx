@@ -1,24 +1,40 @@
 /**
  * OrderDetailPage — /account/orders/:id (ORD-04)
  *
+ * Phase 11 T8 enhancements:
+ * - Visual order timeline: vertical step list with icons + timestamps
+ * - Reorder All: adds all order items back to basket via POST /basket/items
+ * - Invoice Download: GET /orders/:id/invoice (Wave 5a PDF endpoint)
+ *
  * Displays full order detail:
  * - Order header (ID, date, overall status)
- * - Items grouped by vendor sub-order with per-vendor status
+ * - Visual timeline (placed, processing, shipped, delivered/cancelled)
+ * - Items grouped by vendor sub-order
  * - Order totals
- * - "Request return" action for eligible delivered items (D-23, D-16)
- *   → POST /account/orders/:id/return-request
- *   → Refund preference selector: wallet / original payment (D-16)
+ * - "Request return" for eligible delivered items
  */
 
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
+import {
+  CheckCircle2,
+  Circle,
+  Truck,
+  Package,
+  Clock,
+  XCircle,
+  RotateCcw,
+  Download,
+  Loader2,
+} from 'lucide-react';
 import { PageTransition } from '../../components/layout/PageTransition.js';
 import { Button } from '../../components/ui/Button.js';
 import { Skeleton } from '../../components/ui/Skeleton.js';
 import { apiClient, ApiError } from '../../lib/api-client.js';
 import { useUiStore } from '../../store/ui-store.js';
+import { BASKET_QUERY_KEY } from '../../hooks/useBasket.js';
 import type { Order, OrderStatus } from '@grovio/contracts';
 
 // ---------------------------------------------------------------------------
@@ -50,6 +66,12 @@ function formatDate(isoString: string): string {
   });
 }
 
+function formatDateTime(isoString: string): string {
+  return new Date(isoString).toLocaleString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+}
+
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending_payment: 'Pending payment',
   payment_received: 'Payment received',
@@ -69,7 +91,120 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Return request dialog
+// Order timeline
+// ---------------------------------------------------------------------------
+
+interface TimelineStep {
+  key: OrderStatus;
+  label: string;
+  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' }>;
+}
+
+const TIMELINE_STEPS: TimelineStep[] = [
+  { key: 'pending_payment', label: 'Placed', icon: Clock },
+  { key: 'processing', label: 'Processing', icon: Package },
+  { key: 'shipped', label: 'Shipped', icon: Truck },
+  { key: 'delivered', label: 'Delivered', icon: CheckCircle2 },
+];
+
+const STATUS_TO_TIMELINE_INDEX: Record<OrderStatus, number> = {
+  pending_payment: 0,
+  payment_received: 0,
+  processing: 1,
+  shipped: 2,
+  delivered: 3,
+  cancelled: -1, // special case
+};
+
+interface OrderTimelineProps {
+  status: OrderStatus;
+  createdAt: string;
+}
+
+function OrderTimeline({ status, createdAt }: OrderTimelineProps) {
+  const currentIndex = STATUS_TO_TIMELINE_INDEX[status] ?? 0;
+  const isCancelled = status === 'cancelled';
+
+  if (isCancelled) {
+    return (
+      <div className="flex items-center gap-3 p-4 rounded-lg bg-red-50 border border-red-200">
+        <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" aria-hidden="true" />
+        <div>
+          <p className="text-sm font-semibold text-red-700">Order Cancelled</p>
+          <p className="text-xs text-red-500">Placed on {formatDate(createdAt)}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="relative flex flex-col gap-0"
+      role="list"
+      aria-label="Order status timeline"
+    >
+      {TIMELINE_STEPS.map((step, index) => {
+        const isCompleted = index <= currentIndex;
+        const isCurrent = index === currentIndex;
+        const Icon = step.icon;
+
+        return (
+          <div key={step.key} role="listitem" className="flex gap-4">
+            {/* Icon column with vertical connector */}
+            <div className="flex flex-col items-center">
+              <motion.div
+                initial={isCurrent ? { scale: 0.8 } : false}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${
+                  isCompleted
+                    ? 'border-grovio-primary bg-grovio-primary text-white'
+                    : 'border-grovio-border bg-grovio-surface text-grovio-text-muted'
+                } ${isCurrent ? 'ring-4 ring-grovio-primary/20' : ''}`}
+                aria-hidden="true"
+              >
+                {isCompleted ? (
+                  <CheckCircle2 className="h-4 w-4" />
+                ) : (
+                  <Circle className="h-4 w-4" />
+                )}
+              </motion.div>
+
+              {/* Connector line */}
+              {index < TIMELINE_STEPS.length - 1 && (
+                <div
+                  className={`w-0.5 h-8 mt-0.5 transition-colors ${
+                    index < currentIndex ? 'bg-grovio-primary' : 'bg-grovio-border'
+                  }`}
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+
+            {/* Step content */}
+            <div className="pb-6 min-w-0">
+              <p className={`text-sm font-semibold ${isCompleted ? 'text-grovio-text' : 'text-grovio-text-muted'}`}>
+                {step.label}
+              </p>
+              {isCompleted && index === 0 && (
+                <p className="text-xs text-grovio-text-muted">{formatDateTime(createdAt)}</p>
+              )}
+              {isCurrent && index > 0 && (
+                <p className="text-xs text-grovio-primary">In progress</p>
+              )}
+              {!isCompleted && (
+                <p className="text-xs text-grovio-text-muted">Pending</p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Return request dialog (unchanged from Phase 5)
 // ---------------------------------------------------------------------------
 
 interface ReturnDialogProps {
@@ -89,7 +224,6 @@ function ReturnDialog({ orderId, orderItemIds, onClose }: ReturnDialogProps) {
     mutationFn: (body: ReturnRequestInput) =>
       apiClient.post<{ success: boolean }>(`/account/orders/${orderId}/return-request`, body),
     onSuccess: () => {
-      // WR-07: key matches the useQuery key below
       void qc.invalidateQueries({ queryKey: ['account', 'orders', orderId] });
       addToast({ id: crypto.randomUUID(), message: 'Return request submitted.', variant: 'success' });
       onClose();
@@ -171,19 +305,10 @@ function ReturnDialog({ orderId, orderItemIds, onClose }: ReturnDialogProps) {
           {error && <p className="text-sm text-grovio-error" role="alert">{error}</p>}
 
           <div className="flex gap-3 justify-end pt-1">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onClose}
-              disabled={returnMutation.isPending}
-            >
+            <Button type="button" variant="secondary" onClick={onClose} disabled={returnMutation.isPending}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              loading={returnMutation.isPending}
-            >
+            <Button type="submit" variant="primary" loading={returnMutation.isPending}>
               {returnMutation.isPending ? 'Submitting…' : 'Submit'}
             </Button>
           </div>
@@ -201,9 +326,11 @@ export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [showReturnDialog, setShowReturnDialog] = useState(false);
   const [returnItemIds, setReturnItemIds] = useState<string[]>([]);
+  const [isReordering, setIsReordering] = useState(false);
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+  const addToast = useUiStore((s) => s.addToast);
+  const qc = useQueryClient();
 
-  // WR-07: use ['account', 'orders', id] to avoid unintended cache sharing with
-  // OrderConfirmationPage (which now uses ['checkout', 'confirmation', orderId]).
   const { data: order, isLoading, isError } = useQuery<Order | null>({
     queryKey: ['account', 'orders', id],
     queryFn: async () => {
@@ -218,6 +345,55 @@ export default function OrderDetailPage() {
     },
     enabled: !!id,
   });
+
+  async function handleReorderAll() {
+    if (!order) return;
+    setIsReordering(true);
+
+    try {
+      const allItems = order.vendorOrders.flatMap((vo) => vo.items);
+      await Promise.all(
+        allItems.map((item) =>
+          apiClient.post('/basket/items', {
+            productId: item.productId,
+            productVariantId: null,
+            quantity: item.quantity,
+          }),
+        ),
+      );
+      await qc.invalidateQueries({ queryKey: BASKET_QUERY_KEY });
+      addToast({ id: crypto.randomUUID(), message: 'All items added to cart!', variant: 'success' });
+      window.location.href = '/cart';
+    } catch {
+      addToast({ id: crypto.randomUUID(), message: 'Could not reorder some items. Please try again.', variant: 'error' });
+    } finally {
+      setIsReordering(false);
+    }
+  }
+
+  async function handleDownloadInvoice() {
+    if (!id) return;
+    setIsDownloadingInvoice(true);
+    try {
+      const response = await fetch(`${import.meta.env['VITE_API_URL'] as string ?? ''}/orders/${id}/invoice`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Invoice not available');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${order?.displayId ?? id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch {
+      addToast({ id: crypto.randomUUID(), message: 'Invoice not available yet. Please try again later.', variant: 'error' });
+    } finally {
+      setIsDownloadingInvoice(false);
+    }
+  }
 
   function handleRequestReturn(itemIds: string[]) {
     setReturnItemIds(itemIds);
@@ -252,17 +428,41 @@ export default function OrderDetailPage() {
                   Placed on {formatDate(order.createdAt)}
                 </p>
               </div>
-              <span
-                className={[
-                  'inline-block px-2 py-1 rounded-full text-xs font-medium flex-shrink-0',
-                  STATUS_COLORS[order.status],
-                ].join(' ')}
-              >
-                {STATUS_LABELS[order.status]}
-              </span>
+              <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                {/* Invoice download */}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="text-sm px-3 py-1.5 flex items-center gap-1.5"
+                  onClick={() => { void handleDownloadInvoice(); }}
+                  disabled={isDownloadingInvoice}
+                >
+                  {isDownloadingInvoice ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                  )}
+                  Invoice
+                </Button>
+
+                <span
+                  className={[
+                    'inline-block px-2 py-1 rounded-full text-xs font-medium',
+                    STATUS_COLORS[order.status],
+                  ].join(' ')}
+                >
+                  {STATUS_LABELS[order.status]}
+                </span>
+              </div>
             </div>
 
-            {/* Items grouped by vendor (D-08) */}
+            {/* Visual order timeline */}
+            <div className="rounded-lg border border-grovio-border bg-grovio-surface-raised p-5">
+              <h2 className="text-sm font-semibold text-grovio-text mb-4">Order Status</h2>
+              <OrderTimeline status={order.status} createdAt={order.createdAt} />
+            </div>
+
+            {/* Items grouped by vendor */}
             {order.vendorOrders.map((vendorOrder) => {
               const isDelivered = vendorOrder.status === 'delivered';
               const allItemIds = vendorOrder.items.map((i) => i.id);
@@ -272,7 +472,6 @@ export default function OrderDetailPage() {
                   key={vendorOrder.id}
                   className="rounded-lg border border-grovio-border bg-grovio-surface-raised overflow-hidden"
                 >
-                  {/* Vendor header */}
                   <div className="px-4 py-3 border-b border-grovio-border flex items-center justify-between gap-4 bg-grovio-surface">
                     <p className="text-xs font-semibold text-grovio-text-muted uppercase tracking-wide">
                       {vendorOrder.vendorName}
@@ -287,7 +486,6 @@ export default function OrderDetailPage() {
                     </span>
                   </div>
 
-                  {/* Items */}
                   <div className="p-4 flex flex-col gap-3">
                     {vendorOrder.items.map((item) => (
                       <div key={item.id} className="flex items-center justify-between gap-4">
@@ -303,7 +501,6 @@ export default function OrderDetailPage() {
                       </div>
                     ))}
 
-                    {/* Vendor subtotal */}
                     <div className="pt-2 border-t border-grovio-border flex justify-between text-sm">
                       <span className="text-grovio-text-muted">Vendor subtotal</span>
                       <span className="font-medium text-grovio-text">
@@ -311,7 +508,6 @@ export default function OrderDetailPage() {
                       </span>
                     </div>
 
-                    {/* Return request button — only for delivered items (D-23, ORD-04) */}
                     {isDelivered && (
                       <Button
                         type="button"
@@ -357,6 +553,24 @@ export default function OrderDetailPage() {
                   <span>{formatMinor(order.grandTotalMinor)}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Reorder All */}
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => { void handleReorderAll(); }}
+                disabled={isReordering}
+                className="flex items-center gap-2"
+              >
+                {isReordering ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                )}
+                {isReordering ? 'Adding to cart…' : 'Reorder All'}
+              </Button>
             </div>
           </div>
         )}
