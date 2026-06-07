@@ -10,12 +10,12 @@ Grovio is a horizontal-layer infrastructure product. The roadmap builds complete
 - [x] **Phase 2: Category Engine** - Admin-managed category tree, per-category attribute/filter schemas, product templates, vendor-category restrictions (completed 2026-05-30)
 - [x] **Phase 3: Catalog & Search** - Vendor product CRUD with dynamic attribute forms, admin moderation, OpenSearch index, full-text + faceted search API (completed 2026-06-01)
 - [x] **Phase 4: Customer Storefront (Web)** - Complete customer web experience: homepage, category pages, PLP, PDP, search, auth flows, responsive + animated UI (completed 2026-06-02)
-- [x] **Phase 5: Commerce Core** - Basket, inventory reservation, checkout, PaymentProvider abstraction, wallet ledger, order placement + multi-vendor splitting, commission engine, coupon engine (completed 2026-06-05)
-- [x] **Phase 6: Vendor & Admin Tools** - Full vendor panel, full admin panel, commission/payout audit trail, marketplace operational tooling (completed 2026-06-05)
+- [x] **Phase 5: Commerce Core** - Basket, inventory reservation, checkout, PaymentProvider abstraction, wallet ledger, order placement + multi-vendor splitting, commission engine, coupon engine (Wave 1 complete 2026-06-05; Waves 2-5 in progress)
+- [x] **Phase 6: Vendor & Admin Tools** - Full vendor panel, full admin panel, commission/payout audit trail, marketplace operational tooling (Wave 1 complete 2026-06-05; Waves 2-5 in progress)
 - [ ] **Phase 7: React Native App** - Full-featured customer mobile app consuming stable backend APIs via shared contracts
 - [ ] **Phase 8: Fulfillment & Communications** - Order tracking timeline + map shell, serviceability check, simulation mode, full transactional email suite, push-ready notification events
 - [ ] **Phase 9: Productization & Release** - Seed importer, five demo presets, full buyer documentation suite, preview assets, Envato packaging
-- [x] **Phase 11: UX/UI Platform Redesign** - Full redesign of all three portals (Customer Web, Admin, Vendor) from a 2026 product mindset — command-center admin, morning-glance vendor dashboard, conversion-optimized customer storefront, mobile-first with bottom navigation (completed 2026-06-05)
+- [ ] **Phase 11: UX/UI Platform Redesign** - Full redesign of all three portals (Customer Web, Admin, Vendor) from a 2026 product mindset — command-center admin, morning-glance vendor dashboard, conversion-optimized customer storefront, mobile-first with bottom navigation (Wave 1 complete 2026-06-05; Waves 2-5 in progress)
 
 ## Phase Details
 
