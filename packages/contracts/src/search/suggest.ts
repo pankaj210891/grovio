@@ -25,11 +25,17 @@ export type SuggestQuery = z.infer<typeof SuggestQuerySchema>;
 
 /**
  * A single product suggestion.
+ *
+ * Phase 11 T9 (D-16): `categoryName` is included so the storefront typeahead
+ * dropdown can display the category context under each product suggestion.
+ * Optional to maintain backwards compatibility with older search index documents.
  */
 export const SuggestProductSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   slug: z.string(),
+  /** Category name for contextual display in search typeahead (Phase 11 T9) */
+  categoryName: z.string().optional(),
 });
 
 /** TypeScript type inferred from SuggestProductSchema */
