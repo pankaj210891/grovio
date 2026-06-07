@@ -18,7 +18,9 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
 import { useBasket } from '../../hooks/useBasket.js';
 import { useCheckoutStore } from '../../hooks/useCheckout.js';
-import type { CheckoutStepKey } from './CheckoutProgress.js';
+
+/** Step key type — kept here since CheckoutProgress.tsx is deleted in Phase 11 T7. */
+type CheckoutStepKey = 'address' | 'delivery' | 'payment' | 'review';
 
 // ---------------------------------------------------------------------------
 // Guard logic

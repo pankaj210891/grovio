@@ -1,17 +1,14 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout.js';
 import { ProtectedRoute } from './components/layout/ProtectedRoute.js';
-import { CheckoutRootGuard, CheckoutGuard } from './components/checkout/CheckoutGuard.js';
+import { CheckoutRootGuard } from './components/checkout/CheckoutGuard.js';
 import HomePage from './pages/HomePage.js';
 import CategoryPage from './pages/CategoryPage.js';
 import SearchPage from './pages/SearchPage.js';
 import ProductDetailPage from './pages/ProductDetailPage.js';
 import CartPage from './pages/CartPage.js';
-// Checkout step pages
-import CheckoutAddressPage from './pages/checkout/CheckoutAddressPage.js';
-import CheckoutDeliveryPage from './pages/checkout/CheckoutDeliveryPage.js';
-import CheckoutPaymentPage from './pages/checkout/CheckoutPaymentPage.js';
-import CheckoutReviewPage from './pages/checkout/CheckoutReviewPage.js';
+// Phase 11 one-page checkout
+import CheckoutPage from './pages/checkout/CheckoutPage.js';
 // Post-checkout
 import OrderConfirmationPage from './pages/OrderConfirmationPage.js';
 // Account pages
@@ -26,20 +23,22 @@ import OrderDetailPage from './pages/account/OrderDetailPage.js';
 import WalletPage from './pages/account/WalletPage.js';
 
 /**
- * Phase 5 route tree — React Router v7 createBrowserRouter.
+ * Phase 11 route tree — React Router v7 createBrowserRouter.
  *
- * Root route: AppLayout (Header + AnimatePresence Outlet + Footer + Toast)
+ * Root route: AppLayout (BottomNav + Header + AnimatePresence Outlet + Footer + Toast)
  *   ├── /                       → HomePage
  *   ├── /category/:slug         → CategoryPage
+ *   ├── /categories             → redirect to /search (browse all)
  *   ├── /search                 → SearchPage (+ /search?q=...)
  *   ├── /products/:slug         → ProductDetailPage
- *   ├── /cart                   → CartPage (Phase 5 — D-24/D-25 basket)
+ *   ├── /cart                   → CartPage
  *   ├── /checkout               → CheckoutRootGuard (auth + non-empty basket)
- *   │     ├── /checkout/address → CheckoutAddressPage  (step 1, D-05)
- *   │     ├── /checkout/delivery → CheckoutDeliveryPage (step 2, D-05)
- *   │     ├── /checkout/payment → CheckoutPaymentPage  (step 3, PAY-04)
- *   │     └── /checkout/review  → CheckoutReviewPage   (step 4, D-05)
- *   ├── /order-confirmation/:orderId → OrderConfirmationPage (ORD-01)
+ *   │     └── (index)           → CheckoutPage (one-page accordion — Phase 11 T7)
+ *   ├── /checkout/address       → redirect to /checkout (legacy Phase 5 URL)
+ *   ├── /checkout/delivery      → redirect to /checkout (legacy Phase 5 URL)
+ *   ├── /checkout/payment       → redirect to /checkout (legacy Phase 5 URL)
+ *   ├── /checkout/review        → redirect to /checkout (legacy Phase 5 URL)
+ *   ├── /order-confirmation/:orderId → OrderConfirmationPage
  *   ├── /auth/signup            → SignupPage
  *   ├── /auth/login             → LoginPage
  *   ├── /auth/forgot-password   → ForgotPasswordPage
@@ -47,9 +46,9 @@ import WalletPage from './pages/account/WalletPage.js';
  *   └── /account                → ProtectedRoute
  *         ├── /account/profile   → ProfilePage
  *         ├── /account/addresses → AddressesPage
- *         ├── /account/orders    → OrdersPage (ORD-03)
- *         ├── /account/orders/:id → OrderDetailPage (ORD-04)
- *         └── /account/wallet   → WalletPage (WAL-01/02)
+ *         ├── /account/orders    → OrdersPage
+ *         ├── /account/orders/:id → OrderDetailPage
+ *         └── /account/wallet   → WalletPage
  */
 export const router = createBrowserRouter([
   {
@@ -58,48 +57,37 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'category/:slug', element: <CategoryPage /> },
+      // /categories is a BottomNav tab — redirect to search for browsing
+      { path: 'categories', element: <Navigate to="/search" replace /> },
       { path: 'search', element: <SearchPage /> },
       { path: 'products/:slug', element: <ProductDetailPage /> },
       { path: 'cart', element: <CartPage /> },
 
-      // ── Checkout wizard (4 URL-addressable steps with step-skip guard, D-05) ───
+      // ── Checkout (Phase 11: single-page accordion — T7) ──────────────────
       {
         path: 'checkout',
         element: <CheckoutRootGuard />,
         children: [
-          {
-            path: 'address',
-            element: <CheckoutGuard step="address" />,
-            children: [{ index: true, element: <CheckoutAddressPage /> }],
-          },
-          {
-            path: 'delivery',
-            element: <CheckoutGuard step="delivery" />,
-            children: [{ index: true, element: <CheckoutDeliveryPage /> }],
-          },
-          {
-            path: 'payment',
-            element: <CheckoutGuard step="payment" />,
-            children: [{ index: true, element: <CheckoutPaymentPage /> }],
-          },
-          {
-            path: 'review',
-            element: <CheckoutGuard step="review" />,
-            children: [{ index: true, element: <CheckoutReviewPage /> }],
-          },
+          { index: true, element: <CheckoutPage /> },
         ],
       },
 
-      // ── Order confirmation (ORD-01) ──────────────────────────────────────────
+      // ── Legacy checkout URL redirects (Phase 5 bookmarks / links) ────────
+      { path: 'checkout/address', element: <Navigate to="/checkout" replace /> },
+      { path: 'checkout/delivery', element: <Navigate to="/checkout" replace /> },
+      { path: 'checkout/payment', element: <Navigate to="/checkout" replace /> },
+      { path: 'checkout/review', element: <Navigate to="/checkout" replace /> },
+
+      // ── Order confirmation ───────────────────────────────────────────────
       { path: 'order-confirmation/:orderId', element: <OrderConfirmationPage /> },
 
-      // ── Auth pages ───────────────────────────────────────────────────────────
+      // ── Auth pages ───────────────────────────────────────────────────────
       { path: 'auth/signup', element: <SignupPage /> },
       { path: 'auth/login', element: <LoginPage /> },
       { path: 'auth/forgot-password', element: <ForgotPasswordPage /> },
       { path: 'auth/reset-password', element: <ResetPasswordPage /> },
 
-      // ── Account (authenticated) ──────────────────────────────────────────────
+      // ── Account (authenticated) ──────────────────────────────────────────
       {
         path: 'account',
         element: <ProtectedRoute />,
