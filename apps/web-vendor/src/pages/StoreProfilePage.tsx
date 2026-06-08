@@ -80,8 +80,16 @@ function ImageUploadField({ label, id, value, onChange, hint, aspect }: ImageUpl
     form.append('file', file);
     setUploading(true);
     try {
-      const res = await apiClient.post<UploadResponse>('/vendor/profile/upload-image', form);
-      onChange(res.url);
+      // Upload uses multipart/form-data — call fetch directly (apiClient.post forces JSON)
+      const apiBase = (import.meta.env['VITE_API_URL'] as string | undefined) ?? 'http://localhost:3001';
+      const fetchRes = await fetch(`${apiBase}/vendor/profile/upload-image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: form,
+      });
+      if (!fetchRes.ok) throw new Error('Upload failed');
+      const res = (await fetchRes.json()) as UploadResponse;
+      onChange(res.data.url);
     } catch {
       addToast({ id: Date.now().toString(), message: 'Upload failed. Try again.', variant: 'error' });
     } finally {
@@ -274,10 +282,13 @@ export default function StoreProfilePage() {
   }
 
   function updateHours(day: string, field: keyof StoreHoursDay, value: string | boolean) {
-    setStoreHours((prev) => ({
-      ...prev,
-      [day]: { ...prev[day], [field]: value },
-    }));
+    setStoreHours((prev) => {
+      const existing: StoreHoursDay = prev[day] ?? { open: '09:00', close: '18:00', closed: false };
+      return {
+        ...prev,
+        [day]: { ...existing, [field]: value } satisfies StoreHoursDay,
+      } as StoreHoursMap;
+    });
   }
 
   const inputClass =

@@ -204,7 +204,7 @@ export default function ProductsPage() {
               <p className="text-sm text-grovio-text-muted">
                 {statusFilter === 'all'
                   ? 'No products yet.'
-                  : `No ${STATUS_LABELS[statusFilter].toLowerCase()} products.`}
+                  : `No ${(STATUS_LABELS[statusFilter] ?? statusFilter).toLowerCase()} products.`}
               </p>
               {statusFilter === 'all' && (
                 <Link
