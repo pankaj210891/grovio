@@ -62,7 +62,7 @@ export function ProtectedAdminRoute({ requiredRole }: ProtectedAdminRouteProps) 
   if (admin) {
     // Check specific required role
     if (requiredRole && admin.role !== 'super_admin') {
-      if (requiredRole === 'super_admin' && admin.role !== 'super_admin') {
+      if (requiredRole === 'super_admin') {
         return <Navigate to="/dashboard" replace />;
       }
     }

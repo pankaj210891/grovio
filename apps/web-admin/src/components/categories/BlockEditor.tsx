@@ -212,6 +212,7 @@ const BLOCK_TYPE_LABELS: Record<MerchandisingBlock['type'], string> = {
   banner: 'Banner',
   product_grid: 'Product Grid',
   text_block: 'Text Block',
+  featured_categories: 'Featured Categories',
 };
 
 interface BlockItemProps {
@@ -328,6 +329,8 @@ function createDefaultBlock(type: MerchandisingBlock['type']): MerchandisingBloc
       return { type: 'product_grid', title: '', productIds: [], layout: 'grid' };
     case 'text_block':
       return { type: 'text_block', title: '', content: '' };
+    case 'featured_categories':
+      return { type: 'featured_categories', title: '', categoryIds: [], layout: 'row' };
   }
 }
 

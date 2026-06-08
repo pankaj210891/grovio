@@ -81,7 +81,7 @@ interface AccordionSectionProps {
   stepNumber: number;
   isOpen: boolean;
   isCompleted: boolean;
-  summary?: string;
+  summary?: string | undefined;
   onHeaderClick: () => void;
   children: React.ReactNode;
 }
@@ -399,10 +399,10 @@ function PaymentSection({ onContinue }: PaymentSectionProps) {
     }
   }
 
-  if (localResult?.provider === 'stripe' && localResult.clientSecret) {
+  if (localResult?.provider === 'stripe' && localResult.providerOrder.clientSecret) {
     return (
       <div className="pt-4">
-        <StripePaymentForm clientSecret={localResult.clientSecret} orderId={localResult.orderId} />
+        <StripePaymentForm clientSecret={localResult.providerOrder.clientSecret} orderId={localResult.orderId} />
       </div>
     );
   }
@@ -426,8 +426,10 @@ function PaymentSection({ onContinue }: PaymentSectionProps) {
       {providers?.razorpay && localResult?.provider === 'razorpay' && (
         <RazorpayButton
           orderId={localResult.orderId}
-          amount={localResult.amount ?? 0}
-          currency={localResult.currency ?? 'INR'}
+          amountMinor={localResult.amountMinor}
+          providerKey={localResult.providerOrder.providerKey ?? ''}
+          providerOrderRef={localResult.providerOrder.providerOrderRef ?? ''}
+          onSuccess={() => { onContinue('Razorpay'); }}
         />
       )}
 
@@ -561,7 +563,8 @@ export default function CheckoutPage() {
     // Advance to next step
     const steps: CheckoutStep[] = ['address', 'delivery', 'payment', 'review'];
     const nextIdx = STEP_ORDER[step] + 1;
-    if (nextIdx < steps.length) setOpenStep(steps[nextIdx]);
+    const nextStep = steps[nextIdx];
+    if (nextIdx < steps.length && nextStep !== undefined) setOpenStep(nextStep);
   }
 
   if (authLoading || basketLoading) {

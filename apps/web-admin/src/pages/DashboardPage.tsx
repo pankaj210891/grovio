@@ -65,8 +65,7 @@ function KpiCard({ label, value, accent, link, delta }: KpiCardProps) {
   const navigate = useNavigate();
   return (
     <motion.div
-      whileHover={link ? { scale: 1.02 } : undefined}
-      onClick={link ? () => navigate(link) : undefined}
+      {...(link ? { whileHover: { scale: 1.02 }, onClick: () => navigate(link) } : {})}
       className={[
         'rounded-xl border p-5 transition-shadow',
         accent ? 'border-grovio-primary/20 bg-grovio-primary/5' : 'border-grovio-border bg-grovio-surface-raised',

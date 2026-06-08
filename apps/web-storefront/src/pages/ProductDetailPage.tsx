@@ -145,7 +145,7 @@ function DeliveryCheck({ productSlug: _productSlug }: DeliveryCheckProps) {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const { data, isLoading, mutate } = useMutation<ServiceabilityResponse, Error, string>({
+  const { data, isPending: isLoading, mutate } = useMutation<ServiceabilityResponse, Error, string>({
     mutationFn: (pin: string) =>
       apiClient
         .get<{ success: boolean; data: ServiceabilityResponse }>(`/serviceability?pincode=${encodeURIComponent(pin)}`)
@@ -472,17 +472,17 @@ export default function ProductDetailPage() {
         title={`${product.name} | Grovio`}
         description={seoDescription}
         canonicalPath={`/products/${slug}`}
-        ogImage={images[0]?.url}
+        {...(images[0]?.url ? { ogImage: images[0].url } : {})}
         ogType="product"
       />
       <ProductJsonLd
         id={product.id}
         name={product.name}
-        description={product.description ?? undefined}
-        imageUrl={images[0]?.url}
+        {...(product.description ? { description: product.description } : {})}
+        {...(images[0]?.url ? { imageUrl: images[0].url } : {})}
         priceMajor={productPriceMajor}
         availability="InStock"
-        brandName={product.vendorName ?? undefined}
+        {...(product.vendorName ? { brandName: product.vendorName } : {})}
         slug={slug ?? ''}
       />
       <BreadcrumbJsonLd
@@ -744,7 +744,10 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Trust badges */}
-            <TrustBadges returnPolicy={product.returnPolicy} soldCount={product.soldCount} />
+            <TrustBadges
+              {...(product.returnPolicy ? { returnPolicy: product.returnPolicy } : {})}
+              {...(product.soldCount !== undefined ? { soldCount: product.soldCount } : {})}
+            />
 
             {/* Delivery estimation */}
             <DeliveryCheck productSlug={slug ?? ''} />

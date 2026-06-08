@@ -11,7 +11,7 @@ interface ProductCardProps {
   /** Price in minor units (paise/cents) — rendered as formatted string */
   priceMajor: string;
   vendorName: string;
-  imageUrl?: string;
+  imageUrl?: string | undefined;
   /** Render in horizontal list view (image left, details right) */
   listView?: boolean;
   /** Show comparison checkbox (CategoryPage only) */
@@ -135,7 +135,7 @@ export function ProductCard({
       <Link to={`/products/${slug}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2 rounded-lg">
         <motion.div
           className={`bg-grovio-surface-raised rounded-lg border border-grovio-border overflow-hidden h-full transition-opacity ${isDisabled ? 'opacity-50' : ''}`}
-          whileHover={{ y: isDisabled ? 0 : -4, boxShadow: isDisabled ? undefined : '0 8px 24px rgba(0,0,0,0.10)' }}
+          whileHover={{ y: isDisabled ? 0 : -4, ...(isDisabled ? {} : { boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }) }}
           transition={{ duration: 0.2 }}
         >
           {/* Product image */}

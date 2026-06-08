@@ -48,7 +48,7 @@ async function parseCsvPreview(file: File): Promise<ImportPreviewRow[]> {
   const text = await file.text();
   const lines = text.split('\n').filter((l) => l.trim());
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map((h) => h.trim());
+  const headers = (lines[0] ?? '').split(',').map((h) => h.trim());
   return lines.slice(1, 11).map((line) => {
     const cols = line.split(',').map((c) => c.trim());
     const get = (key: string) => cols[headers.indexOf(key)] ?? '';

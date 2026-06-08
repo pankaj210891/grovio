@@ -129,9 +129,7 @@ export function Sidebar() {
             <NavItemComponent
               key={item.to}
               item={item}
-              badge={
-                item.to === '/support' ? openTickets : undefined
-              }
+              {...(item.to === '/support' && openTickets != null ? { badge: openTickets } : {})}
             />
           ))}
         </div>

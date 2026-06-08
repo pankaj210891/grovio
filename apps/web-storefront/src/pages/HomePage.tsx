@@ -279,6 +279,7 @@ function AnnouncementBanner() {
   if (!announcements || announcements.length === 0) return null;
 
   const announcement = announcements[0];
+  if (!announcement) return null;
 
   return (
     <div

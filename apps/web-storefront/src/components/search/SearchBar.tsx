@@ -89,7 +89,7 @@ export function SearchBar() {
     type: 'product' | 'category';
     name: string;
     slug: string;
-    categoryName?: string;
+    categoryName?: string | undefined;
   }
 
   const allSuggestions: GroupedSuggestion[] = [
@@ -112,8 +112,13 @@ export function SearchBar() {
 
   for (const s of allSuggestions) {
     if (s.type === 'product' && s.categoryName) {
-      if (!categoryGroups[s.categoryName]) categoryGroups[s.categoryName] = [];
-      categoryGroups[s.categoryName].push(s);
+      const catName = s.categoryName;
+      const group = categoryGroups[catName];
+      if (!group) {
+        categoryGroups[catName] = [s];
+      } else {
+        group.push(s);
+      }
     } else {
       uncategorized.push(s);
     }
