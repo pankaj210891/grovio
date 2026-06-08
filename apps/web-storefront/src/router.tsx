@@ -21,6 +21,7 @@ import AddressesPage from './pages/account/AddressesPage.js';
 import OrdersPage from './pages/account/OrdersPage.js';
 import OrderDetailPage from './pages/account/OrderDetailPage.js';
 import WalletPage from './pages/account/WalletPage.js';
+import WishlistPage from './pages/account/WishlistPage.js';
 
 /**
  * Phase 11 route tree — React Router v7 createBrowserRouter.
@@ -48,7 +49,9 @@ import WalletPage from './pages/account/WalletPage.js';
  *         ├── /account/addresses → AddressesPage
  *         ├── /account/orders    → OrdersPage
  *         ├── /account/orders/:id → OrderDetailPage
- *         └── /account/wallet   → WalletPage
+ *         ├── /account/wallet   → WalletPage
+ *         ├── /account/wishlist → WishlistPage
+ *         └── /account/notifications → NotificationsPage
  */
 export const router = createBrowserRouter([
   {
@@ -97,6 +100,7 @@ export const router = createBrowserRouter([
           { path: 'orders', element: <OrdersPage /> },
           { path: 'orders/:id', element: <OrderDetailPage /> },
           { path: 'wallet', element: <WalletPage /> },
+          { path: 'wishlist', element: <WishlistPage /> },
         ],
       },
     ],

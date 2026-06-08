@@ -1,6 +1,9 @@
 import { motion } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart } from 'lucide-react';
 import { useComparisonStore } from '../../stores/useComparisonStore.js';
+import { useWishlistToggle } from '../../hooks/useWishlist.js';
+import { useAuth } from '../../hooks/useAuth.js';
 
 interface ProductCardProps {
   slug: string;
@@ -15,6 +18,12 @@ interface ProductCardProps {
   showCompare?: boolean;
   /** Product id for comparison store */
   productId?: string;
+  /** Whether this product is currently wishlisted */
+  isWishlisted?: boolean;
+  /** Show heart/wishlist toggle */
+  showWishlist?: boolean;
+  /** Price-drop badge — shown when product has a lower price than when wishlisted */
+  isPriceDropped?: boolean;
 }
 
 /**
@@ -41,11 +50,17 @@ export function ProductCard({
   listView = false,
   showCompare = false,
   productId,
+  isWishlisted = false,
+  showWishlist = false,
+  isPriceDropped = false,
 }: ProductCardProps) {
   const { selectedProductIds, addProduct, removeProduct } = useComparisonStore();
   const isCompared = productId ? selectedProductIds.includes(productId) : false;
   const maxReached = selectedProductIds.length >= 3;
   const isDisabled = showCompare && maxReached && !isCompared;
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const wishlistToggle = useWishlistToggle();
 
   function handleCompareToggle(e: React.MouseEvent) {
     e.preventDefault();
@@ -56,6 +71,17 @@ export function ProductCard({
     } else if (!maxReached) {
       addProduct(productId);
     }
+  }
+
+  function handleWishlistToggle(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!productId) return;
+    if (!isAuthenticated) {
+      void navigate('/auth/login');
+      return;
+    }
+    wishlistToggle.mutate({ productId, isWishlisted });
   }
 
   if (listView) {
@@ -113,16 +139,24 @@ export function ProductCard({
           transition={{ duration: 0.2 }}
         >
           {/* Product image */}
-          <div className="aspect-[4/5] overflow-hidden rounded-t-lg bg-grovio-surface">
+          <div className="aspect-[4/5] overflow-hidden rounded-t-lg bg-grovio-surface relative">
             {imageUrl ? (
               <img
                 src={imageUrl}
                 alt={name}
                 className="w-full h-full object-cover"
                 loading="lazy"
+                width={300}
+                height={375}
               />
             ) : (
               <div className="w-full h-full bg-grovio-border" aria-hidden="true" />
+            )}
+            {/* Price-drop badge */}
+            {isPriceDropped && (
+              <span className="absolute top-2 left-2 bg-grovio-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                Price Dropped!
+              </span>
             )}
           </div>
 
@@ -134,6 +168,23 @@ export function ProductCard({
           </div>
         </motion.div>
       </Link>
+
+      {/* Wishlist heart button — top-right corner */}
+      {showWishlist && productId && (
+        <button
+          type="button"
+          onClick={handleWishlistToggle}
+          aria-label={isWishlisted ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
+          aria-pressed={isWishlisted}
+          disabled={wishlistToggle.isPending}
+          className="absolute top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-sm transition-colors hover:bg-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-1"
+        >
+          <Heart
+            className={`h-4 w-4 transition-colors ${isWishlisted ? 'fill-grovio-error text-grovio-error' : 'text-grovio-text-muted'}`}
+            aria-hidden="true"
+          />
+        </button>
+      )}
 
       {/* Compare checkbox — bottom-left corner */}
       {showCompare && productId && (
