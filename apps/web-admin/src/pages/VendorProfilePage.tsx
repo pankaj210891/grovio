@@ -222,8 +222,8 @@ export function VendorProfilePage() {
         {[
           { label: 'GMV', value: formatInr(vendor.gmv) },
           { label: 'Products', value: String(vendor.productCount) },
-          { label: 'Avg Rating', value: vendor.avgRating.toFixed(1) },
-          { label: 'KYC Status', value: vendor.kycStatus.replace('_', ' ') },
+          { label: 'Avg Rating', value: vendor.avgRating != null ? vendor.avgRating.toFixed(1) : '—' },
+          { label: 'KYC Status', value: vendor.kycStatus?.replace(/_/g, ' ') ?? '—' },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-xl border border-grovio-border bg-grovio-surface-raised p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-grovio-text-muted">{label}</p>
@@ -343,7 +343,7 @@ export function VendorProfilePage() {
                   <div key={doc.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                     <div>
                       <p className="text-sm font-medium capitalize text-grovio-text">
-                        {doc.documentType.replace('_', ' ')}
+                        {doc.documentType?.replace(/_/g, ' ') ?? '—'}
                       </p>
                       <p className="text-xs text-grovio-text-muted">
                         Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}

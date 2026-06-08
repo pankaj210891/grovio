@@ -370,7 +370,7 @@ export function OrdersPage() {
                       'rounded-full px-2 py-0.5 text-[10px] font-bold capitalize',
                       STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-600',
                     ].join(' ')}>
-                      {order.status.replace('_', ' ')}
+                      {order.status?.replace(/_/g, ' ') ?? '—'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-grovio-text">
