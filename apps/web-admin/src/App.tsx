@@ -22,31 +22,45 @@
  *     /categories            — CategoryListPage (Phase 2 — PRESERVED)
  *     /categories/:id        — CategoryDetailPage (Phase 2 — PRESERVED)
  *
- * REMOVED routes (Phase 11):
- *   /commission-rules        — moved into /finance (Finance tab: Commissions)
- *   /payout-management       — moved into /finance (Finance tab: Payouts)
+ * All page routes use React.lazy for code splitting (T8 performance).
  */
 
+import React, { Suspense } from 'react';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { PanelLayout } from './components/layout/PanelLayout.js';
 import { ProtectedAdminRoute } from './components/layout/ProtectedAdminRoute.js';
+
+// Eager: auth page (small, needed immediately)
 import { LoginPage } from './pages/auth/LoginPage.js';
-import CategoryDetailPage from './pages/categories/CategoryDetailPage.js';
-import CategoryListPage from './pages/categories/CategoryListPage.js';
-import { DashboardPage } from './pages/DashboardPage.js';
-import { VendorsPage } from './pages/VendorsPage.js';
-import { VendorProfilePage } from './pages/VendorProfilePage.js';
-import { CatalogModerationPage } from './pages/CatalogModerationPage.js';
-import { FinancePage } from './pages/FinancePage.js';
-import { OrdersPage } from './pages/OrdersPage.js';
-import { InsightsPage } from './pages/InsightsPage.js';
-import { SupportPage } from './pages/SupportPage.js';
-import { SupportTicketPage } from './pages/SupportTicketPage.js';
-import { CmsPage } from './pages/CmsPage.js';
-import { FeatureFlagsPage } from './pages/FeatureFlagsPage.js';
-import { SettingsPage } from './pages/SettingsPage.js';
-import { AuditLogPage } from './pages/AuditLogPage.js';
-import { BulkImportPage } from './pages/BulkImportPage.js';
+
+// Lazy: all admin panel pages (code-split)
+const DashboardPage = React.lazy(() => import('./pages/DashboardPage.js').then(m => ({ default: m.DashboardPage })));
+const VendorsPage = React.lazy(() => import('./pages/VendorsPage.js').then(m => ({ default: m.VendorsPage })));
+const VendorProfilePage = React.lazy(() => import('./pages/VendorProfilePage.js').then(m => ({ default: m.VendorProfilePage })));
+const CatalogModerationPage = React.lazy(() => import('./pages/CatalogModerationPage.js').then(m => ({ default: m.CatalogModerationPage })));
+const BulkImportPage = React.lazy(() => import('./pages/BulkImportPage.js').then(m => ({ default: m.BulkImportPage })));
+const FinancePage = React.lazy(() => import('./pages/FinancePage.js').then(m => ({ default: m.FinancePage })));
+const OrdersPage = React.lazy(() => import('./pages/OrdersPage.js').then(m => ({ default: m.OrdersPage })));
+const InsightsPage = React.lazy(() => import('./pages/InsightsPage.js').then(m => ({ default: m.InsightsPage })));
+const SupportPage = React.lazy(() => import('./pages/SupportPage.js').then(m => ({ default: m.SupportPage })));
+const SupportTicketPage = React.lazy(() => import('./pages/SupportTicketPage.js').then(m => ({ default: m.SupportTicketPage })));
+const CmsPage = React.lazy(() => import('./pages/CmsPage.js').then(m => ({ default: m.CmsPage })));
+const FeatureFlagsPage = React.lazy(() => import('./pages/FeatureFlagsPage.js').then(m => ({ default: m.FeatureFlagsPage })));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage.js').then(m => ({ default: m.SettingsPage })));
+const AuditLogPage = React.lazy(() => import('./pages/AuditLogPage.js').then(m => ({ default: m.AuditLogPage })));
+const CategoryListPage = React.lazy(() => import('./pages/categories/CategoryListPage.js'));
+const CategoryDetailPage = React.lazy(() => import('./pages/categories/CategoryDetailPage.js'));
+
+// Minimal loading spinner used as Suspense fallback
+const PageSkeleton = () => (
+  <div className="flex min-h-64 items-center justify-center">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-grovio-primary border-t-transparent" aria-label="Loading page" />
+  </div>
+);
+
+function LazyPage({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<PageSkeleton />}>{children}</Suspense>;
+}
 
 const router = createBrowserRouter([
   // Public — login
@@ -66,25 +80,25 @@ const router = createBrowserRouter([
           // Root redirect to dashboard
           { index: true, element: <Navigate to="/dashboard" replace /> },
 
-          // Core admin pages
-          { path: 'dashboard', element: <DashboardPage /> },
-          { path: 'vendors', element: <VendorsPage /> },
-          { path: 'vendors/:id', element: <VendorProfilePage /> },
-          { path: 'catalog-moderation', element: <CatalogModerationPage /> },
-          { path: 'catalog-moderation/import', element: <BulkImportPage /> },
-          { path: 'finance', element: <FinancePage /> },
-          { path: 'orders', element: <OrdersPage /> },
-          { path: 'insights', element: <InsightsPage /> },
-          { path: 'support', element: <SupportPage /> },
-          { path: 'support/:id', element: <SupportTicketPage /> },
-          { path: 'cms', element: <CmsPage /> },
-          { path: 'feature-flags', element: <FeatureFlagsPage /> },
-          { path: 'settings', element: <SettingsPage /> },
-          { path: 'audit-log', element: <AuditLogPage /> },
+          // Core admin pages (all lazy)
+          { path: 'dashboard', element: <LazyPage><DashboardPage /></LazyPage> },
+          { path: 'vendors', element: <LazyPage><VendorsPage /></LazyPage> },
+          { path: 'vendors/:id', element: <LazyPage><VendorProfilePage /></LazyPage> },
+          { path: 'catalog-moderation', element: <LazyPage><CatalogModerationPage /></LazyPage> },
+          { path: 'catalog-moderation/import', element: <LazyPage><BulkImportPage /></LazyPage> },
+          { path: 'finance', element: <LazyPage><FinancePage /></LazyPage> },
+          { path: 'orders', element: <LazyPage><OrdersPage /></LazyPage> },
+          { path: 'insights', element: <LazyPage><InsightsPage /></LazyPage> },
+          { path: 'support', element: <LazyPage><SupportPage /></LazyPage> },
+          { path: 'support/:id', element: <LazyPage><SupportTicketPage /></LazyPage> },
+          { path: 'cms', element: <LazyPage><CmsPage /></LazyPage> },
+          { path: 'feature-flags', element: <LazyPage><FeatureFlagsPage /></LazyPage> },
+          { path: 'settings', element: <LazyPage><SettingsPage /></LazyPage> },
+          { path: 'audit-log', element: <LazyPage><AuditLogPage /></LazyPage> },
 
           // Phase 2 category routes — PRESERVED (must not be deleted)
-          { path: 'categories', element: <CategoryListPage /> },
-          { path: 'categories/:id', element: <CategoryDetailPage /> },
+          { path: 'categories', element: <LazyPage><CategoryListPage /></LazyPage> },
+          { path: 'categories/:id', element: <LazyPage><CategoryDetailPage /></LazyPage> },
 
           // Catch-all inside panel — redirect to dashboard
           { path: '*', element: <Navigate to="/dashboard" replace /> },
