@@ -6,6 +6,13 @@ import { Input } from '../../components/ui/Input.js';
 import { Skeleton } from '../../components/ui/Skeleton.js';
 import { apiClient, ApiError } from '../../lib/api-client.js';
 import { useUiStore } from '../../store/ui-store.js';
+import { Bell } from 'lucide-react';
+
+interface NotificationPreferences {
+  order_updates: boolean; // always true, non-editable
+  price_drops: boolean;
+  promotions: boolean;
+}
 
 /**
  * Response shape from GET /account/profile and PATCH /account/profile.
@@ -55,6 +62,11 @@ export default function ProfilePage() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [errors, setErrors] = useState<{ name?: string; general?: string }>({});
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>({
+    order_updates: true,
+    price_drops: true,
+    promotions: false,
+  });
 
   // Populate form fields once profile data arrives
   useEffect(() => {
@@ -63,6 +75,31 @@ export default function ProfilePage() {
       setPhone(profile.phone ?? '');
     }
   }, [profile]);
+
+  // ── Notification preferences query ─────────────────────────────────────────
+  const { data: notifData } = useQuery<NotificationPreferences>({
+    queryKey: ['account', 'notifications', 'preferences'],
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: NotificationPreferences }>(
+        '/account/notifications/preferences',
+      );
+      return res.data;
+    },
+  });
+
+  // Sync notif prefs when loaded
+  useEffect(() => {
+    if (notifData) setNotifPrefs(notifData);
+  }, [notifData]);
+
+  // ── Notification preferences mutation ──────────────────────────────────────
+  const notifMutation = useMutation({
+    mutationFn: (prefs: Partial<NotificationPreferences>) =>
+      apiClient.patch('/account/notifications/preferences', prefs),
+    onSuccess: () => {
+      addToast({ id: crypto.randomUUID(), message: 'Notification preferences saved.', variant: 'success' });
+    },
+  });
 
   // ── Save mutation ─────────────────────────────────────────────────────────
   const saveMutation = useMutation({
@@ -184,6 +221,75 @@ export default function ProfilePage() {
               {saveMutation.isPending ? 'Please wait…' : 'Save Changes'}
             </Button>
           </form>
+        )}
+
+        {/* Notification Preferences section */}
+        {!isLoading && !isError && profile && (
+          <section aria-labelledby="notif-prefs-heading" className="mt-12 max-w-md">
+            <div className="flex items-center gap-2 mb-5">
+              <Bell className="h-5 w-5 text-grovio-primary" aria-hidden="true" />
+              <h2 id="notif-prefs-heading" className="text-base font-semibold text-grovio-text">
+                Notification Preferences
+              </h2>
+            </div>
+
+            <div className="space-y-4 rounded-xl border border-grovio-border bg-grovio-surface p-5">
+              {/* Order updates — always on */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-grovio-text">Order Updates</p>
+                  <p className="text-xs text-grovio-text-muted">Shipping, delivery, and order status changes</p>
+                </div>
+                <span className="text-xs font-medium text-grovio-text-muted bg-grovio-border px-2 py-0.5 rounded-full" aria-label="Always on">
+                  Always On
+                </span>
+              </div>
+
+              {/* Price drops */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-grovio-text">Price Drops</p>
+                  <p className="text-xs text-grovio-text-muted">When wishlisted items go on sale</p>
+                </div>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    checked={notifPrefs.price_drops}
+                    onChange={(e) => {
+                      const updated = { ...notifPrefs, price_drops: e.target.checked };
+                      setNotifPrefs(updated);
+                      notifMutation.mutate({ price_drops: e.target.checked });
+                    }}
+                    className="sr-only peer"
+                    aria-label="Enable price drop notifications"
+                  />
+                  <div className="h-5 w-9 rounded-full bg-grovio-border peer-checked:bg-grovio-primary transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4" />
+                </label>
+              </div>
+
+              {/* Promotions */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-grovio-text">Promotions</p>
+                  <p className="text-xs text-grovio-text-muted">Special offers, discounts, and sales events</p>
+                </div>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    checked={notifPrefs.promotions}
+                    onChange={(e) => {
+                      const updated = { ...notifPrefs, promotions: e.target.checked };
+                      setNotifPrefs(updated);
+                      notifMutation.mutate({ promotions: e.target.checked });
+                    }}
+                    className="sr-only peer"
+                    aria-label="Enable promotion notifications"
+                  />
+                  <div className="h-5 w-9 rounded-full bg-grovio-border peer-checked:bg-grovio-primary transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4" />
+                </label>
+              </div>
+            </div>
+          </section>
         )}
       </div>
     </PageTransition>
