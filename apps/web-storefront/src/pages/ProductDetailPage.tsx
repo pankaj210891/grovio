@@ -2,15 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ShieldCheck, RefreshCw, Package, ZoomIn, X, Camera, Mic } from 'lucide-react';
+import { ChevronLeft, ShieldCheck, RefreshCw, Package, ZoomIn, X, Camera, Mic, Share2 } from 'lucide-react';
 import { PageTransition } from '../components/layout/PageTransition.js';
 import { Skeleton } from '../components/ui/Skeleton.js';
 import { ReviewsSection } from '../components/pdp/ReviewsSection.js';
 import { apiClient } from '../lib/api-client.js';
 import { useAddToBasket } from '../hooks/useBasket.js';
 import { useUiStore } from '../store/ui-store.js';
+import { useAuth } from '../hooks/useAuth.js';
 import { SeoHead } from '../components/seo/SeoHead.js';
 import { ProductJsonLd, BreadcrumbJsonLd } from '../components/seo/JsonLd.js';
+import { trackProductView } from './HomePage.js';
 import type { Product, ProductImage, ProductVariant } from '@grovio/contracts';
 
 // ---------------------------------------------------------------------------
@@ -302,6 +304,7 @@ export default function ProductDetailPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const addToBasket = useAddToBasket();
   const addToast = useUiStore((s) => s.addToast);
+  const { isAuthenticated } = useAuth();
 
   const { data, isLoading, isError } = useQuery<ProductDetailResponse>({
     queryKey: ['product', slug],
@@ -310,6 +313,7 @@ export default function ProductDetailPage() {
         .get<{ success: boolean; data: ProductDetailResponse }>(`/products/${slug ?? ''}`)
         .then((r) => r.data),
     enabled: !!slug,
+    staleTime: 10 * 60 * 1000,
     retry: (failureCount, error) => {
       if (error && typeof error === 'object' && 'status' in error && (error as { status: number }).status === 404) {
         return false;
@@ -317,6 +321,25 @@ export default function ProductDetailPage() {
       return failureCount < 2;
     },
   });
+
+  // View tracking mutation (fire-and-forget)
+  const viewMutation = useMutation({
+    mutationFn: (productId: string) =>
+      apiClient.post(`/products/${productId}/view`, {}),
+  });
+
+  // Track product view on mount
+  useEffect(() => {
+    const product = data?.product;
+    if (!product) return;
+    // Always track locally
+    trackProductView(product.id);
+    // If authenticated, also track on server (fire-and-forget)
+    if (isAuthenticated) {
+      viewMutation.mutate(product.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.product?.id, isAuthenticated]);
 
   const product = data?.product;
   const images = product?.images ?? [];
@@ -726,7 +749,7 @@ export default function ProductDetailPage() {
             {/* Delivery estimation */}
             <DeliveryCheck productSlug={slug ?? ''} />
 
-            {/* Non-functional camera / voice icons */}
+            {/* Non-functional camera / voice icons + social share */}
             <div className="flex items-center gap-3 mt-3">
               <button
                 type="button"
@@ -745,6 +768,30 @@ export default function ProductDetailPage() {
               >
                 <Mic className="h-4 w-4" aria-hidden="true" />
                 Voice search
+              </button>
+              {/* Share button — uses Web Share API with fallback to clipboard */}
+              <button
+                type="button"
+                onClick={async () => {
+                  const url = window.location.href;
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({ title: product.name, url });
+                    } catch { /* user cancelled */ }
+                  } else {
+                    try {
+                      await navigator.clipboard.writeText(url);
+                      addToast({ id: crypto.randomUUID(), message: 'Link copied to clipboard!', variant: 'success' });
+                    } catch {
+                      addToast({ id: crypto.randomUUID(), message: 'Could not copy link.', variant: 'error' });
+                    }
+                  }
+                }}
+                aria-label="Share this product"
+                className="inline-flex items-center gap-1 text-xs text-grovio-text-muted hover:text-grovio-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2 rounded"
+              >
+                <Share2 className="h-4 w-4" aria-hidden="true" />
+                Share
               </button>
             </div>
 
