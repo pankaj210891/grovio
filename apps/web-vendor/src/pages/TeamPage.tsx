@@ -1,11 +1,19 @@
 /**
- * Vendor Team page (VEN-05) — owner only.
+ * Vendor Team page — enhanced (Plan 11-03, T8).
  *
- * GET /vendor/team → list staff members
- * POST /vendor/team/invite { email, role } → invite (role: manager | staff only)
- * DELETE /vendor/team/:id → remove (soft-delete)
+ * Sections:
+ *   1. Active members: inline role change, deactivate button
+ *   2. Pending invites: resend, cancel
+ * Invite panel (owner only): slide-over with email + role (no owner)
  *
- * Invite role select offers only manager and staff (not owner — D-05, T-06-02).
+ * API endpoints used:
+ *   GET  /vendor/team               → { members, invites }
+ *   POST /vendor/team/invite        → { email, role }
+ *   PATCH /vendor/team/:id/role     → { role }
+ *   PATCH /vendor/team/:id/deactivate
+ *   POST /vendor/team/invite/:id/resend
+ *   DELETE /vendor/team/invite/:id  → cancel invite
+ *   DELETE /vendor/team/:id         → remove active member
  */
 
 import React, { useState } from 'react';
@@ -15,16 +23,30 @@ import { apiClient } from '../lib/apiClient.js';
 import { useUiStore } from '../stores/uiStore.js';
 import type { VendorStaffMember } from '@grovio/contracts';
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface PendingInvite {
+  id: string;
+  email: string;
+  role: 'manager' | 'staff';
+  createdAt: string;
+  expiresAt?: string;
+}
+
 interface TeamResponse {
   success: boolean;
-  data: { members: VendorStaffMember[] };
+  data: { members: VendorStaffMember[]; invites?: PendingInvite[] };
 }
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const ROLE_COLORS: Record<string, string> = {
   owner: 'bg-grovio-primary/10 text-grovio-primary',
   manager: 'bg-blue-100 text-blue-700',
   staff: 'bg-gray-100 text-gray-600',
 };
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function TeamPage() {
   const queryClient = useQueryClient();
@@ -34,15 +56,24 @@ export default function TeamPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'manager' | 'staff'>('staff');
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [changingRoleId, setChangingRoleId] = useState<string | null>(null);
 
-  const { data, isLoading, error: queryError } = useQuery<VendorStaffMember[]>({
+  // ── Queries
+  const { data, isLoading, error: queryError } = useQuery<{
+    members: VendorStaffMember[];
+    invites: PendingInvite[];
+  }>({
     queryKey: ['vendorTeam'],
     queryFn: async () => {
       const res = await apiClient.get<TeamResponse>('/vendor/team');
-      return res.data.members;
+      return {
+        members: res.data.members,
+        invites: res.data.invites ?? [],
+      };
     },
   });
 
+  // ── Mutations: active members
   const inviteMutation = useMutation({
     mutationFn: ({ email, role }: { email: string; role: 'manager' | 'staff' }) =>
       apiClient.post('/vendor/team/invite', { email, role }),
@@ -59,9 +90,32 @@ export default function TeamPage() {
     },
   });
 
+  const changeRoleMutation = useMutation({
+    mutationFn: ({ memberId, role }: { memberId: string; role: 'manager' | 'staff' }) =>
+      apiClient.patch(`/vendor/team/${memberId}/role`, { role }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['vendorTeam'] });
+      setChangingRoleId(null);
+      addToast({ id: Date.now().toString(), message: 'Role updated.', variant: 'success' });
+    },
+    onError: () => {
+      addToast({ id: Date.now().toString(), message: 'Failed to change role.', variant: 'error' });
+    },
+  });
+
+  const deactivateMutation = useMutation({
+    mutationFn: (memberId: string) => apiClient.patch(`/vendor/team/${memberId}/deactivate`, {}),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['vendorTeam'] });
+      addToast({ id: Date.now().toString(), message: 'Member deactivated.', variant: 'success' });
+    },
+    onError: () => {
+      addToast({ id: Date.now().toString(), message: 'Failed to deactivate member.', variant: 'error' });
+    },
+  });
+
   const removeMutation = useMutation({
-    mutationFn: (memberId: string) =>
-      apiClient.delete(`/vendor/team/${memberId}`),
+    mutationFn: (memberId: string) => apiClient.delete(`/vendor/team/${memberId}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['vendorTeam'] });
       addToast({ id: Date.now().toString(), message: 'Member removed.', variant: 'success' });
@@ -71,6 +125,29 @@ export default function TeamPage() {
     },
   });
 
+  // ── Mutations: pending invites
+  const resendMutation = useMutation({
+    mutationFn: (inviteId: string) => apiClient.post(`/vendor/team/invite/${inviteId}/resend`, {}),
+    onSuccess: () => {
+      addToast({ id: Date.now().toString(), message: 'Invite re-sent.', variant: 'success' });
+    },
+    onError: () => {
+      addToast({ id: Date.now().toString(), message: 'Failed to resend invite.', variant: 'error' });
+    },
+  });
+
+  const cancelInviteMutation = useMutation({
+    mutationFn: (inviteId: string) => apiClient.delete(`/vendor/team/invite/${inviteId}`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['vendorTeam'] });
+      addToast({ id: Date.now().toString(), message: 'Invite cancelled.', variant: 'success' });
+    },
+    onError: () => {
+      addToast({ id: Date.now().toString(), message: 'Failed to cancel invite.', variant: 'error' });
+    },
+  });
+
+  // ── Handlers
   function handleInviteSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
@@ -78,8 +155,14 @@ export default function TeamPage() {
     inviteMutation.mutate({ email: inviteEmail.trim(), role: inviteRole });
   }
 
+  function handleDeactivate(member: VendorStaffMember) {
+    if (member.role === 'owner') return;
+    if (!confirm(`Deactivate ${member.email}? They will lose portal access.`)) return;
+    deactivateMutation.mutate(member.id);
+  }
+
   function handleRemove(member: VendorStaffMember) {
-    if (member.role === 'owner') return; // cannot remove owner
+    if (member.role === 'owner') return;
     if (!confirm(`Remove ${member.email} from the team?`)) return;
     removeMutation.mutate(member.id);
   }
@@ -90,11 +173,12 @@ export default function TeamPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
+      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-grovio-text">Team</h1>
           <p className="mt-1 text-sm text-grovio-text-muted">
-            Manage your store team members.
+            Manage your store team members and pending invitations.
           </p>
         </div>
         <button
@@ -120,61 +204,209 @@ export default function TeamPage() {
       )}
 
       {data && (
-        <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised">
-          {data.length === 0 ? (
-            <div className="px-6 py-12 text-center text-sm text-grovio-text-muted">
-              No team members yet.
+        <div className="space-y-8">
+          {/* ── Section 1: Active Members ────────────────────────────────── */}
+          <section>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-grovio-text-muted">
+              Active Members ({data.members.length})
+            </h2>
+            <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised">
+              {data.members.length === 0 ? (
+                <div className="px-6 py-12 text-center text-sm text-grovio-text-muted">
+                  No active team members.
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-grovio-border text-left">
+                      <th className="px-4 py-3 font-medium text-grovio-text-muted">Email</th>
+                      <th className="px-4 py-3 font-medium text-grovio-text-muted">Role</th>
+                      <th className="px-4 py-3 font-medium text-grovio-text-muted">Joined</th>
+                      <th className="px-4 py-3 font-medium text-grovio-text-muted">Status</th>
+                      <th className="px-4 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-grovio-border">
+                    {data.members.map((member) => (
+                      <tr key={member.id} className="hover:bg-grovio-surface/50">
+                        <td className="px-4 py-3 text-grovio-text">{member.email}</td>
+
+                        {/* Inline role change */}
+                        <td className="px-4 py-3">
+                          {member.role === 'owner' ? (
+                            <span
+                              className={[
+                                'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize',
+                                ROLE_COLORS[member.role] ?? 'bg-gray-100 text-gray-600',
+                              ].join(' ')}
+                            >
+                              Owner
+                            </span>
+                          ) : changingRoleId === member.id ? (
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                defaultValue={member.role}
+                                className="rounded-lg border border-grovio-border bg-grovio-surface px-2 py-1 text-xs text-grovio-text focus:border-grovio-primary focus:outline-none"
+                                onBlur={() => setChangingRoleId(null)}
+                                onChange={(e) => {
+                                  changeRoleMutation.mutate({
+                                    memberId: member.id,
+                                    role: e.target.value as 'manager' | 'staff',
+                                  });
+                                }}
+                              >
+                                <option value="manager">Manager</option>
+                                <option value="staff">Staff</option>
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => setChangingRoleId(null)}
+                                className="text-xs text-grovio-text-muted"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setChangingRoleId(member.id)}
+                              className={[
+                                'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize transition-opacity hover:opacity-70',
+                                ROLE_COLORS[member.role] ?? 'bg-gray-100 text-gray-600',
+                              ].join(' ')}
+                              title="Click to change role"
+                            >
+                              {member.role}
+                            </button>
+                          )}
+                        </td>
+
+                        <td className="px-4 py-3 text-grovio-text-muted">
+                          {member.acceptedAt
+                            ? new Date(member.acceptedAt).toLocaleDateString()
+                            : 'Pending'}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          <span
+                            className={[
+                              'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                              (member as VendorStaffMember & { isActive?: boolean }).isActive !== false
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-500',
+                            ].join(' ')}
+                          >
+                            {(member as VendorStaffMember & { isActive?: boolean }).isActive !== false
+                              ? 'Active'
+                              : 'Deactivated'}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-4 py-3">
+                          {member.role !== 'owner' && (
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleDeactivate(member)}
+                                disabled={deactivateMutation.isPending}
+                                className="rounded-md px-2.5 py-1 text-xs font-medium text-grovio-text-muted transition-colors hover:bg-amber-50 hover:text-amber-700 disabled:opacity-50"
+                                title="Deactivate member"
+                              >
+                                Deactivate
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemove(member)}
+                                disabled={removeMutation.isPending}
+                                className="rounded-md px-2.5 py-1 text-xs font-medium text-grovio-error transition-colors hover:bg-grovio-error/10 disabled:opacity-50"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-grovio-border text-left">
-                  <th className="px-4 py-3 font-medium text-grovio-text-muted">Email</th>
-                  <th className="px-4 py-3 font-medium text-grovio-text-muted">Role</th>
-                  <th className="px-4 py-3 font-medium text-grovio-text-muted">Joined</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-grovio-border">
-                {data.map((member) => (
-                  <tr key={member.id} className="hover:bg-grovio-surface/50">
-                    <td className="px-4 py-3 text-grovio-text">{member.email}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={[
-                          'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize',
-                          ROLE_COLORS[member.role] ?? 'bg-gray-100 text-gray-600',
-                        ].join(' ')}
-                      >
-                        {member.role}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-grovio-text-muted">
-                      {member.acceptedAt
-                        ? new Date(member.acceptedAt).toLocaleDateString()
-                        : 'Pending'}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {member.role !== 'owner' && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(member)}
-                          disabled={removeMutation.isPending}
-                          className="rounded-md px-3 py-1 text-xs font-medium text-grovio-error transition-colors hover:bg-grovio-error/10 disabled:opacity-50"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          </section>
+
+          {/* ── Section 2: Pending Invites ───────────────────────────────── */}
+          {data.invites.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-grovio-text-muted">
+                Pending Invitations ({data.invites.length})
+              </h2>
+              <div className="rounded-xl border border-grovio-border bg-grovio-surface-raised">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-grovio-border text-left">
+                      <th className="px-4 py-3 font-medium text-grovio-text-muted">Email</th>
+                      <th className="px-4 py-3 font-medium text-grovio-text-muted">Role</th>
+                      <th className="px-4 py-3 font-medium text-grovio-text-muted">Sent</th>
+                      <th className="px-4 py-3 font-medium text-grovio-text-muted">Expires</th>
+                      <th className="px-4 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-grovio-border">
+                    {data.invites.map((invite) => (
+                      <tr key={invite.id} className="hover:bg-grovio-surface/50">
+                        <td className="px-4 py-3 text-grovio-text">{invite.email}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={[
+                              'inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize',
+                              ROLE_COLORS[invite.role] ?? 'bg-gray-100 text-gray-600',
+                            ].join(' ')}
+                          >
+                            {invite.role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-grovio-text-muted">
+                          {new Date(invite.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-grovio-text-muted">
+                          {invite.expiresAt
+                            ? new Date(invite.expiresAt).toLocaleDateString()
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => resendMutation.mutate(invite.id)}
+                              disabled={resendMutation.isPending}
+                              className="rounded-md px-2.5 py-1 text-xs font-medium text-grovio-primary transition-colors hover:bg-grovio-primary/10 disabled:opacity-50"
+                            >
+                              Resend
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!confirm(`Cancel invite to ${invite.email}?`)) return;
+                                cancelInviteMutation.mutate(invite.id);
+                              }}
+                              disabled={cancelInviteMutation.isPending}
+                              className="rounded-md px-2.5 py-1 text-xs font-medium text-grovio-error transition-colors hover:bg-grovio-error/10 disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           )}
         </div>
       )}
 
-      {/* Invite slide-over */}
+      {/* ── Invite slide-over ──────────────────────────────────────────────── */}
       <AnimatePresence>
         {showPanel && (
           <>
@@ -196,9 +428,7 @@ export default function TeamPage() {
             >
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b border-grovio-border px-6 py-4">
-                  <h2 className="text-base font-semibold text-grovio-text">
-                    Invite Team Member
-                  </h2>
+                  <h2 className="text-base font-semibold text-grovio-text">Invite Team Member</h2>
                   <button
                     type="button"
                     onClick={() => setShowPanel(false)}
@@ -244,7 +474,6 @@ export default function TeamPage() {
                     >
                       <option value="manager">Manager</option>
                       <option value="staff">Staff</option>
-                      {/* owner intentionally omitted — T-06-02 elevation of privilege mitigation */}
                     </select>
                     <p className="mt-1 text-xs text-grovio-text-muted">
                       Owner role cannot be assigned via invite.
