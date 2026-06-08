@@ -6,6 +6,12 @@ import App from './App.js';
 import './lib/i18n.js'; // Initialize i18n
 import './app.css';
 
+if (import.meta.env.DEV) {
+  void import('@axe-core/react').then(({ default: axe }) => {
+    void axe(React, ReactDOM, 1000);
+  });
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

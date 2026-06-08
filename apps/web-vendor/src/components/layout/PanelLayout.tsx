@@ -56,12 +56,20 @@ export function PanelLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-grovio-surface">
+      {/* Skip to main content (WCAG 2.4.1) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-background focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium focus:ring-2 focus:ring-grovio-primary focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
       <Sidebar />
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
 
-        <main className="flex-1 overflow-auto p-6">
+        <main id="main-content" className="flex-1 overflow-auto p-6" tabIndex={-1}>
           <AnimatePresence mode="wait">
             <div key={location.pathname}>
               <Outlet />

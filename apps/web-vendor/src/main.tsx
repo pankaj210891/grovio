@@ -7,6 +7,12 @@ import { router } from './router.js';
 import './lib/i18n.js'; // Initialize i18n
 import './app.css';
 
+if (import.meta.env.DEV) {
+  void import('@axe-core/react').then(({ default: axe }) => {
+    void axe(React, ReactDOM, 1000);
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>

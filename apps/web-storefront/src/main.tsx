@@ -8,6 +8,13 @@ import { router } from './router.js';
 import './lib/i18n.js'; // Initialize i18n — must import before any component
 import './app.css';
 
+// Accessibility audit in development — logs violations to browser console
+if (import.meta.env.DEV) {
+  void import('@axe-core/react').then(({ default: axe }) => {
+    void axe(React, ReactDOM, 1000);
+  });
+}
+
 /**
  * Application entry point.
  *

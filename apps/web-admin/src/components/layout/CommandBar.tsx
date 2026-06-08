@@ -173,6 +173,8 @@ export function CommandBar() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search vendors, products, orders... (⌘K)"
+          aria-label="Search admin panel"
+          role="searchbox"
           className="h-9 w-full rounded-lg border border-grovio-border bg-grovio-surface pl-9 pr-3 text-sm text-grovio-text placeholder-grovio-text-muted/60 focus:border-grovio-primary focus:outline-none"
         />
       </div>
