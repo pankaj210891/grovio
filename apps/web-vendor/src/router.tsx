@@ -3,7 +3,9 @@
  *
  * Public routes:   /auth/login, /accept-invite
  * Protected routes (vendor session required):
- *   /dashboard, /products, /inventory, /orders, /returns, /earnings, /coupons
+ *   /dashboard, /products, /products/new (CreateProductWizard),
+ *   /inventory, /orders, /returns, /finance, /analytics, /coupons
+ *   /earnings → redirects to /finance (backward compat)
  * Owner-only routes (requiredRole="owner"):
  *   /team, /store-profile, /settings
  *
@@ -20,9 +22,12 @@ const LoginPage = React.lazy(() => import('./pages/auth/LoginPage.js'));
 const AcceptInvitePage = React.lazy(() => import('./pages/auth/AcceptInvitePage.js'));
 const DashboardPage = React.lazy(() => import('./pages/DashboardPage.js'));
 const ProductsPage = React.lazy(() => import('./pages/ProductsPage.js'));
+const CreateProductWizard = React.lazy(() => import('./components/products/CreateProductWizard.js'));
 const InventoryPage = React.lazy(() => import('./pages/InventoryPage.js'));
 const OrdersPage = React.lazy(() => import('./pages/OrdersPage.js'));
 const ReturnsPage = React.lazy(() => import('./pages/ReturnsPage.js'));
+const FinancePage = React.lazy(() => import('./pages/FinancePage.js'));
+const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage.js'));
 const EarningsPage = React.lazy(() => import('./pages/EarningsPage.js'));
 const CouponsPage = React.lazy(() => import('./pages/CouponsPage.js'));
 const TeamPage = React.lazy(() => import('./pages/TeamPage.js'));
@@ -84,6 +89,15 @@ export const router = createBrowserRouter([
             ),
           },
           {
+            // New product wizard — /products/new (Plan 11-03, T3)
+            path: 'products/new',
+            element: (
+              <React.Suspense fallback={spinner}>
+                <CreateProductWizard />
+              </React.Suspense>
+            ),
+          },
+          {
             path: 'inventory',
             element: (
               <React.Suspense fallback={spinner}>
@@ -108,12 +122,27 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: 'earnings',
+            // Finance center (Plan 11-03, T5)
+            path: 'finance',
             element: (
               <React.Suspense fallback={spinner}>
-                <EarningsPage />
+                <FinancePage />
               </React.Suspense>
             ),
+          },
+          {
+            // Analytics page (Plan 11-03, T6)
+            path: 'analytics',
+            element: (
+              <React.Suspense fallback={spinner}>
+                <AnalyticsPage />
+              </React.Suspense>
+            ),
+          },
+          {
+            // Legacy /earnings → /finance redirect (backward compat)
+            path: 'earnings',
+            element: <Navigate to="/finance" replace />,
           },
           {
             path: 'coupons',
