@@ -560,6 +560,12 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.15)
+      framer-motion:
+        specifier: ^12.0.0
+        version: 12.40.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      motion:
+        specifier: ^12.0.0
+        version: 12.40.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       storybook:
         specifier: ^8.0.0
         version: 8.6.18(prettier@3.8.3)
