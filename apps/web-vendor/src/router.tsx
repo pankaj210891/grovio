@@ -33,6 +33,7 @@ const CouponsPage = React.lazy(() => import('./pages/CouponsPage.js'));
 const TeamPage = React.lazy(() => import('./pages/TeamPage.js'));
 const StoreProfilePage = React.lazy(() => import('./pages/StoreProfilePage.js'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage.js'));
+const ReviewsPage = React.lazy(() => import('./pages/ReviewsPage.js'));
 
 // Minimal loading spinner used as Suspense fallback during lazy chunk loading
 const spinner = (
@@ -149,6 +150,14 @@ export const router = createBrowserRouter([
             element: (
               <React.Suspense fallback={spinner}>
                 <CouponsPage />
+              </React.Suspense>
+            ),
+          },
+          {
+            path: 'reviews',
+            element: (
+              <React.Suspense fallback={spinner}>
+                <ReviewsPage />
               </React.Suspense>
             ),
           },

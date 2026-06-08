@@ -15,6 +15,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { get, post } from '../lib/apiClient.js';
 
 type ModerationStatus = 'pending' | 'flagged' | 'approved' | 'rejected';
+type ActiveTab = ModerationStatus | 'reviews';
+
+interface Review {
+  id: string;
+  productName: string;
+  authorName: string;
+  rating: number;
+  title: string;
+  body: string;
+  createdAt: string;
+}
+
+interface ReviewListResponse {
+  items: Review[];
+  total: number;
+}
 
 interface Product {
   id: string;
@@ -32,11 +48,15 @@ interface ProductListResponse {
   total: number;
 }
 
-const TABS: { value: ModerationStatus; label: string }[] = [
+const MODERATION_TABS: { value: ModerationStatus; label: string }[] = [
   { value: 'pending', label: 'Pending Review' },
   { value: 'flagged', label: 'Flagged' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
+];
+const ALL_TABS: { value: ActiveTab; label: string }[] = [
+  ...MODERATION_TABS,
+  { value: 'reviews', label: 'Reviews' },
 ];
 
 function formatInr(minor: number): string {
@@ -45,7 +65,7 @@ function formatInr(minor: number): string {
 
 export function CatalogModerationPage() {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<ModerationStatus>('pending');
+  const [tab, setTab] = useState<ActiveTab>('pending');
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery<ProductListResponse>({
@@ -53,6 +73,19 @@ export function CatalogModerationPage() {
     queryFn: () =>
       get<ProductListResponse>(`/admin/catalog/products?moderationStatus=${tab}&page=${page}&pageSize=20`),
     staleTime: 30_000,
+    enabled: tab !== 'reviews',
+  });
+
+  const { data: reviewsData, isLoading: reviewsLoading } = useQuery<ReviewListResponse>({
+    queryKey: ['admin', 'reviews', page],
+    queryFn: () => get<ReviewListResponse>(`/admin/reviews?page=${page}&pageSize=20`),
+    staleTime: 60_000,
+    enabled: tab === 'reviews',
+  });
+
+  const deleteReviewMutation = useMutation({
+    mutationFn: (reviewId: string) => post(`/admin/reviews/${reviewId}/delete`, {}),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin', 'reviews'] }),
   });
 
   const moderateMutation = useMutation({
@@ -94,14 +127,14 @@ export function CatalogModerationPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-grovio-border">
-        {TABS.map((t) => (
+      <div className="flex gap-1 border-b border-grovio-border overflow-x-auto">
+        {ALL_TABS.map((t) => (
           <button
             key={t.value}
             type="button"
             onClick={() => { setTab(t.value); setPage(1); }}
             className={[
-              'px-4 py-2 text-sm font-medium transition-colors border-b-2',
+              'px-4 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap',
               tab === t.value
                 ? 'border-grovio-primary text-grovio-primary'
                 : 'border-transparent text-grovio-text-muted hover:text-grovio-text',
@@ -112,8 +145,44 @@ export function CatalogModerationPage() {
         ))}
       </div>
 
+      {/* Reviews tab */}
+      {tab === 'reviews' && (
+        <div className="space-y-3">
+          {reviewsLoading && <p className="py-12 text-center text-sm text-grovio-text-muted">Loading…</p>}
+          {!reviewsLoading && (reviewsData?.items ?? []).length === 0 && (
+            <p className="py-12 text-center text-sm text-grovio-text-muted">No reviews yet.</p>
+          )}
+          {!reviewsLoading && (reviewsData?.items ?? []).map((review) => (
+            <div key={review.id} className="flex items-start gap-4 rounded-xl border border-grovio-border bg-grovio-surface-raised p-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-grovio-text-muted mb-0.5">{review.productName}</p>
+                <div className="flex items-center gap-1 mb-1">
+                  {[1,2,3,4,5].map((s) => (
+                    <svg key={s} className={`h-3.5 w-3.5 ${s <= review.rating ? 'fill-amber-400 text-amber-400' : 'fill-none text-grovio-border'}`} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} stroke="currentColor" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                  ))}
+                </div>
+                {review.title && <p className="text-sm font-semibold text-grovio-text">{review.title}</p>}
+                <p className="text-xs text-grovio-text truncate">{review.body}</p>
+                <p className="text-[11px] text-grovio-text-muted mt-0.5">By {review.authorName} · {new Date(review.createdAt).toLocaleDateString()}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => deleteReviewMutation.mutate(review.id)}
+                disabled={deleteReviewMutation.isPending}
+                className="shrink-0 rounded-lg border border-grovio-error px-2.5 py-1 text-xs font-medium text-grovio-error hover:bg-grovio-error/5 disabled:opacity-60"
+                aria-label={`Remove review by ${review.authorName}`}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Product list */}
-      {isLoading ? (
+      {tab !== 'reviews' && (isLoading ? (
         <p className="py-12 text-center text-sm text-grovio-text-muted">Loading…</p>
       ) : products.length === 0 ? (
         <p className="py-12 text-center text-sm text-grovio-text-muted">No products in this queue.</p>
@@ -187,7 +256,7 @@ export function CatalogModerationPage() {
             </div>
           ))}
         </div>
-      )}
+      ))}
 
       {/* Pagination */}
       {totalPages > 1 && (
