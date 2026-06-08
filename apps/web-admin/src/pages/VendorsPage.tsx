@@ -47,7 +47,8 @@ const STATUS_TABS: { value: VendorStatus; label: string }[] = [
   { value: 'suspended', label: 'Suspended' },
 ];
 
-function kycBadge(kycStatus: string) {
+function kycBadge(kycStatus: string | undefined) {
+  const key = kycStatus ?? 'not_submitted';
   const styles: Record<string, string> = {
     verified: 'bg-green-100 text-green-700',
     pending: 'bg-amber-100 text-amber-700',
@@ -55,8 +56,8 @@ function kycBadge(kycStatus: string) {
     not_submitted: 'bg-gray-100 text-gray-600',
   };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${styles[kycStatus] ?? 'bg-gray-100 text-gray-600'}`}>
-      {kycStatus.replace('_', ' ')}
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${styles[key] ?? 'bg-gray-100 text-gray-600'}`}>
+      {key.replace(/_/g, ' ')}
     </span>
   );
 }
@@ -65,11 +66,13 @@ function healthScore(vendor: Vendor): number {
   let score = 0;
   if (vendor.kycStatus === 'verified') score += 40;
   else if (vendor.kycStatus === 'pending') score += 15;
-  if (vendor.avgRating >= 4.0) score += 30;
-  else if (vendor.avgRating >= 3.0) score += 15;
-  if (vendor.productCount >= 10) score += 20;
-  else if (vendor.productCount >= 3) score += 10;
-  if (vendor.gmv > 100_000_00) score += 10; // >₹1L GMV
+  const rating = vendor.avgRating ?? 0;
+  if (rating >= 4.0) score += 30;
+  else if (rating >= 3.0) score += 15;
+  const products = vendor.productCount ?? 0;
+  if (products >= 10) score += 20;
+  else if (products >= 3) score += 10;
+  if ((vendor.gmv ?? 0) > 100_000_00) score += 10;
   return Math.min(score, 100);
 }
 
@@ -250,13 +253,13 @@ export function VendorsPage() {
                         : vendor.status === 'pending' ? 'bg-amber-100 text-amber-700'
                         : 'bg-red-100 text-red-700',
                       ].join(' ')}>
-                        {vendor.status}
+                        {vendor.status ?? '—'}
                       </span>
                     </td>
                     <td className="px-4 py-3">{kycBadge(vendor.kycStatus)}</td>
-                    <td className="px-4 py-3 text-right font-medium text-grovio-text">{formatInr(vendor.gmv)}</td>
-                    <td className="px-4 py-3 text-right text-grovio-text-muted">{vendor.productCount}</td>
-                    <td className="px-4 py-3 text-right text-grovio-text-muted">{vendor.avgRating.toFixed(1)}</td>
+                    <td className="px-4 py-3 text-right font-medium text-grovio-text">{formatInr(vendor.gmv ?? 0)}</td>
+                    <td className="px-4 py-3 text-right text-grovio-text-muted">{vendor.productCount ?? 0}</td>
+                    <td className="px-4 py-3 text-right text-grovio-text-muted">{vendor.avgRating != null ? vendor.avgRating.toFixed(1) : '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-0.5">
                         <span className="text-[10px] text-grovio-text-muted">{score}/100</span>

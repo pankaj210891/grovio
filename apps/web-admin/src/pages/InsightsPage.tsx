@@ -262,7 +262,7 @@ export function InsightsPage() {
                       <td className="px-4 py-3 font-medium text-grovio-text">{row.vendorName}</td>
                       <td className="px-4 py-3 text-right text-grovio-text">{formatInr(row.gmv)}</td>
                       <td className="px-4 py-3 text-right text-grovio-text-muted">{row.orderCount}</td>
-                      <td className="px-4 py-3 text-right text-grovio-text-muted">{row.avgRating.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-right text-grovio-text-muted">{row.avgRating != null ? row.avgRating.toFixed(1) : '—'}</td>
                     </tr>
                   ))}
                 </tbody>

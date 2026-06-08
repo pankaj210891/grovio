@@ -165,7 +165,7 @@ export function SettingsPage() {
                         : user.role === 'finance_admin' ? 'bg-amber-100 text-amber-700'
                         : 'bg-gray-100 text-gray-600',
                       ].join(' ')}>
-                        {user.role.replace('_', ' ')}
+                        {user.role?.replace(/_/g, ' ') ?? '—'}
                       </span>
                     </td>
                   </tr>

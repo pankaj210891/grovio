@@ -266,7 +266,7 @@ export function FinancePage() {
                       {rule.categoryName ?? rule.vendorName ?? 'Platform Default'}
                     </td>
                     <td className="px-5 py-3 text-right font-medium text-grovio-text">
-                      {rule.ratePercent.toFixed(1)}%
+                      {rule.ratePercent != null ? rule.ratePercent.toFixed(1) : '—'}%
                     </td>
                     <td className="px-5 py-3 text-grovio-text-muted">
                       {new Date(rule.effectiveFrom).toLocaleDateString()}
@@ -302,7 +302,7 @@ export function FinancePage() {
                 {refundsData.items.map((refund) => (
                   <tr key={refund.id} className="border-b border-grovio-border/50 hover:bg-grovio-surface">
                     <td className="px-5 py-3 text-grovio-text">{refund.customerEmail}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-grovio-text-muted">{refund.orderId.slice(0, 8)}</td>
+                    <td className="px-5 py-3 font-mono text-xs text-grovio-text-muted">{refund.orderId?.slice(0, 8) ?? '—'}</td>
                     <td className="px-5 py-3 text-right font-medium text-grovio-text">{formatInr(refund.amount)}</td>
                     <td className="px-5 py-3 text-grovio-text-muted">{refund.reason}</td>
                     <td className="px-5 py-3 text-grovio-text-muted">

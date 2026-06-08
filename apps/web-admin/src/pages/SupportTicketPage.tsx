@@ -149,7 +149,7 @@ export function SupportTicketPage() {
                 STATUS_COLORS[ticket.status] ?? 'bg-gray-100 text-gray-600',
               ].join(' ')}
             >
-              {ticket.status.replace('_', ' ')}
+              {ticket.status?.replace(/_/g, ' ') ?? '—'}
             </span>
             {ticket.status !== 'in_progress' && (
               <button

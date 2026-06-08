@@ -81,8 +81,8 @@ export function AuditLogPage() {
                     </code>
                   </td>
                   <td className="px-5 py-3 text-xs text-grovio-text-muted">
-                    <span className="capitalize">{entry.resourceType.replace('_', ' ')}</span>
-                    <span className="ml-1 font-mono text-[10px]">{entry.resourceId.slice(0, 8)}</span>
+                    <span className="capitalize">{entry.resourceType?.replace(/_/g, ' ') ?? '—'}</span>
+                    <span className="ml-1 font-mono text-[10px]">{entry.resourceId?.slice(0, 8) ?? ''}</span>
                   </td>
                   <td className="px-5 py-3 text-xs text-grovio-text-muted">
                     {entry.metadata ? JSON.stringify(entry.metadata).slice(0, 60) : '—'}
