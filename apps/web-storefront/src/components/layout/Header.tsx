@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User, Heart, Bell } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.js';
 import { useBasket } from '../../hooks/useBasket.js';
 import { useDarkMode } from '../../hooks/useDarkMode.js';
@@ -26,6 +27,7 @@ export function Header() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { toggle: toggleDarkMode, isDark } = useDarkMode();
+  const { t } = useTranslation(['storefront', 'common']);
 
   function handleSearchSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -59,8 +61,8 @@ export function Header() {
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for products, brands, and more…"
-                aria-label="Search for products"
+                placeholder={t('search_placeholder')}
+                aria-label={t('common:search')}
                 className="w-full h-12 pl-4 pr-10 rounded-md border border-grovio-border bg-grovio-surface text-grovio-text text-sm focus:outline-none focus:ring-2 focus:ring-grovio-primary"
               />
               <button
@@ -139,7 +141,7 @@ export function Header() {
             {/* Cart link with live item count badge (Phase 5 — D-04) */}
             <Link
               to="/cart"
-              aria-label={itemCount > 0 ? `View cart (${itemCount} items)` : 'View cart'}
+              aria-label={itemCount > 0 ? `${t('common:cart')} (${itemCount})` : t('common:cart')}
               className="relative flex items-center justify-center min-h-[48px] min-w-[48px] rounded-md text-grovio-text-muted hover:text-grovio-text hover:bg-grovio-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-grovio-primary focus-visible:ring-offset-2"
             >
               <ShoppingCart className="h-5 w-5" aria-hidden="true" />
@@ -164,8 +166,8 @@ export function Header() {
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for products, brands, and more…"
-                aria-label="Search for products"
+                placeholder={t('search_placeholder')}
+                aria-label={t('common:search')}
                 className="w-full h-10 pl-4 pr-10 rounded-md border border-grovio-border bg-grovio-surface text-grovio-text text-sm focus:outline-none focus:ring-2 focus:ring-grovio-primary"
               />
               <button

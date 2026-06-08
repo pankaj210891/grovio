@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router-dom';
 import { queryClient } from './lib/query-client.js';
 import { router } from './router.js';
+import './lib/i18n.js'; // Initialize i18n — must import before any component
 import './app.css';
 
 /**
