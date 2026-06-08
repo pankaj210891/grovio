@@ -5,6 +5,9 @@ export type { Tokens } from "./tokens/index.js";
 // Utilities
 export { cn } from "./lib/utils.js";
 
+// Hooks
+export { useMotionSafeProps, ENTRY_MOTION, EXIT_MOTION, PAGE_TRANSITION, SPRING_MOTION, useReducedMotion } from "./hooks/useMotionSafe.js";
+
 // UI Components
 export * from "./components/ui/accordion.js";
 export * from "./components/ui/alert.js";
