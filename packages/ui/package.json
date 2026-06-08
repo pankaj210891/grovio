@@ -15,7 +15,9 @@
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm --external react --external react-dom",
     "typecheck": "tsc --noEmit",
-    "dev": "tsup src/index.ts --dts --format esm --external react --external react-dom --watch"
+    "dev": "tsup src/index.ts --dts --format esm --external react --external react-dom --watch",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "peerDependencies": {
     "react": "^19.0.0",
@@ -55,8 +57,12 @@
   },
   "devDependencies": {
     "@grovio/config": "workspace:*",
+    "@storybook/addon-a11y": "^8.0.0",
+    "@storybook/addon-essentials": "^8.0.0",
+    "@storybook/react-vite": "^8.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "storybook": "^8.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.8.0"
   }

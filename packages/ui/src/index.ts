@@ -43,3 +43,5 @@ export * from "./components/ui/toast.js";
 export * from "./components/ui/toggle.js";
 export * from "./components/ui/toggle-group.js";
 export * from "./components/ui/tooltip.js";
+export * from "./components/ui/kpi-card.js";
+export * from "./components/ui/notification-bell.js";

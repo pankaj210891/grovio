@@ -76,3 +76,6 @@ nodecheck.js
 test_import*.mjs
 resolve_vitest*.bat
 cookies.txt
+
+# Storybook build output
+storybook-static/
