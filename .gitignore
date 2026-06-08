@@ -68,6 +68,7 @@ logs
 # Claude Code
 .claude/settings.local.json
 .claude/worktrees/
+.claire/
 
 # Dev debug scripts (Windows batch/node scripts from local debugging sessions)
 *.bat
