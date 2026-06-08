@@ -25,6 +25,15 @@ const UpdateVendorOrderStatusInputSchema = z.object({
   status: z.enum(["processing", "shipped", "delivered", "cancelled"]),
 });
 
+const BulkShipInputSchema = z.object({
+  orders: z.array(
+    z.object({
+      orderId: z.string().uuid(),
+      trackingNumber: z.string().optional(),
+    })
+  ).min(1),
+});
+
 // ── vendorOrderRoutes plugin ──────────────────────────────────────────────────
 
 export async function vendorOrderRoutes(fastify: FastifyInstance): Promise<void> {
@@ -87,4 +96,61 @@ export async function vendorOrderRoutes(fastify: FastifyInstance): Promise<void>
       }
     }
   );
+
+  // ── PATCH /vendor/orders/:id ─────────────────────────────────────────────
+  // Convenience alias for status update (frontend compatibility, Plan 11-03).
+  fastify.patch<{ Params: { id: string } }>(
+    "/vendor/orders/:id",
+    async (request, reply) => {
+      const body = UpdateVendorOrderStatusInputSchema.parse(request.body);
+      const orderService = getOrderService();
+      const vendorId = getVendorId(request);
+
+      try {
+        const updated = await orderService.updateVendorOrderStatus(
+          request.params.id,
+          vendorId,
+          body.status
+        );
+        return reply.send({ success: true, data: updated });
+      } catch (err) {
+        if (err instanceof VendorOrderOwnershipError) {
+          return reply.status(403).send({
+            success: false,
+            error: { code: err.code, message: err.message },
+          });
+        }
+        throw err;
+      }
+    }
+  );
+
+  // ── PATCH /vendor/orders/bulk-ship ───────────────────────────────────────
+  // Mark multiple orders as shipped with optional tracking numbers (Plan 11-03, T4).
+  // All orders must belong to the authenticated vendor.
+  fastify.patch("/vendor/orders/bulk-ship", async (request, reply) => {
+    const { orders: shipOrders } = BulkShipInputSchema.parse(request.body);
+    const vendorId = getVendorId(request);
+    const orderService = getOrderService();
+
+    const results = await Promise.allSettled(
+      shipOrders.map(({ orderId }) =>
+        orderService.updateVendorOrderStatus(orderId, vendorId, "shipped")
+      )
+    );
+
+    const failed = results.filter((r) => r.status === "rejected");
+    if (failed.length > 0) {
+      return reply.status(207).send({
+        success: false,
+        error: { code: "PARTIAL_FAILURE", message: `${failed.length} of ${shipOrders.length} orders failed to update` },
+        data: { shipped: results.length - failed.length, failed: failed.length },
+      });
+    }
+
+    return reply.send({
+      success: true,
+      data: { shipped: results.length, failed: 0 },
+    });
+  });
 }
