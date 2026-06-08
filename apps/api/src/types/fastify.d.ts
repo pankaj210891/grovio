@@ -35,5 +35,23 @@ declare module "fastify" {
      * Values: 'super_admin' | 'moderator' | 'finance_admin'
      */
     adminRole?: string;
+
+    /**
+     * Vendor store UUID (vendors.id) — set by requireVendorAuth middleware.
+     * All vendor routes scope their queries to this ID (ORD-05, D-06).
+     */
+    vendorId?: string;
+
+    /**
+     * Authenticated vendor_users.id (JWT sub claim) — set by requireVendorAuth.
+     * Used by team management routes (WR-08).
+     */
+    vendorUserId?: string;
+
+    /**
+     * Vendor role — set by requireVendorAuth middleware.
+     * Values: 'owner' | 'manager' | 'staff' (D-05, T-06-09).
+     */
+    vendorRole?: "owner" | "manager" | "staff";
   }
 }

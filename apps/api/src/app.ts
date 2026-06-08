@@ -48,6 +48,8 @@ import { vendorReturnRoutes } from "./routes/vendor/returns.js";
 import { vendorEarningsRoutes } from "./routes/vendor/earnings.js";
 import { vendorTeamRoutes, vendorTeamPublicRoutes } from "./routes/vendor/team.js";
 import { vendorCouponRoutes } from "./routes/vendor/coupons.js";
+// Phase 11-03 vendor portal redesign routes
+import { vendorAnalyticsRoutes, vendorFinanceRoutes, vendorOnboardingRoutes } from "./routes/vendor/analytics.js";
 // Phase 11 admin portal routes
 import { adminRoutes } from "./routes/admin/admin.js";
 // Phase 11-05 new feature routes
@@ -173,6 +175,9 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
   await fastify.register(vendorTeamPublicRoutes);    // POST /vendor/team/accept-invite (public — T-06-29)
   await fastify.register(vendorTeamRoutes);          // GET /vendor/team, POST /vendor/team/invite, DELETE /vendor/team/:userId (owner-only)
   await fastify.register(vendorCouponRoutes);        // GET/POST /vendor/coupons (COUPONS_ENABLED gate — T-06-27)
+  await fastify.register(vendorAnalyticsRoutes);     // GET /vendor/analytics/* and /vendor/inventory/alerts (Plan 11-03)
+  await fastify.register(vendorFinanceRoutes);       // GET /vendor/finance/* (Plan 11-03)
+  await fastify.register(vendorOnboardingRoutes);    // GET/PATCH /vendor/onboarding* (Plan 11-03)
 
   // --- 404 handler ---
   fastify.setNotFoundHandler((_req, reply) => {
