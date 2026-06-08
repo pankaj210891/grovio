@@ -91,3 +91,37 @@ export const reservationQueue = new Queue("reservation-expiry-queue", {
 export const basketCleanupQueue = new Queue("basket-cleanup-queue", {
   connection: bullMqConnection,
 });
+
+// ---------------------------------------------------------------------------
+// Price drop check queue
+// ---------------------------------------------------------------------------
+
+/**
+ * BullMQ Queue for price drop check jobs (Plan 11-05 T4).
+ *
+ * Jobs are enqueued by PATCH /vendor/products/:id/pricing when the new price
+ * is lower than the old price. Each job checks all customers who have wishlisted
+ * this product with price_at_wishlist_minor > newPriceMinor and inserts
+ * price_drop notifications for eligible customers.
+ *
+ * Job payload: { productId: string, newPriceMinor: number }
+ */
+export const priceDropQueue = new Queue("price-drop-queue", {
+  connection: bullMqConnection,
+});
+
+// ---------------------------------------------------------------------------
+// Popular searches queue
+// ---------------------------------------------------------------------------
+
+/**
+ * BullMQ Queue for popular searches aggregation (Plan 11-05 T8).
+ *
+ * A recurring job runs daily to aggregate top 10 search query strings from
+ * search_query_log and store the result in Redis key `search:popular` with 24h TTL.
+ *
+ * Job payload: {} (no data needed — aggregate full log window)
+ */
+export const popularSearchesQueue = new Queue("popular-searches-queue", {
+  connection: bullMqConnection,
+});

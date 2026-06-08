@@ -42,4 +42,21 @@ export async function adminAnalyticsRoutes(fastify: FastifyInstance): Promise<vo
     const charts = await service.getAdminCharts(period as AnalyticsPeriod);
     return reply.send({ success: true, data: charts });
   });
+
+  // ── GET /admin/insights/product-views (Plan 11-05 T9) ─────────────────────
+  // Most-viewed products platform-wide (last 7d) from customer_product_views.
+  fastify.get("/admin/insights/product-views", async (_request, reply) => {
+    const service = getService();
+    const data = await service.getMostViewedProducts();
+    return reply.send({ success: true, data });
+  });
+
+  // ── GET /admin/insights/view-conversion-gap (Plan 11-05 T9) ──────────────
+  // Products with high views but low order conversion (last 7d).
+  // view_count > 50 AND (order_count / view_count) < 0.02.
+  fastify.get("/admin/insights/view-conversion-gap", async (_request, reply) => {
+    const service = getService();
+    const data = await service.getViewConversionGap();
+    return reply.send({ success: true, data });
+  });
 }

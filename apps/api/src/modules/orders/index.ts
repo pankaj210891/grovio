@@ -19,3 +19,9 @@ export type {
   CreatePendingOrderResult,
   OrderDetail,
 } from "./OrderService.js";
+
+export {
+  InvoiceService,
+  InvoiceOrderNotFoundError,
+  InvoiceOrderOwnershipError,
+} from "./InvoiceService.js";

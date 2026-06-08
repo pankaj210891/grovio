@@ -1,4 +1,4 @@
-import { eq, desc, inArray } from "drizzle-orm";
+import { eq, desc, inArray, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { allocate } from "@grovio/contracts/money";
 import type { Env } from "../../config/env.js";
@@ -7,6 +7,7 @@ import {
   vendorOrders,
   orderItems,
   inventoryReservations,
+  products,
   type InsertOrder,
   type SelectOrder,
   type SelectVendorOrder,
@@ -270,6 +271,16 @@ export class OrderService {
             createdAt: new Date(),
           }))
         );
+
+        // Update sold_count for each product in this vendor's items (Plan 11-05 T8).
+        // Synchronous update within the transaction — no BullMQ needed per plan spec.
+        // UPDATE products SET sold_count = sold_count + quantity WHERE id = product_id
+        for (const item of vendorEntry.items) {
+          await tx
+            .update(products)
+            .set({ soldCount: sql`${products.soldCount} + ${item.quantity}` })
+            .where(eq(products.id, item.productId));
+        }
       }
 
       return {

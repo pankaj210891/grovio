@@ -1,6 +1,7 @@
 import { SearchQuerySchema, SuggestQuerySchema } from "@grovio/contracts";
 import type { FastifyInstance } from "fastify";
 import type { SearchService } from "../modules/search/index.js";
+import { logSearchQuery, POPULAR_SEARCHES_CACHE_KEY } from "../modules/jobs/PopularSearchesJob.js";
 
 /**
  * Public search routes — no auth required (SRCH-01 through SRCH-04).
@@ -70,6 +71,14 @@ export async function searchRoutes(fastify: FastifyInstance): Promise<void> {
 
     const result = await searchService.search(searchParams);
 
+    // Log search query asynchronously for popular searches aggregation (Plan 11-05 T8)
+    if (params.q) {
+      const customerId = (request as import("fastify").FastifyRequest).customerId;
+      void logSearchQuery(fastify.db, params.q, customerId).catch(() => {
+        // Non-blocking — log failures must not affect search response
+      });
+    }
+
     return reply.send({
       success: true,
       data: {
@@ -128,7 +137,11 @@ export async function searchRoutes(fastify: FastifyInstance): Promise<void> {
     let popularTerms: string[] = [];
 
     try {
-      const raw = await redis.get("popular_searches");
+      // Try new PopularSearchesJob key first (Plan 11-05 T8), fallback to legacy key
+      const raw =
+        (await redis.get(POPULAR_SEARCHES_CACHE_KEY)) ??
+        (await redis.get("popular_searches"));
+
       if (raw) {
         const parsed = JSON.parse(raw) as unknown;
         if (Array.isArray(parsed)) {

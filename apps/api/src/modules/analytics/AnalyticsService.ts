@@ -516,4 +516,126 @@ export class AnalyticsService {
       })),
     };
   }
+
+  // ── Public: product view analytics (Plan 11-05 T9) ───────────────────────
+
+  /**
+   * Returns the 20 most-viewed products platform-wide over the last 7 days.
+   * Data source: customer_product_views grouped by product_id.
+   */
+  async getMostViewedProducts(): Promise<
+    Array<{
+      productId: string;
+      name: string;
+      categoryId: string;
+      categoryName: string;
+      viewCount: number;
+    }>
+  > {
+    const { db } = this.deps;
+    const sevenDaysAgo = periodCutoff("7d");
+
+    const rows = await db.execute(
+      sql`
+        SELECT
+          p.id AS "productId",
+          p.name,
+          p.category_id AS "categoryId",
+          c.name AS "categoryName",
+          COUNT(cpv.id)::int AS "viewCount"
+        FROM customer_product_views cpv
+        JOIN products p ON p.id = cpv.product_id
+        JOIN categories c ON c.id = p.category_id
+        WHERE cpv.viewed_at >= ${sevenDaysAgo}
+          AND p.archived_at IS NULL
+        GROUP BY p.id, p.name, p.category_id, c.name
+        ORDER BY "viewCount" DESC
+        LIMIT 20
+      `
+    );
+
+    return rows.rows as Array<{
+      productId: string;
+      name: string;
+      categoryId: string;
+      categoryName: string;
+      viewCount: number;
+    }>;
+  }
+
+  /**
+   * Returns products with high view count but low order conversion (last 7 days).
+   * Formula: view_count > 50 AND (order_count / view_count) < 0.02.
+   * These are candidates for pricing or UX review.
+   * Returns up to 20 items.
+   */
+  async getViewConversionGap(): Promise<
+    Array<{
+      productId: string;
+      name: string;
+      categoryId: string;
+      categoryName: string;
+      viewCount: number;
+      orderCount: number;
+      conversionRate: number;
+    }>
+  > {
+    const { db } = this.deps;
+    const sevenDaysAgo = periodCutoff("7d");
+
+    const rows = await db.execute(
+      sql`
+        WITH view_stats AS (
+          SELECT
+            cpv.product_id,
+            COUNT(cpv.id)::int AS view_count
+          FROM customer_product_views cpv
+          WHERE cpv.viewed_at >= ${sevenDaysAgo}
+          GROUP BY cpv.product_id
+          HAVING COUNT(cpv.id) > 50
+        ),
+        order_stats AS (
+          SELECT
+            oi.product_id,
+            COUNT(oi.id)::int AS order_count
+          FROM order_items oi
+          JOIN vendor_orders vo ON oi.vendor_order_id = vo.id
+          JOIN orders o ON vo.order_id = o.id
+          WHERE o.created_at >= ${sevenDaysAgo}
+          GROUP BY oi.product_id
+        )
+        SELECT
+          p.id AS "productId",
+          p.name,
+          p.category_id AS "categoryId",
+          c.name AS "categoryName",
+          vs.view_count AS "viewCount",
+          COALESCE(os.order_count, 0) AS "orderCount",
+          ROUND(COALESCE(os.order_count, 0)::numeric / vs.view_count::numeric, 4) AS "conversionRate"
+        FROM view_stats vs
+        JOIN products p ON p.id = vs.product_id
+        JOIN categories c ON c.id = p.category_id
+        LEFT JOIN order_stats os ON os.product_id = vs.product_id
+        WHERE COALESCE(os.order_count, 0)::numeric / vs.view_count::numeric < 0.02
+          AND p.archived_at IS NULL
+        ORDER BY vs.view_count DESC
+        LIMIT 20
+      `
+    );
+
+    return (
+      rows.rows as Array<{
+        productId: string;
+        name: string;
+        categoryId: string;
+        categoryName: string;
+        viewCount: number;
+        orderCount: number;
+        conversionRate: string;
+      }>
+    ).map((r) => ({
+      ...r,
+      conversionRate: parseFloat(String(r.conversionRate)),
+    }));
+  }
 }

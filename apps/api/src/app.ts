@@ -50,6 +50,13 @@ import { vendorTeamRoutes, vendorTeamPublicRoutes } from "./routes/vendor/team.j
 import { vendorCouponRoutes } from "./routes/vendor/coupons.js";
 // Phase 11 admin portal routes
 import { adminRoutes } from "./routes/admin/admin.js";
+// Phase 11-05 new feature routes
+import { wishlistRoutes } from "./routes/wishlist.js";
+import { reviewRoutes } from "./routes/reviews.js";
+import { accountNotificationRoutes } from "./routes/account/notifications.js";
+import { personalizationRoutes } from "./routes/personalization.js";
+import { supportRoutes } from "./routes/support.js";
+import { invoiceRoutes } from "./routes/account/invoice.js";
 
 /**
  * Build and configure the Fastify application.
@@ -135,6 +142,14 @@ export async function buildApp(opts?: FastifyServerOptions): Promise<FastifyInst
 
   // --- Routes (Phase 11 — plan 11-02 admin portal) ---
   await fastify.register(adminRoutes);   // /announcements/active (public) + /admin/* (RBAC-gated)
+
+  // --- Routes (Phase 11-05 — new feature backends) ---
+  await fastify.register(wishlistRoutes);             // POST/DELETE /wishlist/:productId, GET /account/wishlist, GET /wishlist/status
+  await fastify.register(reviewRoutes);               // POST /products/:id/reviews, GET /products/:id/reviews, PATCH /vendor/reviews/:id/reply, DELETE /admin/reviews/:id
+  await fastify.register(accountNotificationRoutes);  // GET /account/notifications, PATCH /notifications/:id/dismiss, GET+PATCH /account/notifications/preferences
+  await fastify.register(personalizationRoutes);      // POST /products/:id/view, GET /products/recently-viewed, GET /products/trending, etc.
+  await fastify.register(supportRoutes);              // POST /support/tickets, GET /account/support-tickets, POST /account/support-tickets/:id/replies
+  await fastify.register(invoiceRoutes);              // GET /orders/:id/invoice (customer), GET /admin/orders/:id/invoice (admin)
 
   // --- Routes (Phase 6 — plan 06-08) ---
   // Admin auth (public login + protected me/logout)

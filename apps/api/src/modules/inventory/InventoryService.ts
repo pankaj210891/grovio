@@ -86,6 +86,8 @@ interface InventoryServiceDeps {
   reservationQueue: Queue<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   productIndexQueue?: Queue<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  priceDropQueue?: Queue<any>;
   env: Pick<Env, "NODE_ENV">;
 }
 
@@ -367,13 +369,14 @@ export class InventoryService {
     input: { basePriceMinor: number },
     variantId?: string
   ): Promise<void> {
-    const { db, productIndexQueue } = this.deps;
+    const { db, productIndexQueue, priceDropQueue } = this.deps;
 
     // IDOR guard: load product and verify vendor ownership (T-06-18)
     const productRows = await db
       .select({
         id: products.id,
         vendorId: products.vendorId,
+        basePriceMinor: products.basePriceMinor,
       })
       .from(products)
       .where(eq(products.id, productId))
@@ -389,6 +392,8 @@ export class InventoryService {
         `Product ${productId} belongs to a different vendor.`
       );
     }
+
+    const oldPriceMinor = product.basePriceMinor;
 
     // Update price — variant-level if variantId provided, otherwise product base price
     if (variantId) {
@@ -418,6 +423,20 @@ export class InventoryService {
         { productId, action: "index" },
         {
           jobId: `price-update:${productId}:${Date.now()}`,
+          removeOnComplete: true,
+          removeOnFail: { count: 3 },
+        }
+      );
+    }
+
+    // Enqueue PriceDropCheckJob when price is lowered (Plan 11-05 T4)
+    // Only for product-level price updates (not variant-level) and only when new price < old price
+    if (!variantId && priceDropQueue && input.basePriceMinor < oldPriceMinor) {
+      await priceDropQueue.add(
+        "price-drop-check",
+        { productId, newPriceMinor: input.basePriceMinor },
+        {
+          jobId: `price-drop:${productId}:${Date.now()}`,
           removeOnComplete: true,
           removeOnFail: { count: 3 },
         }

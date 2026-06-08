@@ -10,7 +10,7 @@ import { CustomerAuthService } from "./modules/customer-auth/index.js";
 import { FeatureFlagService } from "./modules/feature-flags/index.js";
 import { FilterSchemaService } from "./modules/filter-schema/index.js";
 import { HomepageService } from "./modules/homepage/index.js";
-import { productIndexQueue, reservationQueue, basketCleanupQueue } from "./modules/jobs/queues.js";
+import { productIndexQueue, reservationQueue, basketCleanupQueue, priceDropQueue, popularSearchesQueue } from "./modules/jobs/queues.js";
 import { createMailerTransport } from "./modules/mailer/mailer.js";
 import { ProductTemplateService } from "./modules/product-templates/index.js";
 import { SearchService } from "./modules/search/index.js";
@@ -38,6 +38,13 @@ import { VendorProfileService } from "./modules/vendor-profile/index.js";
 import { VendorStaffService } from "./modules/vendor-staff/index.js";
 import { AnalyticsService } from "./modules/analytics/index.js";
 import { PayoutService } from "./modules/payouts/index.js";
+// Phase 11-05 new feature services
+import { WishlistService } from "./modules/wishlist/index.js";
+import { ReviewService } from "./modules/reviews/index.js";
+import { NotificationService } from "./modules/notifications/customer/index.js";
+import { PersonalizationService } from "./modules/personalization/index.js";
+import { SupportService } from "./modules/support/index.js";
+import { InvoiceService } from "./modules/orders/InvoiceService.js";
 
 /**
  * Create the Awilix DI container for the application.
@@ -75,6 +82,9 @@ export function createAppContainer(fastify: FastifyInstance) {
     // Phase 5: BullMQ queues for reservation expiry and basket cleanup
     reservationQueue: asValue(reservationQueue),
     basketCleanupQueue: asValue(basketCleanupQueue),
+    // Phase 11-05: BullMQ queues for price drop check and popular searches
+    priceDropQueue: asValue(priceDropQueue),
+    popularSearchesQueue: asValue(popularSearchesQueue),
     // Phase 11: S3-compatible storage client (Cloudflare R2 or Supabase Storage)
     storageClient: asValue(storageClient),
     // productIndexQueue is already registered above (Phase 3); also available for Phase 6 InventoryService pricing updates
@@ -122,6 +132,13 @@ export function createAppContainer(fastify: FastifyInstance) {
     payoutService: asClass(PayoutService).singleton(),
     // Phase 11 services (plan 11-02)
     adminService: asClass(AdminService).singleton(),
+    // Phase 11-05 new feature services
+    wishlistService: asClass(WishlistService).singleton(),
+    reviewService: asClass(ReviewService).singleton(),
+    notificationService: asClass(NotificationService).singleton(),
+    personalizationService: asClass(PersonalizationService).singleton(),
+    supportService: asClass(SupportService).singleton(),
+    invoiceService: asClass(InvoiceService).singleton(),
   });
 
   return container;

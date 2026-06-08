@@ -20,6 +20,8 @@ export interface SearchParams {
   sort?: string;
   limit?: number;
   cursor?: string;
+  /** Optional: customer category IDs for personalized function_score boost (Plan 11-05 T5.7). */
+  customerCategoryIds?: string[];
 }
 
 export interface SearchHit {
@@ -155,7 +157,7 @@ export class SearchService {
     }
 
     const { opensearch, env } = this.deps;
-    const { q, categoryId, appliedFilters = [], sort, limit = 20 } = params;
+    const { q, categoryId, appliedFilters = [], sort, limit = 20, customerCategoryIds } = params;
     const indexName = getIndexName(env);
 
     // Resolve filter schema for aggregations if categoryId provided
@@ -193,12 +195,32 @@ export class SearchService {
         }
       : baseQuery;
 
+    // Personalized search ranking (Plan 11-05 T5.7):
+    // Wrap the query in a function_score that boosts results from categories
+    // the customer has purchased from. Boost value: 1.5×.
+    // Only applied when customerCategoryIds is non-empty (authenticated customer with history).
+    // Graceful no-op for guests and customers with no purchase history.
+    let finalQueryClause: unknown = queryClause;
+    if (customerCategoryIds && customerCategoryIds.length > 0) {
+      finalQueryClause = {
+        function_score: {
+          query: queryClause,
+          functions: customerCategoryIds.map((catId) => ({
+            filter: { term: { categoryId: catId } },
+            weight: 1.5,
+          })),
+          score_mode: "sum",
+          boost_mode: "multiply",
+        },
+      };
+    }
+
     // Determine sort
     const sortParam = resolveSortParam(sort);
 
     // Build the OpenSearch request body
     const body: Record<string, unknown> = {
-      query: queryClause,
+      query: finalQueryClause,
       aggs,
       sort: sortParam,
       size: limit,
