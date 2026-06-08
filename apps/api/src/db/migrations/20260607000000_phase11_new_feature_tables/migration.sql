@@ -3,6 +3,10 @@
 -- customer_product_views, support_tickets, support_ticket_replies, search_query_log
 -- + avg_rating, review_count, sold_count columns on products table
 
+-- ─── admin_users: add role column (Phase 11 RBAC) ───────────────────────────
+
+ALTER TABLE "admin_users" ADD COLUMN IF NOT EXISTS "role" text NOT NULL DEFAULT 'moderator';
+
 -- ─── Enums ───────────────────────────────────────────────────────────────────
 
 CREATE TYPE "customer_notification_type" AS ENUM (
@@ -132,7 +136,6 @@ CREATE INDEX "search_query_log_query_idx"
 
 -- ─── products table: add cached aggregate columns ─────────────────────────────
 
-ALTER TABLE "products"
-  ADD COLUMN "avg_rating" double precision NOT NULL DEFAULT 0,
-  ADD COLUMN "review_count" integer NOT NULL DEFAULT 0,
-  ADD COLUMN "sold_count" integer NOT NULL DEFAULT 0;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "avg_rating" double precision NOT NULL DEFAULT 0;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "review_count" integer NOT NULL DEFAULT 0;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "sold_count" integer NOT NULL DEFAULT 0;

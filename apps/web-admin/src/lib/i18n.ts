@@ -5,8 +5,8 @@
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import commonEn from '../../../packages/locales/en/common.json';
-import adminEn from '../../../packages/locales/en/admin.json';
+import commonEn from '../../../../packages/locales/en/common.json';
+import adminEn from '../../../../packages/locales/en/admin.json';
 
 void i18n
   .use(initReactI18next)

@@ -1,6 +1,12 @@
-CREATE TYPE "vendor_onboarding_status" AS ENUM('pending', 'approved', 'suspended');--> statement-breakpoint
-CREATE TYPE "vendor_user_role" AS ENUM('owner', 'manager', 'staff');--> statement-breakpoint
-CREATE TABLE "vendor_users" (
+DO $$ BEGIN
+  CREATE TYPE "vendor_onboarding_status" AS ENUM('pending', 'approved', 'suspended');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  CREATE TYPE "vendor_user_role" AS ENUM('owner', 'manager', 'staff');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "vendor_users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"vendor_id" uuid NOT NULL,
 	"email" text NOT NULL UNIQUE,
@@ -13,7 +19,7 @@ CREATE TABLE "vendor_users" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "vendor_staff_invites" (
+CREATE TABLE IF NOT EXISTS "vendor_staff_invites" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"vendor_id" uuid NOT NULL,
 	"email" text NOT NULL,
@@ -25,7 +31,7 @@ CREATE TABLE "vendor_staff_invites" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "vendor_payout_info" (
+CREATE TABLE IF NOT EXISTS "vendor_payout_info" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"vendor_id" uuid NOT NULL UNIQUE,
 	"account_holder_name" text NOT NULL,
@@ -35,7 +41,7 @@ CREATE TABLE "vendor_payout_info" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "vendor_payouts" (
+CREATE TABLE IF NOT EXISTS "vendor_payouts" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"vendor_id" uuid NOT NULL,
 	"amount_minor" bigint NOT NULL,
@@ -46,7 +52,7 @@ CREATE TABLE "vendor_payouts" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "admin_users" (
+CREATE TABLE IF NOT EXISTS "admin_users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"email" text NOT NULL UNIQUE,
 	"password_hash" text NOT NULL,
@@ -54,13 +60,13 @@ CREATE TABLE "admin_users" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "marketplace_settings" (
+CREATE TABLE IF NOT EXISTS "marketplace_settings" (
 	"key" text PRIMARY KEY,
 	"value" jsonb NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "audit_log" (
+CREATE TABLE IF NOT EXISTS "audit_log" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"actor_type" text NOT NULL,
 	"actor_id" text NOT NULL,
@@ -74,17 +80,29 @@ CREATE TABLE "audit_log" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "vendors" ADD COLUMN "store_name" text;--> statement-breakpoint
-ALTER TABLE "vendors" ADD COLUMN "store_description" text;--> statement-breakpoint
-ALTER TABLE "vendors" ADD COLUMN "logo_url" text;--> statement-breakpoint
-ALTER TABLE "vendors" ADD COLUMN "banner_url" text;--> statement-breakpoint
-ALTER TABLE "vendors" ADD COLUMN "contact_email" text;--> statement-breakpoint
-ALTER TABLE "vendors" ADD COLUMN "contact_phone" text;--> statement-breakpoint
-ALTER TABLE "vendors" ADD COLUMN "address" text;--> statement-breakpoint
-ALTER TABLE "vendors" ADD COLUMN "onboarding_status" "vendor_onboarding_status" DEFAULT 'approved'::"vendor_onboarding_status" NOT NULL;--> statement-breakpoint
-ALTER TABLE "coupons" ADD COLUMN "created_by_type" text;--> statement-breakpoint
-ALTER TABLE "coupons" ADD COLUMN "created_by_id" text;--> statement-breakpoint
-ALTER TABLE "vendor_users" ADD CONSTRAINT "vendor_users_vendor_id_vendors_id_fkey" FOREIGN KEY ("vendor_id") REFERENCES "vendors"("id");--> statement-breakpoint
-ALTER TABLE "vendor_staff_invites" ADD CONSTRAINT "vendor_staff_invites_vendor_id_vendors_id_fkey" FOREIGN KEY ("vendor_id") REFERENCES "vendors"("id");--> statement-breakpoint
-ALTER TABLE "vendor_payout_info" ADD CONSTRAINT "vendor_payout_info_vendor_id_vendors_id_fkey" FOREIGN KEY ("vendor_id") REFERENCES "vendors"("id");--> statement-breakpoint
-ALTER TABLE "vendor_payouts" ADD CONSTRAINT "vendor_payouts_vendor_id_vendors_id_fkey" FOREIGN KEY ("vendor_id") REFERENCES "vendors"("id");
+ALTER TABLE "vendors" ADD COLUMN IF NOT EXISTS "store_name" text;--> statement-breakpoint
+ALTER TABLE "vendors" ADD COLUMN IF NOT EXISTS "store_description" text;--> statement-breakpoint
+ALTER TABLE "vendors" ADD COLUMN IF NOT EXISTS "logo_url" text;--> statement-breakpoint
+ALTER TABLE "vendors" ADD COLUMN IF NOT EXISTS "banner_url" text;--> statement-breakpoint
+ALTER TABLE "vendors" ADD COLUMN IF NOT EXISTS "contact_email" text;--> statement-breakpoint
+ALTER TABLE "vendors" ADD COLUMN IF NOT EXISTS "contact_phone" text;--> statement-breakpoint
+ALTER TABLE "vendors" ADD COLUMN IF NOT EXISTS "address" text;--> statement-breakpoint
+ALTER TABLE "vendors" ADD COLUMN IF NOT EXISTS "onboarding_status" "vendor_onboarding_status" DEFAULT 'approved'::"vendor_onboarding_status" NOT NULL;--> statement-breakpoint
+ALTER TABLE "coupons" ADD COLUMN IF NOT EXISTS "created_by_type" text;--> statement-breakpoint
+ALTER TABLE "coupons" ADD COLUMN IF NOT EXISTS "created_by_id" text;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "vendor_users" ADD CONSTRAINT "vendor_users_vendor_id_vendors_id_fkey" FOREIGN KEY ("vendor_id") REFERENCES "vendors"("id");
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "vendor_staff_invites" ADD CONSTRAINT "vendor_staff_invites_vendor_id_vendors_id_fkey" FOREIGN KEY ("vendor_id") REFERENCES "vendors"("id");
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "vendor_payout_info" ADD CONSTRAINT "vendor_payout_info_vendor_id_vendors_id_fkey" FOREIGN KEY ("vendor_id") REFERENCES "vendors"("id");
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "vendor_payouts" ADD CONSTRAINT "vendor_payouts_vendor_id_vendors_id_fkey" FOREIGN KEY ("vendor_id") REFERENCES "vendors"("id");
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;

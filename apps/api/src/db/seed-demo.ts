@@ -12,10 +12,11 @@
  * Run: pnpm --filter @grovio/api db:seed:demo
  */
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { Client } from "@opensearch-project/opensearch";
+import * as argon2 from "argon2";
 import { randomUUID } from "crypto";
 import { createHash } from "crypto";
 import * as schema from "./schema/index.js";
@@ -93,6 +94,32 @@ async function seed() {
       .returning({ id: schema.vendors.id });
     vendorId = v.id;
     console.log(`[seed:demo] Vendor created (id=${vendorId})`);
+  }
+
+  // ── 1b. Vendor user (owner) — required for login via VendorAuthService ──────
+  // VendorAuthService authenticates against vendor_users, not vendors (Phase 6 D-03).
+  const existingVendorUser = await db
+    .select({ id: schema.vendorUsers.id })
+    .from(schema.vendorUsers)
+    .where(eq(schema.vendorUsers.email, "vendor@demo.grovio"))
+    .limit(1);
+
+  const vendorPasswordHash = await argon2.hash("Vendor@1234");
+  if (existingVendorUser.length > 0) {
+    // Re-hash on every run so a legacy SHA256 fake-hash is always replaced with real argon2
+    await db
+      .update(schema.vendorUsers)
+      .set({ passwordHash: vendorPasswordHash })
+      .where(eq(schema.vendorUsers.email, "vendor@demo.grovio"));
+    console.log(`[seed:demo] VendorUser hash refreshed (id=${existingVendorUser[0].id})`);
+  } else {
+    await db.insert(schema.vendorUsers).values({
+      vendorId,
+      email: "vendor@demo.grovio",
+      passwordHash: vendorPasswordHash,
+      role: "owner",
+    });
+    console.log(`[seed:demo] VendorUser created (email=vendor@demo.grovio, password=Vendor@1234)`);
   }
 
   // ── 2. Categories ─────────────────────────────────────────────────────────

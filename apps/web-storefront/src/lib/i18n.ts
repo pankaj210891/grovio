@@ -17,8 +17,8 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import commonEn from '../../../packages/locales/en/common.json';
-import storefrontEn from '../../../packages/locales/en/storefront.json';
+import commonEn from '../../../../packages/locales/en/common.json';
+import storefrontEn from '../../../../packages/locales/en/storefront.json';
 
 void i18n
   .use(LanguageDetector)
